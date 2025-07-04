@@ -1,0 +1,10 @@
+# Punchy Configuration
+server:
+  port: 8080
+  mode: release
+client:
+  server_url: http://localhost:8080
+  format: json
+generator:
+  output_dir: ./generated
+  template_file: azure_services.tf

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"punchbag-cube-testsuite/server/models"
+	"github.com/username/punchbag-cube-testsuite/server/models"
 )
 
 var (
@@ -35,6 +35,25 @@ type Store interface {
 	ListNodePools(clusterID string) ([]*models.NodePool, error)
 	UpdateNodePool(id string, nodePool *models.NodePool) error
 	DeleteNodePool(id string) error
+
+	// Azure-specific operations
+	CreateAzureMonitoring(monitoring *models.AzureMonitoring) error
+	GetAzureMonitoring(id string) (*models.AzureMonitoring, error)
+	ListAzureMonitorings() ([]*models.AzureMonitoring, error)
+	UpdateAzureMonitoring(id string, monitoring *models.AzureMonitoring) error
+	DeleteAzureMonitoring(id string) error
+
+	CreateAzureKubernetes(kubernetes *models.AzureKubernetes) error
+	GetAzureKubernetes(id string) (*models.AzureKubernetes, error)
+	ListAzureKubernetes() ([]*models.AzureKubernetes, error)
+	UpdateAzureKubernetes(id string, kubernetes *models.AzureKubernetes) error
+	DeleteAzureKubernetes(id string) error
+
+	CreateAzureBudget(budget *models.AzureBudget) error
+	GetAzureBudget(id string) (*models.AzureBudget, error)
+	ListAzureBudgets() ([]*models.AzureBudget, error)
+	UpdateAzureBudget(id string, budget *models.AzureBudget) error
+	DeleteAzureBudget(id string) error
 }
 
 // MemoryStore implements the Store interface using in-memory storage
@@ -43,6 +62,11 @@ type MemoryStore struct {
 	clusters    map[string]*models.Cluster
 	testResults map[string]*models.TestResult
 	nodePools   map[string]*models.NodePool
+
+	// Azure-specific fields
+	azureMonitorings map[string]*models.AzureMonitoring
+	azureKubernetes  map[string]*models.AzureKubernetes
+	azureBudgets      map[string]*models.AzureBudget
 }
 
 // NewMemoryStore creates a new in-memory store
@@ -51,6 +75,11 @@ func NewMemoryStore() *MemoryStore {
 		clusters:    make(map[string]*models.Cluster),
 		testResults: make(map[string]*models.TestResult),
 		nodePools:   make(map[string]*models.NodePool),
+
+		// Azure-specific initializations
+		azureMonitorings: make(map[string]*models.AzureMonitoring),
+		azureKubernetes:  make(map[string]*models.AzureKubernetes),
+		azureBudgets:      make(map[string]*models.AzureBudget),
 	}
 }
 
@@ -243,5 +272,192 @@ func (s *MemoryStore) DeleteNodePool(id string) error {
 	}
 
 	delete(s.nodePools, id)
+	return nil
+}
+
+// Azure-specific operations
+func (s *MemoryStore) CreateAzureMonitoring(monitoring *models.AzureMonitoring) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureMonitorings[monitoring.ID]; exists {
+		return ErrAlreadyExists
+	}
+
+	monitoring.CreatedAt = time.Now()
+	monitoring.UpdatedAt = time.Now()
+	s.azureMonitorings[monitoring.ID] = monitoring
+	return nil
+}
+
+func (s *MemoryStore) GetAzureMonitoring(id string) (*models.AzureMonitoring, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	monitoring, exists := s.azureMonitorings[id]
+	if !exists {
+		return nil, ErrNotFound
+	}
+	return monitoring, nil
+}
+
+func (s *MemoryStore) ListAzureMonitorings() ([]*models.AzureMonitoring, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	monitorings := make([]*models.AzureMonitoring, 0, len(s.azureMonitorings))
+	for _, monitoring := range s.azureMonitorings {
+		monitorings = append(monitorings, monitoring)
+	}
+	return monitorings, nil
+}
+
+func (s *MemoryStore) UpdateAzureMonitoring(id string, monitoring *models.AzureMonitoring) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureMonitorings[id]; !exists {
+		return ErrNotFound
+	}
+
+	monitoring.ID = id
+	monitoring.UpdatedAt = time.Now()
+	s.azureMonitorings[id] = monitoring
+	return nil
+}
+
+func (s *MemoryStore) DeleteAzureMonitoring(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureMonitorings[id]; !exists {
+		return ErrNotFound
+	}
+
+	delete(s.azureMonitorings, id)
+	return nil
+}
+
+func (s *MemoryStore) CreateAzureKubernetes(kubernetes *models.AzureKubernetes) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureKubernetes[kubernetes.ID]; exists {
+		return ErrAlreadyExists
+	}
+
+	kubernetes.CreatedAt = time.Now()
+	kubernetes.UpdatedAt = time.Now()
+	s.azureKubernetes[kubernetes.ID] = kubernetes
+	return nil
+}
+
+func (s *MemoryStore) GetAzureKubernetes(id string) (*models.AzureKubernetes, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	kubernetes, exists := s.azureKubernetes[id]
+	if !exists {
+		return nil, ErrNotFound
+	}
+	return kubernetes, nil
+}
+
+func (s *MemoryStore) ListAzureKubernetes() ([]*models.AzureKubernetes, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	kubernetess := make([]*models.AzureKubernetes, 0, len(s.azureKubernetes))
+	for _, kubernetes := range s.azureKubernetes {
+		kubernetess = append(kubernetess, kubernetes)
+	}
+	return kubernetess, nil
+}
+
+func (s *MemoryStore) UpdateAzureKubernetes(id string, kubernetes *models.AzureKubernetes) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureKubernetes[id]; !exists {
+		return ErrNotFound
+	}
+
+	kubernetes.ID = id
+	kubernetes.UpdatedAt = time.Now()
+	s.azureKubernetes[id] = kubernetes
+	return nil
+}
+
+func (s *MemoryStore) DeleteAzureKubernetes(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureKubernetes[id]; !exists {
+		return ErrNotFound
+	}
+
+	delete(s.azureKubernetes, id)
+	return nil
+}
+
+func (s *MemoryStore) CreateAzureBudget(budget *models.AzureBudget) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureBudgets[budget.ID]; exists {
+		return ErrAlreadyExists
+	}
+
+	budget.CreatedAt = time.Now()
+	budget.UpdatedAt = time.Now()
+	s.azureBudgets[budget.ID] = budget
+	return nil
+}
+
+func (s *MemoryStore) GetAzureBudget(id string) (*models.AzureBudget, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	budget, exists := s.azureBudgets[id]
+	if !exists {
+		return nil, ErrNotFound
+	}
+	return budget, nil
+}
+
+func (s *MemoryStore) ListAzureBudgets() ([]*models.AzureBudget, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	budgets := make([]*models.AzureBudget, 0, len(s.azureBudgets))
+	for _, budget := range s.azureBudgets {
+		budgets = append(budgets, budget)
+	}
+	return budgets, nil
+}
+
+func (s *MemoryStore) UpdateAzureBudget(id string, budget *models.AzureBudget) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureBudgets[id]; !exists {
+		return ErrNotFound
+	}
+
+	budget.ID = id
+	budget.UpdatedAt = time.Now()
+	s.azureBudgets[id] = budget
+	return nil
+}
+
+func (s *MemoryStore) DeleteAzureBudget(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.azureBudgets[id]; !exists {
+		return ErrNotFound
+	}
+
+	delete(s.azureBudgets, id)
 	return nil
 }

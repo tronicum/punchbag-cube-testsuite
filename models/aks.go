@@ -156,3 +156,29 @@ type LoadTestMetrics struct {
 	RequestsPerSecond float64       `json:"requests_per_second"`
 	ErrorRate         float64       `json:"error_rate"`
 }
+
+// Structs for Azure services
+
+// AzureMonitoring represents an Azure Monitoring resource.
+type AzureMonitoring struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Config      map[string]interface{} `json:"config"`
+}
+
+// AzureKubernetes represents an Azure Kubernetes resource.
+type AzureKubernetes struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	ClusterSize int                    `json:"cluster_size"`
+	Config      map[string]interface{} `json:"config"`
+}
+
+// AzureBudget represents an Azure Budget resource.
+type AzureBudget struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Amount      float64               `json:"amount"`
+	Config      map[string]interface{} `json:"config"`
+}

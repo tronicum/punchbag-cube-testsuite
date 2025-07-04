@@ -1,12 +1,12 @@
 # Punchbag Cube Test Suite
 
-A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, client, and Terraform provider components.
+A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, werfty, and Terraform provider components.
 
 ## Overview
 
 This project provides a complete ecosystem for testing various aspects of the punchbag cube system across multiple cloud providers including:
 - REST API server for multi-cloud cluster management and test execution
-- Command-line client for interacting with the API across cloud providers
+- Command-line werfty for interacting with the API across cloud providers
 - Terraform provider for Infrastructure as Code (IaC) support
 - Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE)
 - Performance and load testing capabilities across different cloud environments
@@ -36,17 +36,13 @@ This project provides a complete ecosystem for testing various aspects of the pu
 │   │   └── aks.go               # Multi-cloud cluster models
 │   └── store/                   # Data storage layer
 │       └── store.go             # Multi-cloud storage interface
-├── client/                      # CLI Client (Multi-Cloud)
-│   ├── main.go                  # Client entry point
-│   ├── go.mod                   # Client dependencies
-│   ├── README.md                # Client documentation
-│   ├── cmd/                     # CLI commands
-│   │   ├── root.go              # Root command
-│   │   ├── cluster.go           # Multi-cloud cluster commands
-│   │   └── test.go              # Test commands
-│   └── pkg/                     # Client packages
-│       ├── api/                 # API client
-│       │   └── client.go        # Multi-cloud HTTP client
+├── werfty/                      # CLI Werfty (Multi-Cloud)
+│   ├── main.go                  # Werfty entry point
+│   ├── go.mod                   # Werfty dependencies
+│   ├── README.md                # Werfty documentation
+│   └── pkg/                     # Werfty packages
+│       ├── api/                 # API werfty
+│       │   └── werfty.go        # Multi-cloud HTTP werfty
 │       └── output/              # Output formatting
 │           └── formatter.go     # Multi-cloud output formatters
 ├── terraform-provider/          # Terraform Provider (Multi-Cloud)
@@ -84,7 +80,7 @@ go run main.go
 
 Server will be available at `http://localhost:8080`
 
-### 📱 Client (`/client`)
+### 📱 Werfty (`/werfty`)
 
 Command-line interface for interacting with the server:
 - Manage clusters from the command line
@@ -94,9 +90,11 @@ Command-line interface for interacting with the server:
 
 **Quick Start:**
 ```bash
-cd client
-go build -o punchbag-client .
-./punchbag-client cluster list
+cd werfty
+
+go build -o punchbag-werfty .
+
+./punchbag-werfty cluster list
 ```
 
 ### 🏗️ Terraform Provider (`/terraform-provider`)
@@ -129,12 +127,12 @@ go mod tidy
 go run main.go
 ```
 
-2. **Use the Client:**
+2. **Use the Werfty:**
 ```bash
-cd client
+cd werfty
 go mod tidy
-go build -o punchbag-client .
-./punchbag-client cluster list
+go build -o punchbag-werfty .
+./punchbag-werfty cluster list
 ```
 
 3. **Try the Terraform Provider:**
@@ -155,9 +153,9 @@ cd server
 docker build -t punchbag-server .
 docker run -p 8080:8080 punchbag-server
 
-# Client (for CI/CD pipelines)
-cd client
-docker build -t punchbag-client .
+# Werfty (for CI/CD pipelines)
+cd werfty
+docker build -t punchbag-werfty .
 ```
 
 ## API Documentation
@@ -172,7 +170,7 @@ The server provides comprehensive API documentation:
 
 **Azure (AKS) Cluster:**
 ```bash
-./punchbag-client cluster create \
+./punchbag-werfty cluster create \
   --name my-aks-cluster \
   --provider azure \
   --resource-group my-rg \
@@ -183,7 +181,7 @@ The server provides comprehensive API documentation:
 
 **StackIT Cluster:**
 ```bash
-./punchbag-client cluster create \
+./punchbag-werfty cluster create \
   --name my-stackit-cluster \
   --provider schwarz-stackit \
   --project-id your-project-id \
@@ -196,20 +194,20 @@ The server provides comprehensive API documentation:
 
 **All clusters:**
 ```bash
-./punchbag-client cluster list
+./punchbag-werfty cluster list
 ```
 
 **Filter by provider:**
 ```bash
-./punchbag-client cluster list --provider azure
-./punchbag-client cluster list --provider schwarz-stackit
+./punchbag-werfty cluster list --provider azure
+./punchbag-werfty cluster list --provider schwarz-stackit
 ```
 
 ### Running Tests
 
 **Run tests on any cluster:**
 ```bash
-./punchbag-client cluster test cluster-id-123 --type performance_test
+./punchbag-werfty cluster test cluster-id-123 --type performance_test
 ```
 
 ### Terraform Provider Examples
