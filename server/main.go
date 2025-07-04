@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"punchbag-cube-testsuite/api"
-	"punchbag-cube-testsuite/store"
+	"punchbag-cube-testsuite/server/api"
+	"punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -50,7 +50,7 @@ func main() {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",
-			"service": "punchbag-cube-testsuite",
+			"service": "punchbag-cube-testsuite-server",
 		})
 	})
 

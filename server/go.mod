@@ -1,4 +1,4 @@
-module punchbag-cube-testsuite
+module punchbag-cube-testsuite/server
 
 go 1.21
 

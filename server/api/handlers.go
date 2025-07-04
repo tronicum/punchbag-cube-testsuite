@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"punchbag-cube-testsuite/models"
-	"punchbag-cube-testsuite/store"
+	"punchbag-cube-testsuite/server/models"
+	"punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

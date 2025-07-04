@@ -1,0 +1,338 @@
+openapi: 3.0.3
+info:
+  title: Punchbag Cube Test Suite API
+  description: API for testing and managing AKS clusters and punchbag cube functionality
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.punchbag-cube.example.com/api/v1
+    description: Production server
+
+paths:
+  /clusters:
+    get:
+      summary: List all AKS clusters
+      tags:
+        - Clusters
+      responses:
+        '200':
+          description: List of clusters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clusters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AKSCluster'
+    post:
+      summary: Create a new AKS cluster
+      tags:
+        - Clusters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AKSCluster'
+      responses:
+        '201':
+          description: Cluster created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AKSCluster'
+        '400':
+          description: Invalid request data
+        '409':
+          description: Cluster already exists
+
+  /clusters/{id}:
+    get:
+      summary: Get cluster by ID
+      tags:
+        - Clusters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cluster details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AKSCluster'
+        '404':
+          description: Cluster not found
+    put:
+      summary: Update cluster
+      tags:
+        - Clusters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AKSCluster'
+      responses:
+        '200':
+          description: Cluster updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AKSCluster'
+        '404':
+          description: Cluster not found
+    delete:
+      summary: Delete cluster
+      tags:
+        - Clusters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Cluster deleted successfully
+        '404':
+          description: Cluster not found
+
+  /clusters/{id}/tests:
+    get:
+      summary: List tests for a cluster
+      tags:
+        - Tests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of test results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  test_results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AKSTestResult'
+    post:
+      summary: Run a test on a cluster
+      tags:
+        - Tests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AKSTestRequest'
+      responses:
+        '202':
+          description: Test started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AKSTestResult'
+        '404':
+          description: Cluster not found
+
+  /tests/{id}:
+    get:
+      summary: Get test result by ID
+      tags:
+        - Tests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test result details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AKSTestResult'
+        '404':
+          description: Test result not found
+
+  /metrics/health:
+    get:
+      summary: Health check endpoint
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /metrics/status:
+    get:
+      summary: Service status and metrics
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clusters:
+                    type: integer
+                    description: Number of clusters
+                  test_results:
+                    type: integer
+                    description: Number of test results
+                  version:
+                    type: string
+                    description: API version
+
+components:
+  schemas:
+    AKSCluster:
+      type: object
+      required:
+        - name
+        - resource_group
+        - location
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the cluster
+        name:
+          type: string
+          description: Name of the AKS cluster
+        resource_group:
+          type: string
+          description: Azure resource group
+        location:
+          type: string
+          description: Azure region
+        kubernetes_version:
+          type: string
+          description: Kubernetes version
+        status:
+          type: string
+          enum: [creating, running, stopped, deleting, failed]
+          description: Current status of the cluster
+        node_count:
+          type: integer
+          description: Number of nodes in the cluster
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+          description: Tags associated with the cluster
+        created_at:
+          type: string
+          format: date-time
+          description: Cluster creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    AKSTestResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the test result
+        cluster_id:
+          type: string
+          description: ID of the cluster being tested
+        test_type:
+          type: string
+          description: Type of test being performed
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+          description: Current status of the test
+        duration:
+          type: string
+          description: Test duration in nanoseconds
+        details:
+          type: object
+          description: Test-specific details and metrics
+        error_message:
+          type: string
+          description: Error message if test failed
+        started_at:
+          type: string
+          format: date-time
+          description: Test start timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Test completion timestamp
+
+    AKSTestRequest:
+      type: object
+      required:
+        - cluster_id
+        - test_type
+      properties:
+        cluster_id:
+          type: string
+          description: ID of the cluster to test
+        test_type:
+          type: string
+          enum: [load_test, connectivity_test, performance_test, stress_test]
+          description: Type of test to perform
+        config:
+          type: object
+          description: Test-specific configuration parameters
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+
+tags:
+  - name: Clusters
+    description: AKS cluster management operations
+  - name: Tests
+    description: Test execution and result management
+  - name: Monitoring
+    description: Health and status monitoring endpoints

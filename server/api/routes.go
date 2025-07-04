@@ -1,7 +1,7 @@
 package api
 
 import (
-	"punchbag-cube-testsuite/store"
+	"punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
