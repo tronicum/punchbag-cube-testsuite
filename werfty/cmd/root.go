@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
+	"gopkg.in/yaml.v2"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,7 +48,8 @@ var validateCmd = &cobra.Command{
 		}
 		defer response.Body.Close()
 		body, _ := io.ReadAll(response.Body)
-		fmt.Println(string(body))
+		format := viper.GetString("format")
+		fmt.Println(formatOutput(string(body), format))
 	},
 }
 
@@ -63,7 +68,8 @@ var simulateProviderCmd = &cobra.Command{
 		}
 		defer response.Body.Close()
 		body, _ := io.ReadAll(response.Body)
-		fmt.Println(string(body))
+		format := viper.GetString("format")
+		fmt.Println(formatOutput(string(body), format))
 	},
 }
 
@@ -76,13 +82,14 @@ var generateAzureCmd = &cobra.Command{
 			fmt.Println("Please specify the Azure service: monitoring, kubernetes, or budget")
 			return
 		}
+		format := viper.GetString("format")
 		switch args[0] {
 		case "monitoring":
-			fmt.Println(generator.GenerateAzureMonitoringTemplate(nil))
+			fmt.Println(formatOutput(generator.GenerateAzureMonitoringTemplate(nil), format))
 		case "kubernetes":
-			fmt.Println(generator.GenerateAzureKubernetesTemplate(nil))
+			fmt.Println(formatOutput(generator.GenerateAzureKubernetesTemplate(nil), format))
 		case "budget":
-			fmt.Println(generator.GenerateAzureBudgetTemplate(nil))
+			fmt.Println(formatOutput(generator.GenerateAzureBudgetTemplate(nil), format))
 		default:
 			fmt.Println("Unknown service. Please specify monitoring, kubernetes, or budget.")
 		}
@@ -144,4 +151,25 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+// Helper function to format output
+func formatOutput(data interface{}, format string) string {
+	if format == "json" {
+		jsonData, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			return fmt.Sprintf("Error formatting JSON: %v", err)
+		}
+		return string(jsonData)
+	} else if format == "table" {
+		// Example table formatting (can be replaced with a library like "tablewriter")
+		return fmt.Sprintf("%v", data)
+	} else if format == "yaml" {
+		yamlData, err := yaml.Marshal(data)
+		if err != nil {
+			return fmt.Sprintf("Error formatting YAML: %v", err)
+		}
+		return string(yamlData)
+	}
+	return fmt.Sprintf("Unknown format: %s", format)
 }
