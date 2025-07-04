@@ -279,6 +279,20 @@ func (h *Handlers) getProviderSpecificMetrics(provider string) map[string]interf
 			"project_usage": "normal",
 			"hibernation_supported": true,
 		}
+	case string(models.CloudProviderHetzner):
+		return map[string]interface{}{
+			"hetzner_specific_metric": "sample_value",
+			"network_zone": "eu-central",
+			"load_balancer_type": "lb11",
+			"server_type": "cx21",
+		}
+	case string(models.CloudProviderIONOS):
+		return map[string]interface{}{
+			"ionos_specific_metric": "sample_value",
+			"datacenter_location": "de/fra",
+			"k8s_cluster_type": "managed",
+			"maintenance_window": "automatic",
+		}
 	case string(models.CloudProviderAzure):
 		return map[string]interface{}{
 			"azure_specific_metric": "sample_value",
@@ -311,6 +325,35 @@ func (h *Handlers) validateClusterByProvider(cluster *models.Cluster) error {
 		}
 		if cluster.Location == "" && cluster.Region == "" {
 			return fmt.Errorf("location or region is required for StackIT clusters")
+		}
+	case models.CloudProviderHetzner:
+		if cluster.Location == "" {
+			return fmt.Errorf("location is required for Hetzner Cloud clusters")
+		}
+		// Validate Hetzner-specific fields from ProviderConfig
+		if cluster.ProviderConfig != nil {
+			if hetznerConfig, ok := cluster.ProviderConfig["hetzner_config"]; ok {
+				if config, ok := hetznerConfig.(map[string]interface{}); ok {
+					if serverType, exists := config["server_type"]; exists && serverType == "" {
+						return fmt.Errorf("server_type cannot be empty for Hetzner clusters")
+					}
+				}
+			}
+		}
+	case models.CloudProviderIONOS:
+		// Validate IONOS-specific fields from ProviderConfig
+		if cluster.ProviderConfig != nil {
+			if ionosConfig, ok := cluster.ProviderConfig["ionos_config"]; ok {
+				if config, ok := ionosConfig.(map[string]interface{}); ok {
+					if datacenterID, exists := config["datacenter_id"]; !exists || datacenterID == "" {
+						return fmt.Errorf("datacenter_id is required for IONOS Cloud clusters")
+					}
+				}
+			} else {
+				return fmt.Errorf("ionos_config is required for IONOS Cloud clusters")
+			}
+		} else {
+			return fmt.Errorf("configuration is required for IONOS Cloud clusters")
 		}
 	case models.CloudProviderAzure:
 		if cluster.ResourceGroup == "" {

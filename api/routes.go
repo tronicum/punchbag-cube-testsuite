@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+	
 	"punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +42,7 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 			metrics.GET("/health", func(c *gin.Context) {
 				c.JSON(200, gin.H{
 					"status":    "healthy",
-					"timestamp": c.GetTime(),
+					"timestamp": time.Now().Format(time.RFC3339),
 				})
 			})
 

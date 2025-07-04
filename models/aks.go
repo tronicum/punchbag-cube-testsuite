@@ -97,6 +97,52 @@ type PunchbagTestConfig struct {
 	ExpectedCode int           `json:"expected_code"`
 }
 
+// HetznerClusterConfig represents configuration for Hetzner Cloud clusters
+type HetznerClusterConfig struct {
+	ServerType      string            `json:"server_type"`
+	Image           string            `json:"image"`
+	Location        string            `json:"location"`
+	Network         string            `json:"network,omitempty"`
+	SSHKeys         []string          `json:"ssh_keys,omitempty"`
+	Firewalls       []string          `json:"firewalls,omitempty"`
+	Labels          map[string]string `json:"labels,omitempty"`
+	UserData        string            `json:"user_data,omitempty"`
+	Backups         bool              `json:"backups"`
+	KubernetesVersion string          `json:"kubernetes_version"`
+	NodeCount       int               `json:"node_count"`
+	EnableIPv6      bool              `json:"enable_ipv6"`
+	PrivateNetworkOnly bool           `json:"private_network_only"`
+}
+
+// IONOSClusterConfig represents configuration for IONOS Cloud clusters  
+type IONOSClusterConfig struct {
+	DatacenterID    string            `json:"datacenter_id"`
+	CPUFamily       string            `json:"cpu_family"`
+	Cores           int               `json:"cores"`
+	RAM             int               `json:"ram"`
+	StorageType     string            `json:"storage_type"`
+	StorageSize     int               `json:"storage_size"`
+	Location        string            `json:"location"`
+	ImageAlias      string            `json:"image_alias"`
+	SSHKeys         []string          `json:"ssh_keys,omitempty"`
+	Properties      map[string]string `json:"properties,omitempty"`
+	KubernetesVersion string          `json:"kubernetes_version"`
+	NodeCount       int               `json:"node_count"`
+	PublicLAN       bool              `json:"public_lan"`
+	DHCPEnabled     bool              `json:"dhcp_enabled"`
+	MaintenanceWindow string          `json:"maintenance_window,omitempty"`
+}
+
+// CloudProvider constants for multi-cloud support
+const (
+	CloudProviderAzure      = "azure"
+	CloudProviderAWS        = "aws"
+	CloudProviderGCP        = "gcp"
+	CloudProviderStackit    = "schwarz-stackit"
+	CloudProviderHetzner    = "hetzner-hcloud"
+	CloudProviderIONOS      = "united-ionos"
+)
+
 // LoadTestMetrics represents metrics collected during load testing
 type LoadTestMetrics struct {
 	TotalRequests     int64         `json:"total_requests"`

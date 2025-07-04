@@ -10,6 +10,8 @@ type CloudProvider string
 const (
 	CloudProviderAzure      CloudProvider = "azure"
 	CloudProviderStackIT    CloudProvider = "schwarz-stackit"
+	CloudProviderHetzner    CloudProvider = "hetzner-hcloud"
+	CloudProviderIONOS      CloudProvider = "united-ionos"
 	CloudProviderAWS        CloudProvider = "aws"
 	CloudProviderGCP        CloudProvider = "gcp"
 )
@@ -143,4 +145,36 @@ type LoadTestMetrics struct {
 	MaxLatency        time.Duration `json:"max_latency"`
 	RequestsPerSecond float64       `json:"requests_per_second"`
 	ErrorRate         float64       `json:"error_rate"`
+}
+
+// HetznerClusterConfig represents Hetzner Cloud-specific cluster configuration
+type HetznerClusterConfig struct {
+	Token                string   `json:"token,omitempty"`
+	NetworkID            int      `json:"network_id,omitempty"`
+	NetworkZone          string   `json:"network_zone,omitempty"`
+	ServerType           string   `json:"server_type,omitempty"`
+	Location             string   `json:"location,omitempty"`
+	SSHKeys              []string `json:"ssh_keys,omitempty"`
+	FirewallIDs          []int    `json:"firewall_ids,omitempty"`
+	LoadBalancerType     string   `json:"load_balancer_type,omitempty"`
+	EnablePublicNetwork  bool     `json:"enable_public_network,omitempty"`
+	EnablePrivateNetwork bool     `json:"enable_private_network,omitempty"`
+}
+
+// IONOSClusterConfig represents IONOS Cloud-specific cluster configuration
+type IONOSClusterConfig struct {
+	DatacenterID         string `json:"datacenter_id"`
+	Username             string `json:"username,omitempty"`
+	Password             string `json:"password,omitempty"`
+	Token                string `json:"token,omitempty"`
+	Endpoint             string `json:"endpoint,omitempty"`
+	K8sClusterName       string `json:"k8s_cluster_name,omitempty"`
+	MaintenanceWindow    struct {
+		DayOfTheWeek string `json:"day_of_the_week,omitempty"`
+		Time         string `json:"time,omitempty"`
+	} `json:"maintenance_window,omitempty"`
+	AllowReplace         bool     `json:"allow_replace,omitempty"`
+	Public               bool     `json:"public,omitempty"`
+	GatewayIP            string   `json:"gateway_ip,omitempty"`
+	AvailableUpgradeVersions []string `json:"available_upgrade_versions,omitempty"`
 }

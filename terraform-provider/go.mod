@@ -4,7 +4,12 @@ go 1.22
 
 toolchain go1.24.4
 
-require github.com/hashicorp/terraform-plugin-framework v1.10.0
+require (
+	github.com/hashicorp/terraform-plugin-framework v1.10.0
+	github.com/hetznercloud/terraform-provider-hcloud v1.45.0
+	github.com/ionos-cloud/terraform-provider-ionoscloud v6.4.13
+	github.com/stackitcloud/terraform-provider-stackit v0.24.0
+)
 
 require (
 	github.com/fatih/color v1.16.0 // indirect

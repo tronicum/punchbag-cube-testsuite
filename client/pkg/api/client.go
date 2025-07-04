@@ -340,6 +340,56 @@ func (c *Client) CreateAzureCluster(name, resourceGroup, location string, config
 	return c.CreateMultiCloudCluster(cluster)
 }
 
+// CreateHetznerCluster creates a new Hetzner Cloud cluster
+func (c *Client) CreateHetznerCluster(name, location string, config map[string]interface{}) (*Cluster, error) {
+	cluster := &Cluster{
+		Name:          name,
+		CloudProvider: "hetzner-hcloud",
+		Status:        "creating",
+		Config: map[string]interface{}{
+			"hetzner_config": map[string]interface{}{
+				"location": location,
+			},
+		},
+	}
+	
+	// Merge additional config
+	if config != nil {
+		if hetznerConfig, ok := cluster.Config["hetzner_config"].(map[string]interface{}); ok {
+			for k, v := range config {
+				hetznerConfig[k] = v
+			}
+		}
+	}
+	
+	return c.CreateMultiCloudCluster(cluster)
+}
+
+// CreateIONOSCluster creates a new IONOS Cloud cluster
+func (c *Client) CreateIONOSCluster(name, datacenterID string, config map[string]interface{}) (*Cluster, error) {
+	cluster := &Cluster{
+		Name:          name,
+		CloudProvider: "united-ionos",
+		Status:        "creating",
+		Config: map[string]interface{}{
+			"ionos_config": map[string]interface{}{
+				"datacenter_id": datacenterID,
+			},
+		},
+	}
+	
+	// Merge additional config
+	if config != nil {
+		if ionosConfig, ok := cluster.Config["ionos_config"].(map[string]interface{}); ok {
+			for k, v := range config {
+				ionosConfig[k] = v
+			}
+		}
+	}
+	
+	return c.CreateMultiCloudCluster(cluster)
+}
+
 // UpdateCluster updates an existing cluster
 func (c *Client) UpdateCluster(id string, cluster *AKSCluster) (*AKSCluster, error) {
 	resp, err := c.doRequest("PUT", "/api/v1/clusters/"+id, cluster)

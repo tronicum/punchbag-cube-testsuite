@@ -233,6 +233,50 @@ func (c *PunchbagClient) CreateStackITCluster(cluster *Cluster, stackitConfig *S
 	return cluster, nil
 }
 
+// CreateHetznerCluster creates a Hetzner Cloud-specific cluster
+func (c *PunchbagClient) CreateHetznerCluster(cluster *Cluster, hetznerConfig *HetznerConfig) (*Cluster, error) {
+	// Implementation would integrate with Hetzner Cloud provider
+	cluster.ID = "hetzner-" + hetznerConfig.Location + "-cluster"
+	cluster.Status = "creating"
+	cluster.Provider = "hetzner-hcloud"
+	cluster.Location = hetznerConfig.Location
+	
+	// Store Hetzner-specific config
+	cluster.ProviderConfig = map[string]interface{}{
+		"token":                  hetznerConfig.Token,
+		"network_zone":           hetznerConfig.NetworkZone,
+		"server_type":            hetznerConfig.ServerType,
+		"ssh_keys":               hetznerConfig.SSHKeys,
+		"enable_public_network":  hetznerConfig.EnablePublicNetwork,
+		"enable_private_network": hetznerConfig.EnablePrivateNetwork,
+	}
+	
+	return cluster, nil
+}
+
+// CreateIONOSCluster creates an IONOS Cloud-specific cluster
+func (c *PunchbagClient) CreateIONOSCluster(cluster *Cluster, ionosConfig *IONOSConfig) (*Cluster, error) {
+	// Implementation would integrate with IONOS Cloud provider
+	cluster.ID = "ionos-" + ionosConfig.DatacenterID + "-cluster"
+	cluster.Status = "creating"
+	cluster.Provider = "united-ionos"
+	
+	// Store IONOS-specific config
+	cluster.ProviderConfig = map[string]interface{}{
+		"datacenter_id":     ionosConfig.DatacenterID,
+		"username":          ionosConfig.Username,
+		"k8s_cluster_name":  ionosConfig.K8sClusterName,
+		"public":            ionosConfig.Public,
+		"gateway_ip":        ionosConfig.GatewayIP,
+		"maintenance_window": map[string]string{
+			"day_of_the_week": ionosConfig.MaintenanceWindow.DayOfTheWeek,
+			"time":           ionosConfig.MaintenanceWindow.Time,
+		},
+	}
+	
+	return cluster, nil
+}
+
 // UpdateCluster updates an existing cluster
 func (c *PunchbagClient) UpdateCluster(cluster *Cluster) (*Cluster, error) {
 	// Implementation would make HTTP request to update cluster
@@ -300,4 +344,36 @@ type StackITConfig struct {
 	MaintenanceTimeEnd       string `json:"maintenance_time_end,omitempty"`
 	MaintenanceTimeZone      string `json:"maintenance_time_zone,omitempty"`
 	AllowPrivilegedContainers bool   `json:"allow_privileged_containers,omitempty"`
+}
+
+// HetznerConfig represents Hetzner Cloud-specific configuration
+type HetznerConfig struct {
+	Token                string   `json:"token,omitempty"`
+	NetworkID            int      `json:"network_id,omitempty"`
+	NetworkZone          string   `json:"network_zone,omitempty"`
+	ServerType           string   `json:"server_type,omitempty"`
+	Location             string   `json:"location,omitempty"`
+	SSHKeys              []string `json:"ssh_keys,omitempty"`
+	FirewallIDs          []int    `json:"firewall_ids,omitempty"`
+	LoadBalancerType     string   `json:"load_balancer_type,omitempty"`
+	EnablePublicNetwork  bool     `json:"enable_public_network,omitempty"`
+	EnablePrivateNetwork bool     `json:"enable_private_network,omitempty"`
+}
+
+// IONOSConfig represents IONOS Cloud-specific configuration
+type IONOSConfig struct {
+	DatacenterID         string `json:"datacenter_id"`
+	Username             string `json:"username,omitempty"`
+	Password             string `json:"password,omitempty"`
+	Token                string `json:"token,omitempty"`
+	Endpoint             string `json:"endpoint,omitempty"`
+	K8sClusterName       string `json:"k8s_cluster_name,omitempty"`
+	MaintenanceWindow    struct {
+		DayOfTheWeek string `json:"day_of_the_week,omitempty"`
+		Time         string `json:"time,omitempty"`
+	} `json:"maintenance_window,omitempty"`
+	AllowReplace         bool     `json:"allow_replace,omitempty"`
+	Public               bool     `json:"public,omitempty"`
+	GatewayIP            string   `json:"gateway_ip,omitempty"`
+	AvailableUpgradeVersions []string `json:"available_upgrade_versions,omitempty"`
 }

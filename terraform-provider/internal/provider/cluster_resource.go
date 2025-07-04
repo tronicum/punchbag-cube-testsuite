@@ -45,6 +45,25 @@ type clusterResourceModel struct {
 	MaintenanceTimeEnd        types.String `tfsdk:"maintenance_time_end"`
 	MaintenanceTimeZone       types.String `tfsdk:"maintenance_time_zone"`
 	AllowPrivilegedContainers types.Bool   `tfsdk:"allow_privileged_containers"`
+	
+	// Hetzner Cloud-specific fields
+	HetznerToken            types.String `tfsdk:"hetzner_token"`
+	NetworkZone             types.String `tfsdk:"network_zone"`
+	ServerType              types.String `tfsdk:"server_type"`
+	SSHKeys                 types.List   `tfsdk:"ssh_keys"`
+	EnablePublicNetwork     types.Bool   `tfsdk:"enable_public_network"`
+	EnablePrivateNetwork    types.Bool   `tfsdk:"enable_private_network"`
+	
+	// IONOS Cloud-specific fields
+	DatacenterID       types.String `tfsdk:"datacenter_id"`
+	IONOSUsername      types.String `tfsdk:"ionos_username"`
+	IONOSPassword      types.String `tfsdk:"ionos_password"`
+	IONOSToken         types.String `tfsdk:"ionos_token"`
+	K8sClusterName     types.String `tfsdk:"k8s_cluster_name"`
+	MaintenanceDay     types.String `tfsdk:"maintenance_day"`
+	MaintenanceTime    types.String `tfsdk:"maintenance_time"`
+	IONOSPublic        types.Bool   `tfsdk:"ionos_public"`
+	GatewayIP          types.String `tfsdk:"gateway_ip"`
 }
 
 func (r *clusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -68,7 +87,7 @@ func (r *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required:            true,
 			},
 			"provider": schema.StringAttribute{
-				MarkdownDescription: "Cloud provider (azure, schwarz-stackit, aws, gcp)",
+				MarkdownDescription: "Cloud provider (azure, schwarz-stackit, hetzner-hcloud, united-ionos, aws, gcp)",
 				Required:            true,
 			},
 			"resource_group": schema.StringAttribute{
@@ -121,6 +140,72 @@ func (r *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 			"allow_privileged_containers": schema.BoolAttribute{
 				MarkdownDescription: "Allow privileged containers (StackIT only)",
+				Optional:            true,
+			},
+			// Hetzner Cloud-specific attributes
+			"hetzner_token": schema.StringAttribute{
+				MarkdownDescription: "Hetzner Cloud API token (Hetzner only)",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"network_zone": schema.StringAttribute{
+				MarkdownDescription: "Network zone (Hetzner only)",
+				Optional:            true,
+			},
+			"server_type": schema.StringAttribute{
+				MarkdownDescription: "Server type (Hetzner only)",
+				Optional:            true,
+			},
+			"ssh_keys": schema.ListAttribute{
+				MarkdownDescription: "SSH key names (Hetzner only)",
+				ElementType:         types.StringType,
+				Optional:            true,
+			},
+			"enable_public_network": schema.BoolAttribute{
+				MarkdownDescription: "Enable public network (Hetzner only)",
+				Optional:            true,
+			},
+			"enable_private_network": schema.BoolAttribute{
+				MarkdownDescription: "Enable private network (Hetzner only)",
+				Optional:            true,
+			},
+			// IONOS Cloud-specific attributes
+			"datacenter_id": schema.StringAttribute{
+				MarkdownDescription: "Datacenter ID (IONOS only)",
+				Optional:            true,
+			},
+			"ionos_username": schema.StringAttribute{
+				MarkdownDescription: "IONOS username (IONOS only)",
+				Optional:            true,
+			},
+			"ionos_password": schema.StringAttribute{
+				MarkdownDescription: "IONOS password (IONOS only)",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"ionos_token": schema.StringAttribute{
+				MarkdownDescription: "IONOS API token (IONOS only)",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"k8s_cluster_name": schema.StringAttribute{
+				MarkdownDescription: "Kubernetes cluster name (IONOS only)",
+				Optional:            true,
+			},
+			"maintenance_day": schema.StringAttribute{
+				MarkdownDescription: "Maintenance window day of the week (IONOS only)",
+				Optional:            true,
+			},
+			"maintenance_time": schema.StringAttribute{
+				MarkdownDescription: "Maintenance window time (IONOS only)",
+				Optional:            true,
+			},
+			"ionos_public": schema.BoolAttribute{
+				MarkdownDescription: "Enable public access (IONOS only)",
+				Optional:            true,
+			},
+			"gateway_ip": schema.StringAttribute{
+				MarkdownDescription: "Gateway IP address (IONOS only)",
 				Optional:            true,
 			},
 		},
@@ -197,6 +282,70 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 		cluster = createdCluster
+	case "hetzner-hcloud":
+		cluster.Location = data.Location.ValueString()
+		if cluster.Location == "" {
+			resp.Diagnostics.AddError("Validation Error", "location is required for Hetzner Cloud clusters")
+			return
+		}
+		
+		// Handle Hetzner-specific configuration
+		hetznerConfig := &HetznerConfig{
+			Token:                data.HetznerToken.ValueString(),
+			NetworkZone:          data.NetworkZone.ValueString(),
+			ServerType:           data.ServerType.ValueString(),
+			Location:             cluster.Location,
+			EnablePublicNetwork:  data.EnablePublicNetwork.ValueBool(),
+			EnablePrivateNetwork: data.EnablePrivateNetwork.ValueBool(),
+		}
+		
+		// Convert SSH keys list
+		if !data.SSHKeys.IsNull() {
+			var sshKeys []string
+			for _, key := range data.SSHKeys.Elements() {
+				if keyStr, ok := key.(types.String); ok {
+					sshKeys = append(sshKeys, keyStr.ValueString())
+				}
+			}
+			hetznerConfig.SSHKeys = sshKeys
+		}
+		
+		createdCluster, err := r.client.CreateHetznerCluster(cluster, hetznerConfig)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create Hetzner cluster, got error: %s", err))
+			return
+		}
+		cluster = createdCluster
+	case "united-ionos":
+		datacenterID := data.DatacenterID.ValueString()
+		if datacenterID == "" {
+			resp.Diagnostics.AddError("Validation Error", "datacenter_id is required for IONOS Cloud clusters")
+			return
+		}
+		
+		// Handle IONOS-specific configuration
+		ionosConfig := &IONOSConfig{
+			DatacenterID:   datacenterID,
+			Username:       data.IONOSUsername.ValueString(),
+			Password:       data.IONOSPassword.ValueString(),
+			Token:          data.IONOSToken.ValueString(),
+			K8sClusterName: data.K8sClusterName.ValueString(),
+			Public:         data.IONOSPublic.ValueBool(),
+			GatewayIP:      data.GatewayIP.ValueString(),
+		}
+		
+		// Set maintenance window if provided
+		if !data.MaintenanceDay.IsNull() || !data.MaintenanceTime.IsNull() {
+			ionosConfig.MaintenanceWindow.DayOfTheWeek = data.MaintenanceDay.ValueString()
+			ionosConfig.MaintenanceWindow.Time = data.MaintenanceTime.ValueString()
+		}
+		
+		createdCluster, err := r.client.CreateIONOSCluster(cluster, ionosConfig)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create IONOS cluster, got error: %s", err))
+			return
+		}
+		cluster = createdCluster
 	case "aws":
 		cluster.Region = data.Region.ValueString()
 		if cluster.Region == "" {
@@ -211,7 +360,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 	default:
-		resp.Diagnostics.AddError("Validation Error", "Unsupported provider. Supported providers: azure, schwarz-stackit, aws, gcp")
+		resp.Diagnostics.AddError("Validation Error", "Unsupported provider. Supported providers: azure, schwarz-stackit, hetzner-hcloud, united-ionos, aws, gcp")
 		return
 	}
 
