@@ -30,12 +30,21 @@ type clusterResource struct {
 type clusterResourceModel struct {
 	ID                types.String `tfsdk:"id"`
 	Name              types.String `tfsdk:"name"`
+	Provider          types.String `tfsdk:"provider"`
 	ResourceGroup     types.String `tfsdk:"resource_group"`
 	Location          types.String `tfsdk:"location"`
+	Region            types.String `tfsdk:"region"`
+	ProjectID         types.String `tfsdk:"project_id"`
 	KubernetesVersion types.String `tfsdk:"kubernetes_version"`
 	Status            types.String `tfsdk:"status"`
 	NodeCount         types.Int64  `tfsdk:"node_count"`
 	Tags              types.Map    `tfsdk:"tags"`
+	
+	// StackIT-specific fields
+	MaintenanceTimeStart      types.String `tfsdk:"maintenance_time_start"`
+	MaintenanceTimeEnd        types.String `tfsdk:"maintenance_time_end"`
+	MaintenanceTimeZone       types.String `tfsdk:"maintenance_time_zone"`
+	AllowPrivilegedContainers types.Bool   `tfsdk:"allow_privileged_containers"`
 }
 
 func (r *clusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -44,7 +53,7 @@ func (r *clusterResource) Metadata(ctx context.Context, req resource.MetadataReq
 
 func (r *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Cluster resource for managing AKS clusters in Punchbag Test Suite.",
+		MarkdownDescription: "Cluster resource for managing multi-cloud Kubernetes clusters in Punchbag Test Suite.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -58,13 +67,25 @@ func (r *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Cluster name",
 				Required:            true,
 			},
-			"resource_group": schema.StringAttribute{
-				MarkdownDescription: "Azure resource group",
+			"provider": schema.StringAttribute{
+				MarkdownDescription: "Cloud provider (azure, schwarz-stackit, aws, gcp)",
 				Required:            true,
 			},
+			"resource_group": schema.StringAttribute{
+				MarkdownDescription: "Azure resource group (Azure only)",
+				Optional:            true,
+			},
 			"location": schema.StringAttribute{
-				MarkdownDescription: "Azure location",
-				Required:            true,
+				MarkdownDescription: "Azure location (Azure only)",
+				Optional:            true,
+			},
+			"region": schema.StringAttribute{
+				MarkdownDescription: "Cloud region (StackIT, AWS, GCP)",
+				Optional:            true,
+			},
+			"project_id": schema.StringAttribute{
+				MarkdownDescription: "Project ID (StackIT, GCP)",
+				Optional:            true,
 			},
 			"kubernetes_version": schema.StringAttribute{
 				MarkdownDescription: "Kubernetes version",
@@ -83,6 +104,23 @@ func (r *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"tags": schema.MapAttribute{
 				MarkdownDescription: "Tags",
 				ElementType:         types.StringType,
+				Optional:            true,
+			},
+			// StackIT-specific attributes
+			"maintenance_time_start": schema.StringAttribute{
+				MarkdownDescription: "Maintenance window start time (StackIT only, format: HH:MM)",
+				Optional:            true,
+			},
+			"maintenance_time_end": schema.StringAttribute{
+				MarkdownDescription: "Maintenance window end time (StackIT only, format: HH:MM)",
+				Optional:            true,
+			},
+			"maintenance_time_zone": schema.StringAttribute{
+				MarkdownDescription: "Maintenance window timezone (StackIT only)",
+				Optional:            true,
+			},
+			"allow_privileged_containers": schema.BoolAttribute{
+				MarkdownDescription: "Allow privileged containers (StackIT only)",
 				Optional:            true,
 			},
 		},
@@ -119,34 +157,87 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// Create cluster
+	// Create cluster based on provider
 	cluster := &Cluster{
 		Name:              data.Name.ValueString(),
-		ResourceGroup:     data.ResourceGroup.ValueString(),
-		Location:          data.Location.ValueString(),
+		Provider:          data.Provider.ValueString(),
 		KubernetesVersion: data.KubernetesVersion.ValueString(),
 		NodeCount:         int(data.NodeCount.ValueInt64()),
 	}
 
+	// Set provider-specific fields
+	switch data.Provider.ValueString() {
+	case "azure":
+		cluster.ResourceGroup = data.ResourceGroup.ValueString()
+		cluster.Location = data.Location.ValueString()
+		if cluster.ResourceGroup == "" || cluster.Location == "" {
+			resp.Diagnostics.AddError("Validation Error", "resource_group and location are required for Azure clusters")
+			return
+		}
+	case "schwarz-stackit":
+		cluster.ProjectID = data.ProjectID.ValueString()
+		cluster.Region = data.Region.ValueString()
+		if cluster.ProjectID == "" || cluster.Region == "" {
+			resp.Diagnostics.AddError("Validation Error", "project_id and region are required for StackIT clusters")
+			return
+		}
+		
+		// Handle StackIT-specific configuration
+		stackitConfig := &StackITConfig{
+			ProjectID:                 cluster.ProjectID,
+			MaintenanceTimeStart:      data.MaintenanceTimeStart.ValueString(),
+			MaintenanceTimeEnd:        data.MaintenanceTimeEnd.ValueString(),
+			MaintenanceTimeZone:       data.MaintenanceTimeZone.ValueString(),
+			AllowPrivilegedContainers: data.AllowPrivilegedContainers.ValueBool(),
+		}
+		
+		createdCluster, err := r.client.CreateStackITCluster(cluster, stackitConfig)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create StackIT cluster, got error: %s", err))
+			return
+		}
+		cluster = createdCluster
+	case "aws":
+		cluster.Region = data.Region.ValueString()
+		if cluster.Region == "" {
+			resp.Diagnostics.AddError("Validation Error", "region is required for AWS clusters")
+			return
+		}
+	case "gcp":
+		cluster.ProjectID = data.ProjectID.ValueString()
+		cluster.Region = data.Region.ValueString()
+		if cluster.ProjectID == "" || cluster.Region == "" {
+			resp.Diagnostics.AddError("Validation Error", "project_id and region are required for GCP clusters")
+			return
+		}
+	default:
+		resp.Diagnostics.AddError("Validation Error", "Unsupported provider. Supported providers: azure, schwarz-stackit, aws, gcp")
+		return
+	}
+
+	// Set defaults
 	if data.NodeCount.IsNull() {
 		cluster.NodeCount = 3 // default
 	}
-
 	if data.KubernetesVersion.IsNull() {
 		cluster.KubernetesVersion = "1.28.0" // default
 	}
 
-	createdCluster, err := r.client.CreateCluster(cluster)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create cluster, got error: %s", err))
-		return
+	// Create cluster if not StackIT (already created above)
+	if data.Provider.ValueString() != "schwarz-stackit" {
+		createdCluster, err := r.client.CreateCluster(cluster)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create cluster, got error: %s", err))
+			return
+		}
+		cluster = createdCluster
 	}
 
 	// Update model with created cluster data
-	data.ID = types.StringValue(createdCluster.ID)
-	data.Status = types.StringValue(createdCluster.Status)
-	data.KubernetesVersion = types.StringValue(createdCluster.KubernetesVersion)
-	data.NodeCount = types.Int64Value(int64(createdCluster.NodeCount))
+	data.ID = types.StringValue(cluster.ID)
+	data.Status = types.StringValue(cluster.Status)
+	data.KubernetesVersion = types.StringValue(cluster.KubernetesVersion)
+	data.NodeCount = types.Int64Value(int64(cluster.NodeCount))
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

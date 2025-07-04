@@ -4,7 +4,38 @@ import (
 	"time"
 )
 
-// AKSCluster represents an Azure Kubernetes Service cluster
+// Cluster represents a Kubernetes cluster across different cloud providers
+type Cluster struct {
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	CloudProvider string                 `json:"cloud_provider"` // azure, schwarz-stackit, aws, gcp
+	Status        string                 `json:"status"`
+	Config        map[string]interface{} `json:"config,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
+}
+
+// TestResult represents the result of a cluster test
+type TestResult struct {
+	ID          string                 `json:"id"`
+	ClusterID   string                 `json:"cluster_id"`
+	TestType    string                 `json:"test_type"`
+	Status      string                 `json:"status"`
+	Duration    time.Duration          `json:"duration"`
+	Details     map[string]interface{} `json:"details,omitempty"`
+	ErrorMsg    string                 `json:"error_message,omitempty"`
+	StartedAt   time.Time              `json:"started_at"`
+	CompletedAt *time.Time             `json:"completed_at,omitempty"`
+}
+
+// TestRequest represents a request to run a test on a cluster
+type TestRequest struct {
+	ClusterID string                 `json:"cluster_id" binding:"required"`
+	TestType  string                 `json:"test_type" binding:"required"`
+	Config    map[string]interface{} `json:"config,omitempty"`
+}
+
+// AKSCluster represents an Azure Kubernetes Service cluster (for backward compatibility)
 type AKSCluster struct {
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
@@ -18,7 +49,7 @@ type AKSCluster struct {
 	UpdatedAt         time.Time         `json:"updated_at"`
 }
 
-// AKSTestResult represents the result of an AKS test
+// AKSTestResult represents the result of an AKS test (for backward compatibility)
 type AKSTestResult struct {
 	ID          string                 `json:"id"`
 	ClusterID   string                 `json:"cluster_id"`
@@ -31,7 +62,7 @@ type AKSTestResult struct {
 	CompletedAt *time.Time             `json:"completed_at,omitempty"`
 }
 
-// AKSTestRequest represents a request to run a test on an AKS cluster
+// AKSTestRequest represents a request to run a test on an AKS cluster (for backward compatibility)
 type AKSTestRequest struct {
 	ClusterID string                 `json:"cluster_id" binding:"required"`
 	TestType  string                 `json:"test_type" binding:"required"`

@@ -191,8 +191,9 @@ func (c *PunchbagClient) GetCluster(id string) (*Cluster, error) {
 	return &Cluster{
 		ID:                id,
 		Name:              "example-cluster",
-		ResourceGroup:     "example-rg",
-		Location:          "eastus",
+		Provider:          "schwarz-stackit",
+		ProjectID:         "example-project-id",
+		Region:            "eu-central-1",
 		KubernetesVersion: "1.28.0",
 		Status:            "running",
 		NodeCount:         3,
@@ -204,6 +205,31 @@ func (c *PunchbagClient) CreateCluster(cluster *Cluster) (*Cluster, error) {
 	// Implementation would make HTTP request to create cluster
 	cluster.ID = "generated-id"
 	cluster.Status = "creating"
+	
+	// Set default provider if not specified
+	if cluster.Provider == "" {
+		cluster.Provider = "azure" // default to Azure for backward compatibility
+	}
+	
+	return cluster, nil
+}
+
+// CreateStackITCluster creates a StackIT-specific cluster
+func (c *PunchbagClient) CreateStackITCluster(cluster *Cluster, stackitConfig *StackITConfig) (*Cluster, error) {
+	// Implementation would integrate with StackIT provider
+	cluster.ID = "stackit-" + stackitConfig.ProjectID + "-cluster"
+	cluster.Status = "creating"
+	cluster.Provider = "schwarz-stackit"
+	cluster.ProjectID = stackitConfig.ProjectID
+	
+	// Store StackIT-specific config
+	cluster.ProviderConfig = map[string]interface{}{
+		"maintenance_time_start":       stackitConfig.MaintenanceTimeStart,
+		"maintenance_time_end":         stackitConfig.MaintenanceTimeEnd,
+		"maintenance_time_zone":        stackitConfig.MaintenanceTimeZone,
+		"allow_privileged_containers":  stackitConfig.AllowPrivilegedContainers,
+	}
+	
 	return cluster, nil
 }
 
@@ -225,24 +251,53 @@ func (c *PunchbagClient) ListClusters() ([]*Cluster, error) {
 	return []*Cluster{
 		{
 			ID:                "cluster-1",
-			Name:              "test-cluster-1",
+			Name:              "azure-test-cluster",
+			Provider:          "azure",
 			ResourceGroup:     "test-rg",
 			Location:          "eastus",
 			KubernetesVersion: "1.28.0",
 			Status:            "running",
 			NodeCount:         3,
 		},
+		{
+			ID:                "cluster-2",
+			Name:              "stackit-test-cluster",
+			Provider:          "schwarz-stackit",
+			ProjectID:         "my-stackit-project",
+			Region:            "eu-central-1",
+			KubernetesVersion: "1.28.0",
+			Status:            "running",
+			NodeCount:         2,
+			ProviderConfig: map[string]interface{}{
+				"maintenance_time_start": "02:00",
+				"maintenance_time_end":   "04:00",
+				"maintenance_time_zone":  "Europe/Berlin",
+			},
+		},
 	}, nil
 }
 
-// Cluster represents a cluster resource
+// Cluster represents a cluster resource with multi-cloud support
 type Cluster struct {
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
-	ResourceGroup     string            `json:"resource_group"`
-	Location          string            `json:"location"`
+	Provider          string            `json:"provider"`                     // azure, schwarz-stackit, aws, gcp
+	ResourceGroup     string            `json:"resource_group,omitempty"`     // Azure specific
+	Location          string            `json:"location,omitempty"`           // Azure/General location
+	Region            string            `json:"region,omitempty"`             // AWS/GCP/StackIT region
+	ProjectID         string            `json:"project_id,omitempty"`         // StackIT/GCP specific
 	KubernetesVersion string            `json:"kubernetes_version"`
 	Status            string            `json:"status"`
 	NodeCount         int               `json:"node_count"`
 	Tags              map[string]string `json:"tags,omitempty"`
+	ProviderConfig    map[string]interface{} `json:"provider_config,omitempty"` // Provider-specific config
+}
+
+// StackITConfig represents StackIT-specific configuration
+type StackITConfig struct {
+	ProjectID                string `json:"project_id"`
+	MaintenanceTimeStart     string `json:"maintenance_time_start,omitempty"`
+	MaintenanceTimeEnd       string `json:"maintenance_time_end,omitempty"`
+	MaintenanceTimeZone      string `json:"maintenance_time_zone,omitempty"`
+	AllowPrivilegedContainers bool   `json:"allow_privileged_containers,omitempty"`
 }

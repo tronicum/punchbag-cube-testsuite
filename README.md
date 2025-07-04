@@ -1,53 +1,65 @@
 # Punchbag Cube Test Suite
 
-A comprehensive test suite for testing punchbag cube functionality with server, client, and Terraform provider components.
+A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, client, and Terraform provider components.
 
 ## Overview
 
-This project provides a complete ecosystem for testing various aspects of the punchbag cube system including:
-- REST API server for cluster management and test execution
-- Command-line client for interacting with the API
+This project provides a complete ecosystem for testing various aspects of the punchbag cube system across multiple cloud providers including:
+- REST API server for multi-cloud cluster management and test execution
+- Command-line client for interacting with the API across cloud providers
 - Terraform provider for Infrastructure as Code (IaC) support
-- AKS (Azure Kubernetes Service) integration testing
-- Performance and load testing capabilities
+- Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE)
+- Performance and load testing capabilities across different cloud environments
+
+## Supported Cloud Providers
+
+- **Azure**: Azure Kubernetes Service (AKS)
+- **StackIT (Schwarz IT)**: StackIT Kubernetes Engine (SKE)
+- **AWS**: Amazon Elastic Kubernetes Service (EKS) [planned]
+- **GCP**: Google Kubernetes Engine (GKE) [planned]
 
 ## Project Structure
 
 ```
 ├── README.md                    # This file
 ├── LICENSE                      # License file
-├── server/                      # REST API Server
+├── server/                      # REST API Server (Multi-Cloud)
 │   ├── main.go                  # Server entry point
 │   ├── go.mod                   # Server dependencies
 │   ├── Dockerfile               # Server container config
 │   ├── README.md                # Server documentation
 │   ├── api/                     # API layer
-│   │   ├── handlers.go          # HTTP request handlers
+│   │   ├── handlers.go          # Multi-cloud HTTP request handlers
 │   │   ├── routes.go            # Route definitions
 │   │   └── openapi.yaml         # API specification
 │   ├── models/                  # Data models
-│   │   └── aks.go               # AKS-related models
+│   │   └── aks.go               # Multi-cloud cluster models
 │   └── store/                   # Data storage layer
-│       └── store.go             # Storage interface
-├── client/                      # CLI Client
+│       └── store.go             # Multi-cloud storage interface
+├── client/                      # CLI Client (Multi-Cloud)
 │   ├── main.go                  # Client entry point
 │   ├── go.mod                   # Client dependencies
 │   ├── README.md                # Client documentation
 │   ├── cmd/                     # CLI commands
 │   │   ├── root.go              # Root command
-│   │   ├── cluster.go           # Cluster commands
+│   │   ├── cluster.go           # Multi-cloud cluster commands
 │   │   └── test.go              # Test commands
 │   └── pkg/                     # Client packages
 │       ├── api/                 # API client
-│       │   └── client.go        # HTTP client
+│       │   └── client.go        # Multi-cloud HTTP client
 │       └── output/              # Output formatting
-│           └── formatter.go     # Output formatters
-└── terraform-provider/          # Terraform Provider
-    ├── main.go                  # Provider entry point
-    ├── go.mod                   # Provider dependencies
-    ├── README.md                # Provider documentation
-    └── internal/                # Provider implementation
-        └── provider/            # Provider logic
+│           └── formatter.go     # Multi-cloud output formatters
+├── terraform-provider/          # Terraform Provider (Multi-Cloud)
+│   ├── main.go                  # Provider entry point
+│   ├── go.mod                   # Provider dependencies (includes StackIT provider)
+│   ├── README.md                # Provider documentation
+│   └── internal/                # Provider implementation
+│       └── provider/            # Multi-cloud provider logic
+├── models/                      # Shared data models
+│   └── aks.go                   # Multi-cloud cluster models
+└── store/                       # Shared storage layer
+    └── store.go                 # Multi-cloud storage interface
+```
             ├── provider.go      # Main provider
             ├── cluster_resource.go
             ├── test_resource.go
@@ -153,6 +165,84 @@ docker build -t punchbag-client .
 The server provides comprehensive API documentation:
 - Interactive docs: `http://localhost:8080/docs`
 - OpenAPI spec: `server/api/openapi.yaml`
+
+## Multi-Cloud Usage Examples
+
+### Creating Clusters
+
+**Azure (AKS) Cluster:**
+```bash
+./punchbag-client cluster create \
+  --name my-aks-cluster \
+  --provider azure \
+  --resource-group my-rg \
+  --location eastus \
+  --kubernetes-version 1.28.0 \
+  --node-count 3
+```
+
+**StackIT Cluster:**
+```bash
+./punchbag-client cluster create \
+  --name my-stackit-cluster \
+  --provider schwarz-stackit \
+  --project-id your-project-id \
+  --region eu-de-1 \
+  --kubernetes-version 1.28.0 \
+  --node-count 3
+```
+
+### Listing Clusters
+
+**All clusters:**
+```bash
+./punchbag-client cluster list
+```
+
+**Filter by provider:**
+```bash
+./punchbag-client cluster list --provider azure
+./punchbag-client cluster list --provider schwarz-stackit
+```
+
+### Running Tests
+
+**Run tests on any cluster:**
+```bash
+./punchbag-client cluster test cluster-id-123 --type performance_test
+```
+
+### Terraform Provider Examples
+
+**Azure cluster:**
+```hcl
+resource "punchbag_cluster" "example_azure" {
+  name     = "my-aks-cluster"
+  provider = "azure"
+
+  azure_config = {
+    resource_group     = "my-rg"
+    location          = "eastus"
+    kubernetes_version = "1.28.0"
+    node_count        = 3
+  }
+}
+```
+
+**StackIT cluster:**
+```hcl
+resource "punchbag_cluster" "example_stackit" {
+  name     = "my-stackit-cluster"
+  provider = "schwarz-stackit"
+
+  stackit_config = {
+    project_id         = "your-project-id"
+    region            = "eu-de-1"
+    kubernetes_version = "1.28.0"
+    node_count        = 3
+  }
+}
+```
 
 ## Contributing
 

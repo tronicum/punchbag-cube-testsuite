@@ -15,46 +15,47 @@ var (
 
 // Store defines the interface for data storage operations
 type Store interface {
-	// AKS Cluster operations
-	CreateCluster(cluster *models.AKSCluster) error
-	GetCluster(id string) (*models.AKSCluster, error)
-	ListClusters() ([]*models.AKSCluster, error)
-	UpdateCluster(id string, cluster *models.AKSCluster) error
+	// Cluster operations (multi-cloud)
+	CreateCluster(cluster *models.Cluster) error
+	GetCluster(id string) (*models.Cluster, error)
+	ListClusters() ([]*models.Cluster, error)
+	ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error)
+	UpdateCluster(id string, cluster *models.Cluster) error
 	DeleteCluster(id string) error
 
 	// Test Result operations
-	CreateTestResult(result *models.AKSTestResult) error
-	GetTestResult(id string) (*models.AKSTestResult, error)
-	ListTestResults(clusterID string) ([]*models.AKSTestResult, error)
-	UpdateTestResult(id string, result *models.AKSTestResult) error
+	CreateTestResult(result *models.TestResult) error
+	GetTestResult(id string) (*models.TestResult, error)
+	ListTestResults(clusterID string) ([]*models.TestResult, error)
+	UpdateTestResult(id string, result *models.TestResult) error
 
 	// Node Pool operations
-	CreateNodePool(nodePool *models.AKSNodePool) error
-	GetNodePool(id string) (*models.AKSNodePool, error)
-	ListNodePools(clusterID string) ([]*models.AKSNodePool, error)
-	UpdateNodePool(id string, nodePool *models.AKSNodePool) error
+	CreateNodePool(nodePool *models.NodePool) error
+	GetNodePool(id string) (*models.NodePool, error)
+	ListNodePools(clusterID string) ([]*models.NodePool, error)
+	UpdateNodePool(id string, nodePool *models.NodePool) error
 	DeleteNodePool(id string) error
 }
 
 // MemoryStore implements the Store interface using in-memory storage
 type MemoryStore struct {
 	mu          sync.RWMutex
-	clusters    map[string]*models.AKSCluster
-	testResults map[string]*models.AKSTestResult
-	nodePools   map[string]*models.AKSNodePool
+	clusters    map[string]*models.Cluster
+	testResults map[string]*models.TestResult
+	nodePools   map[string]*models.NodePool
 }
 
 // NewMemoryStore creates a new in-memory store
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		clusters:    make(map[string]*models.AKSCluster),
-		testResults: make(map[string]*models.AKSTestResult),
-		nodePools:   make(map[string]*models.AKSNodePool),
+		clusters:    make(map[string]*models.Cluster),
+		testResults: make(map[string]*models.TestResult),
+		nodePools:   make(map[string]*models.NodePool),
 	}
 }
 
-// AKS Cluster operations
-func (s *MemoryStore) CreateCluster(cluster *models.AKSCluster) error {
+// Cluster operations
+func (s *MemoryStore) CreateCluster(cluster *models.Cluster) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -68,7 +69,7 @@ func (s *MemoryStore) CreateCluster(cluster *models.AKSCluster) error {
 	return nil
 }
 
-func (s *MemoryStore) GetCluster(id string) (*models.AKSCluster, error) {
+func (s *MemoryStore) GetCluster(id string) (*models.Cluster, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -79,18 +80,31 @@ func (s *MemoryStore) GetCluster(id string) (*models.AKSCluster, error) {
 	return cluster, nil
 }
 
-func (s *MemoryStore) ListClusters() ([]*models.AKSCluster, error) {
+func (s *MemoryStore) ListClusters() ([]*models.Cluster, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	clusters := make([]*models.AKSCluster, 0, len(s.clusters))
+	clusters := make([]*models.Cluster, 0, len(s.clusters))
 	for _, cluster := range s.clusters {
 		clusters = append(clusters, cluster)
 	}
 	return clusters, nil
 }
 
-func (s *MemoryStore) UpdateCluster(id string, cluster *models.AKSCluster) error {
+func (s *MemoryStore) ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var clusters []*models.Cluster
+	for _, cluster := range s.clusters {
+		if cluster.Provider == provider {
+			clusters = append(clusters, cluster)
+		}
+	}
+	return clusters, nil
+}
+
+func (s *MemoryStore) UpdateCluster(id string, cluster *models.Cluster) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -117,7 +131,7 @@ func (s *MemoryStore) DeleteCluster(id string) error {
 }
 
 // Test Result operations
-func (s *MemoryStore) CreateTestResult(result *models.AKSTestResult) error {
+func (s *MemoryStore) CreateTestResult(result *models.TestResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -130,7 +144,7 @@ func (s *MemoryStore) CreateTestResult(result *models.AKSTestResult) error {
 	return nil
 }
 
-func (s *MemoryStore) GetTestResult(id string) (*models.AKSTestResult, error) {
+func (s *MemoryStore) GetTestResult(id string) (*models.TestResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -141,11 +155,11 @@ func (s *MemoryStore) GetTestResult(id string) (*models.AKSTestResult, error) {
 	return result, nil
 }
 
-func (s *MemoryStore) ListTestResults(clusterID string) ([]*models.AKSTestResult, error) {
+func (s *MemoryStore) ListTestResults(clusterID string) ([]*models.TestResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var results []*models.AKSTestResult
+	var results []*models.TestResult
 	for _, result := range s.testResults {
 		if clusterID == "" || result.ClusterID == clusterID {
 			results = append(results, result)
@@ -154,7 +168,7 @@ func (s *MemoryStore) ListTestResults(clusterID string) ([]*models.AKSTestResult
 	return results, nil
 }
 
-func (s *MemoryStore) UpdateTestResult(id string, result *models.AKSTestResult) error {
+func (s *MemoryStore) UpdateTestResult(id string, result *models.TestResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -168,7 +182,7 @@ func (s *MemoryStore) UpdateTestResult(id string, result *models.AKSTestResult) 
 }
 
 // Node Pool operations
-func (s *MemoryStore) CreateNodePool(nodePool *models.AKSNodePool) error {
+func (s *MemoryStore) CreateNodePool(nodePool *models.NodePool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -182,7 +196,7 @@ func (s *MemoryStore) CreateNodePool(nodePool *models.AKSNodePool) error {
 	return nil
 }
 
-func (s *MemoryStore) GetNodePool(id string) (*models.AKSNodePool, error) {
+func (s *MemoryStore) GetNodePool(id string) (*models.NodePool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -193,11 +207,11 @@ func (s *MemoryStore) GetNodePool(id string) (*models.AKSNodePool, error) {
 	return nodePool, nil
 }
 
-func (s *MemoryStore) ListNodePools(clusterID string) ([]*models.AKSNodePool, error) {
+func (s *MemoryStore) ListNodePools(clusterID string) ([]*models.NodePool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var nodePools []*models.AKSNodePool
+	var nodePools []*models.NodePool
 	for _, nodePool := range s.nodePools {
 		if clusterID == "" || nodePool.ClusterID == clusterID {
 			nodePools = append(nodePools, nodePool)
@@ -206,7 +220,7 @@ func (s *MemoryStore) ListNodePools(clusterID string) ([]*models.AKSNodePool, er
 	return nodePools, nil
 }
 
-func (s *MemoryStore) UpdateNodePool(id string, nodePool *models.AKSNodePool) error {
+func (s *MemoryStore) UpdateNodePool(id string, nodePool *models.NodePool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

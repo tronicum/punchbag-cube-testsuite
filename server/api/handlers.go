@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,7 +29,7 @@ func NewHandlers(store store.Store, logger *zap.Logger) *Handlers {
 
 // CreateCluster handles POST /clusters
 func (h *Handlers) CreateCluster(c *gin.Context) {
-	var cluster models.AKSCluster
+	var cluster models.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -38,6 +39,18 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 	// Generate ID if not provided
 	if cluster.ID == "" {
 		cluster.ID = generateID()
+	}
+
+	// Validate provider
+	if cluster.Provider == "" {
+		cluster.Provider = models.CloudProviderAzure // default to Azure for backward compatibility
+	}
+
+	// Validate required fields based on provider
+	if err := h.validateClusterByProvider(&cluster); err != nil {
+		h.logger.Error("Cluster validation failed", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	if err := h.store.CreateCluster(&cluster); err != nil {
@@ -50,7 +63,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster created", zap.String("id", cluster.ID))
+	h.logger.Info("Cluster created", zap.String("id", cluster.ID), zap.String("provider", string(cluster.Provider)))
 	c.JSON(http.StatusCreated, cluster)
 }
 
@@ -73,7 +86,20 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 
 // ListClusters handles GET /clusters
 func (h *Handlers) ListClusters(c *gin.Context) {
-	clusters, err := h.store.ListClusters()
+	provider := c.Query("provider")
+	
+	var clusters []*models.Cluster
+	var err error
+	
+	if provider != "" {
+		// Filter by provider
+		cloudProvider := models.CloudProvider(provider)
+		clusters, err = h.store.ListClustersByProvider(cloudProvider)
+	} else {
+		// List all clusters
+		clusters, err = h.store.ListClusters()
+	}
+	
 	if err != nil {
 		h.logger.Error("Failed to list clusters", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -86,9 +112,16 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 // UpdateCluster handles PUT /clusters/:id
 func (h *Handlers) UpdateCluster(c *gin.Context) {
 	id := c.Param("id")
-	var cluster models.AKSCluster
+	var cluster models.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate provider-specific fields
+	if err := h.validateClusterByProvider(&cluster); err != nil {
+		h.logger.Error("Cluster validation failed", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -103,7 +136,7 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster updated", zap.String("id", id))
+	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", string(cluster.Provider)))
 	c.JSON(http.StatusOK, cluster)
 }
 
@@ -127,7 +160,7 @@ func (h *Handlers) DeleteCluster(c *gin.Context) {
 // RunTest handles POST /clusters/:id/tests
 func (h *Handlers) RunTest(c *gin.Context) {
 	clusterID := c.Param("id")
-	var testReq models.AKSTestRequest
+	var testReq models.TestRequest
 	if err := c.ShouldBindJSON(&testReq); err != nil {
 		h.logger.Error("Failed to bind test request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -135,7 +168,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	}
 
 	// Verify cluster exists
-	_, err := h.store.GetCluster(clusterID)
+	cluster, err := h.store.GetCluster(clusterID)
 	if err != nil {
 		if err == store.ErrNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
@@ -147,13 +180,20 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	}
 
 	// Create test result
-	testResult := &models.AKSTestResult{
+	testResult := &models.TestResult{
 		ID:        generateID(),
 		ClusterID: clusterID,
 		TestType:  testReq.TestType,
 		Status:    "running",
 		Details:   testReq.Config,
 	}
+
+	// Add provider information to test details
+	if testResult.Details == nil {
+		testResult.Details = make(map[string]interface{})
+	}
+	testResult.Details["provider"] = string(cluster.Provider)
+	testResult.Details["cluster_name"] = cluster.Name
 
 	if err := h.store.CreateTestResult(testResult); err != nil {
 		h.logger.Error("Failed to create test result", zap.Error(err))
@@ -165,7 +205,10 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	// For this example, we'll simulate test completion
 	go h.simulateTest(testResult)
 
-	h.logger.Info("Test started", zap.String("test_id", testResult.ID), zap.String("cluster_id", clusterID))
+	h.logger.Info("Test started", 
+		zap.String("test_id", testResult.ID), 
+		zap.String("cluster_id", clusterID),
+		zap.String("provider", string(cluster.Provider)))
 	c.JSON(http.StatusAccepted, testResult)
 }
 
@@ -200,7 +243,7 @@ func (h *Handlers) ListTestResults(c *gin.Context) {
 }
 
 // simulateTest simulates a test execution and updates the result
-func (h *Handlers) simulateTest(testResult *models.AKSTestResult) {
+func (h *Handlers) simulateTest(testResult *models.TestResult) {
 	// Simulate test duration
 	time.Sleep(5 * time.Second)
 
@@ -209,20 +252,86 @@ func (h *Handlers) simulateTest(testResult *models.AKSTestResult) {
 	testResult.Status = "completed"
 	testResult.Duration = now.Sub(testResult.StartedAt)
 	testResult.CompletedAt = &now
-	testResult.Details = map[string]interface{}{
-		"requests_sent":       1000,
-		"successful_requests": 995,
-		"failed_requests":     5,
-		"average_latency_ms":  45.2,
-		"p95_latency_ms":      89.7,
-		"p99_latency_ms":      156.3,
-	}
+	
+	// Add provider-specific test results
+	provider := testResult.Details["provider"].(string)
+	testResult.Details["requests_sent"] = 1000
+	testResult.Details["successful_requests"] = 995
+	testResult.Details["failed_requests"] = 5
+	testResult.Details["average_latency_ms"] = 45.2
+	testResult.Details["p95_latency_ms"] = 89.7
+	testResult.Details["p99_latency_ms"] = 156.3
+	testResult.Details["provider_specific"] = h.getProviderSpecificMetrics(provider)
 
 	if err := h.store.UpdateTestResult(testResult.ID, testResult); err != nil {
 		h.logger.Error("Failed to update test result", zap.Error(err))
 	} else {
 		h.logger.Info("Test completed", zap.String("test_id", testResult.ID))
 	}
+}
+
+// getProviderSpecificMetrics returns provider-specific test metrics
+func (h *Handlers) getProviderSpecificMetrics(provider string) map[string]interface{} {
+	switch provider {
+	case string(models.CloudProviderStackIT):
+		return map[string]interface{}{
+			"stackit_specific_metric": "sample_value",
+			"project_usage": "normal",
+			"hibernation_supported": true,
+		}
+	case string(models.CloudProviderAzure):
+		return map[string]interface{}{
+			"azure_specific_metric": "sample_value",
+			"aks_version": "1.28.0",
+			"resource_group_location": "eastus",
+		}
+	case string(models.CloudProviderAWS):
+		return map[string]interface{}{
+			"aws_specific_metric": "sample_value",
+			"eks_version": "1.28",
+			"vpc_configuration": "standard",
+		}
+	case string(models.CloudProviderGCP):
+		return map[string]interface{}{
+			"gcp_specific_metric": "sample_value",
+			"gke_version": "1.28.0",
+			"autopilot_enabled": false,
+		}
+	default:
+		return map[string]interface{}{}
+	}
+}
+
+// validateClusterByProvider validates cluster configuration based on provider
+func (h *Handlers) validateClusterByProvider(cluster *models.Cluster) error {
+	switch cluster.Provider {
+	case models.CloudProviderStackIT:
+		if cluster.ProjectID == "" {
+			return fmt.Errorf("project_id is required for StackIT clusters")
+		}
+		if cluster.Location == "" && cluster.Region == "" {
+			return fmt.Errorf("location or region is required for StackIT clusters")
+		}
+	case models.CloudProviderAzure:
+		if cluster.ResourceGroup == "" {
+			return fmt.Errorf("resource_group is required for Azure clusters")
+		}
+		if cluster.Location == "" {
+			return fmt.Errorf("location is required for Azure clusters")
+		}
+	case models.CloudProviderAWS:
+		if cluster.Region == "" {
+			return fmt.Errorf("region is required for AWS clusters")
+		}
+	case models.CloudProviderGCP:
+		if cluster.ProjectID == "" {
+			return fmt.Errorf("project_id is required for GCP clusters")
+		}
+		if cluster.Region == "" {
+			return fmt.Errorf("region is required for GCP clusters")
+		}
+	}
+	return nil
 }
 
 // generateID generates a simple ID for demonstration purposes

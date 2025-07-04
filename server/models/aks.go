@@ -4,22 +4,39 @@ import (
 	"time"
 )
 
-// AKSCluster represents an Azure Kubernetes Service cluster
-type AKSCluster struct {
+// CloudProvider represents the different cloud providers
+type CloudProvider string
+
+const (
+	CloudProviderAzure      CloudProvider = "azure"
+	CloudProviderStackIT    CloudProvider = "schwarz-stackit"
+	CloudProviderAWS        CloudProvider = "aws"
+	CloudProviderGCP        CloudProvider = "gcp"
+)
+
+// Cluster represents a Kubernetes cluster across different cloud providers
+type Cluster struct {
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
-	ResourceGroup     string            `json:"resource_group"`
+	Provider          CloudProvider     `json:"provider"`
+	ResourceGroup     string            `json:"resource_group,omitempty"`     // Azure specific
 	Location          string            `json:"location"`
+	Region            string            `json:"region,omitempty"`             // Alternative to location
+	ProjectID         string            `json:"project_id,omitempty"`         // StackIT/GCP specific
 	KubernetesVersion string            `json:"kubernetes_version"`
 	Status            string            `json:"status"`
 	NodeCount         int               `json:"node_count"`
 	Tags              map[string]string `json:"tags,omitempty"`
+	ProviderConfig    map[string]interface{} `json:"provider_config,omitempty"` // Provider-specific config
 	CreatedAt         time.Time         `json:"created_at"`
 	UpdatedAt         time.Time         `json:"updated_at"`
 }
 
-// AKSTestResult represents the result of an AKS test
-type AKSTestResult struct {
+// Legacy type for backward compatibility
+type AKSCluster = Cluster
+
+// TestResult represents the result of a cluster test
+type TestResult struct {
 	ID          string                 `json:"id"`
 	ClusterID   string                 `json:"cluster_id"`
 	TestType    string                 `json:"test_type"`
@@ -31,19 +48,27 @@ type AKSTestResult struct {
 	CompletedAt *time.Time             `json:"completed_at,omitempty"`
 }
 
-// AKSTestRequest represents a request to run a test on an AKS cluster
-type AKSTestRequest struct {
+// Legacy type for backward compatibility
+type AKSTestResult = TestResult
+
+// TestRequest represents a request to run a test on a cluster
+type TestRequest struct {
 	ClusterID string                 `json:"cluster_id" binding:"required"`
 	TestType  string                 `json:"test_type" binding:"required"`
 	Config    map[string]interface{} `json:"config,omitempty"`
 }
 
-// AKSNodePool represents a node pool within an AKS cluster
-type AKSNodePool struct {
+// Legacy type for backward compatibility
+type AKSTestRequest = TestRequest
+
+// NodePool represents a node pool within a cluster
+type NodePool struct {
 	ID              string    `json:"id"`
 	ClusterID       string    `json:"cluster_id"`
 	Name            string    `json:"name"`
-	VMSize          string    `json:"vm_size"`
+	VMSize          string    `json:"vm_size,omitempty"`          // Azure specific
+	InstanceType    string    `json:"instance_type,omitempty"`    // AWS/StackIT specific
+	MachineType     string    `json:"machine_type,omitempty"`     // GCP specific
 	NodeCount       int       `json:"node_count"`
 	MinNodes        int       `json:"min_nodes"`
 	MaxNodes        int       `json:"max_nodes"`
@@ -52,6 +77,46 @@ type AKSNodePool struct {
 	KubernetesVersion string  `json:"kubernetes_version"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// Legacy type for backward compatibility
+type AKSNodePool = NodePool
+
+// StackITClusterConfig represents StackIT-specific cluster configuration
+type StackITClusterConfig struct {
+	ProjectID           string `json:"project_id"`
+	MaintenanceTimeStart string `json:"maintenance_time_start,omitempty"`
+	MaintenanceTimeEnd   string `json:"maintenance_time_end,omitempty"`
+	MaintenanceTimeZone  string `json:"maintenance_time_zone,omitempty"`
+	HibernationSchedules []struct {
+		Start    string `json:"start"`
+		End      string `json:"end"`
+		Timezone string `json:"timezone"`
+	} `json:"hibernation_schedules,omitempty"`
+}
+
+// AzureClusterConfig represents Azure-specific cluster configuration  
+type AzureClusterConfig struct {
+	ResourceGroup     string `json:"resource_group"`
+	SubscriptionID    string `json:"subscription_id,omitempty"`
+	NetworkProfile    string `json:"network_profile,omitempty"`
+	ServicePrincipal  string `json:"service_principal,omitempty"`
+}
+
+// AWSClusterConfig represents AWS-specific cluster configuration
+type AWSClusterConfig struct {
+	SubnetIDs         []string `json:"subnet_ids,omitempty"`
+	SecurityGroupIDs  []string `json:"security_group_ids,omitempty"`
+	RoleARN           string   `json:"role_arn,omitempty"`
+	VpcID             string   `json:"vpc_id,omitempty"`
+}
+
+// GCPClusterConfig represents GCP-specific cluster configuration
+type GCPClusterConfig struct {
+	ProjectID         string `json:"project_id"`
+	Network           string `json:"network,omitempty"`
+	Subnetwork        string `json:"subnetwork,omitempty"`
+	ServiceAccount    string `json:"service_account,omitempty"`
 }
 
 // PunchbagTestConfig represents configuration for punchbag testing

@@ -25,7 +25,18 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
-// AKSCluster represents an Azure Kubernetes Service cluster
+// Cluster represents a Kubernetes cluster across different cloud providers
+type Cluster struct {
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	CloudProvider string                 `json:"cloud_provider"` // azure, schwarz-stackit, aws, gcp
+	Status        string                 `json:"status"`
+	Config        map[string]interface{} `json:"config,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
+}
+
+// AKSCluster represents an Azure Kubernetes Service cluster (for backward compatibility)
 type AKSCluster struct {
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
@@ -39,7 +50,20 @@ type AKSCluster struct {
 	UpdatedAt         time.Time         `json:"updated_at"`
 }
 
-// AKSTestResult represents the result of an AKS test
+// TestResult represents the result of a cluster test
+type TestResult struct {
+	ID          string                 `json:"id"`
+	ClusterID   string                 `json:"cluster_id"`
+	TestType    string                 `json:"test_type"`
+	Status      string                 `json:"status"`
+	Duration    time.Duration          `json:"duration"`
+	Details     map[string]interface{} `json:"details,omitempty"`
+	ErrorMsg    string                 `json:"error_message,omitempty"`
+	StartedAt   time.Time              `json:"started_at"`
+	CompletedAt *time.Time             `json:"completed_at,omitempty"`
+}
+
+// AKSTestResult represents the result of an AKS test (for backward compatibility)
 type AKSTestResult struct {
 	ID          string                 `json:"id"`
 	ClusterID   string                 `json:"cluster_id"`
@@ -52,7 +76,14 @@ type AKSTestResult struct {
 	CompletedAt *time.Time             `json:"completed_at,omitempty"`
 }
 
-// AKSTestRequest represents a request to run a test on an AKS cluster
+// TestRequest represents a request to run a test on a cluster
+type TestRequest struct {
+	ClusterID string                 `json:"cluster_id"`
+	TestType  string                 `json:"test_type"`
+	Config    map[string]interface{} `json:"config,omitempty"`
+}
+
+// AKSTestRequest represents a request to run a test on an AKS cluster (for backward compatibility)
 type AKSTestRequest struct {
 	ClusterID string                 `json:"cluster_id"`
 	TestType  string                 `json:"test_type"`
@@ -61,12 +92,12 @@ type AKSTestRequest struct {
 
 // ClustersResponse represents the response for listing clusters
 type ClustersResponse struct {
-	Clusters []*AKSCluster `json:"clusters"`
+	Clusters []*Cluster `json:"clusters"`
 }
 
 // TestResultsResponse represents the response for listing test results
 type TestResultsResponse struct {
-	TestResults []*AKSTestResult `json:"test_results"`
+	TestResults []*TestResult `json:"test_results"`
 }
 
 // doRequest performs an HTTP request
@@ -94,8 +125,8 @@ func (c *Client) doRequest(method, path string, body interface{}) (*http.Respons
 	return c.HTTPClient.Do(req)
 }
 
-// ListClusters lists all clusters
-func (c *Client) ListClusters() ([]*AKSCluster, error) {
+// ListClusters lists all clusters (multi-cloud)
+func (c *Client) ListClusters() ([]*Cluster, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters", nil)
 	if err != nil {
 		return nil, err
@@ -114,8 +145,73 @@ func (c *Client) ListClusters() ([]*AKSCluster, error) {
 	return response.Clusters, nil
 }
 
-// GetCluster gets a cluster by ID
-func (c *Client) GetCluster(id string) (*AKSCluster, error) {
+// ListClustersByProvider lists clusters filtered by provider
+func (c *Client) ListClustersByProvider(provider string) ([]*Cluster, error) {
+	resp, err := c.doRequest("GET", "/api/v1/clusters?provider="+provider, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
+	}
+
+	var response ClustersResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error decoding response: %w", err)
+	}
+
+	return response.Clusters, nil
+}
+
+// ListAKSClusters lists all AKS clusters (backward compatibility)
+func (c *Client) ListAKSClusters() ([]*AKSCluster, error) {
+	clusters, err := c.ListClustersByProvider("azure")
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to AKSCluster format for backward compatibility
+	aksClusters := make([]*AKSCluster, len(clusters))
+	for i, cluster := range clusters {
+		aksClusters[i] = c.convertToAKSCluster(cluster)
+	}
+
+	return aksClusters, nil
+}
+
+// Helper method to convert Cluster to AKSCluster
+func (c *Client) convertToAKSCluster(cluster *Cluster) *AKSCluster {
+	aksCluster := &AKSCluster{
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
+	}
+
+	// Extract Azure-specific fields from config
+	if config, ok := cluster.Config["azure_config"].(map[string]interface{}); ok {
+		if rg, ok := config["resource_group"].(string); ok {
+			aksCluster.ResourceGroup = rg
+		}
+		if loc, ok := config["location"].(string); ok {
+			aksCluster.Location = loc
+		}
+		if k8sVer, ok := config["kubernetes_version"].(string); ok {
+			aksCluster.KubernetesVersion = k8sVer
+		}
+		if nodeCount, ok := config["node_count"].(float64); ok {
+			aksCluster.NodeCount = int(nodeCount)
+		}
+	}
+
+	return aksCluster
+}
+
+// GetCluster gets a cluster by ID (multi-cloud)
+func (c *Client) GetCluster(id string) (*Cluster, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -129,7 +225,7 @@ func (c *Client) GetCluster(id string) (*AKSCluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var cluster AKSCluster
+	var cluster Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -137,8 +233,43 @@ func (c *Client) GetCluster(id string) (*AKSCluster, error) {
 	return &cluster, nil
 }
 
-// CreateCluster creates a new cluster
-func (c *Client) CreateCluster(cluster *AKSCluster) (*AKSCluster, error) {
+// GetAKSCluster gets an AKS cluster by ID (backward compatibility)
+func (c *Client) GetAKSCluster(id string) (*AKSCluster, error) {
+	cluster, err := c.GetCluster(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to AKSCluster format for backward compatibility
+	aksCluster := &AKSCluster{
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
+	}
+
+	// Extract Azure-specific fields from config
+	if config, ok := cluster.Config["azure_config"].(map[string]interface{}); ok {
+		if rg, ok := config["resource_group"].(string); ok {
+			aksCluster.ResourceGroup = rg
+		}
+		if loc, ok := config["location"].(string); ok {
+			aksCluster.Location = loc
+		}
+		if k8sVer, ok := config["kubernetes_version"].(string); ok {
+			aksCluster.KubernetesVersion = k8sVer
+		}
+		if nodeCount, ok := config["node_count"].(float64); ok {
+			aksCluster.NodeCount = int(nodeCount)
+		}
+	}
+
+	return aksCluster, nil
+}
+
+// CreateCluster creates a new cluster (multi-cloud)
+func (c *Client) CreateMultiCloudCluster(cluster *Cluster) (*Cluster, error) {
 	resp, err := c.doRequest("POST", "/api/v1/clusters", cluster)
 	if err != nil {
 		return nil, err
@@ -149,12 +280,64 @@ func (c *Client) CreateCluster(cluster *AKSCluster) (*AKSCluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var created AKSCluster
+	var created Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
 
 	return &created, nil
+}
+
+// CreateStackITCluster creates a new StackIT cluster
+func (c *Client) CreateStackITCluster(name, projectID, region string, config map[string]interface{}) (*Cluster, error) {
+	cluster := &Cluster{
+		Name:          name,
+		CloudProvider: "schwarz-stackit",
+		Status:        "creating",
+		Config: map[string]interface{}{
+			"stackit_config": map[string]interface{}{
+				"project_id": projectID,
+				"region":     region,
+			},
+		},
+	}
+	
+	// Merge additional config
+	if config != nil {
+		if stackitConfig, ok := cluster.Config["stackit_config"].(map[string]interface{}); ok {
+			for k, v := range config {
+				stackitConfig[k] = v
+			}
+		}
+	}
+	
+	return c.CreateMultiCloudCluster(cluster)
+}
+
+// CreateAzureCluster creates a new Azure cluster
+func (c *Client) CreateAzureCluster(name, resourceGroup, location string, config map[string]interface{}) (*Cluster, error) {
+	cluster := &Cluster{
+		Name:          name,
+		CloudProvider: "azure",
+		Status:        "creating",
+		Config: map[string]interface{}{
+			"azure_config": map[string]interface{}{
+				"resource_group": resourceGroup,
+				"location":       location,
+			},
+		},
+	}
+	
+	// Merge additional config
+	if config != nil {
+		if azureConfig, ok := cluster.Config["azure_config"].(map[string]interface{}); ok {
+			for k, v := range config {
+				azureConfig[k] = v
+			}
+		}
+	}
+	
+	return c.CreateMultiCloudCluster(cluster)
 }
 
 // UpdateCluster updates an existing cluster
@@ -198,8 +381,8 @@ func (c *Client) DeleteCluster(id string) error {
 	return nil
 }
 
-// RunTest runs a test on a cluster
-func (c *Client) RunTest(clusterID string, testReq *AKSTestRequest) (*AKSTestResult, error) {
+// RunTest runs a test on a cluster (multi-cloud)
+func (c *Client) RunTest(clusterID string, testReq *TestRequest) (*TestResult, error) {
 	resp, err := c.doRequest("POST", "/api/v1/clusters/"+clusterID+"/tests", testReq)
 	if err != nil {
 		return nil, err
@@ -213,7 +396,7 @@ func (c *Client) RunTest(clusterID string, testReq *AKSTestRequest) (*AKSTestRes
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var result AKSTestResult
+	var result TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -221,8 +404,37 @@ func (c *Client) RunTest(clusterID string, testReq *AKSTestRequest) (*AKSTestRes
 	return &result, nil
 }
 
-// GetTestResult gets a test result by ID
-func (c *Client) GetTestResult(id string) (*AKSTestResult, error) {
+// RunAKSTest runs a test on an AKS cluster (backward compatibility)
+func (c *Client) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTestResult, error) {
+	multiTestReq := &TestRequest{
+		ClusterID: testReq.ClusterID,
+		TestType:  testReq.TestType,
+		Config:    testReq.Config,
+	}
+	
+	result, err := c.RunTest(clusterID, multiTestReq)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert to AKSTestResult for backward compatibility
+	aksResult := &AKSTestResult{
+		ID:          result.ID,
+		ClusterID:   result.ClusterID,
+		TestType:    result.TestType,
+		Status:      result.Status,
+		Duration:    result.Duration,
+		Details:     result.Details,
+		ErrorMsg:    result.ErrorMsg,
+		StartedAt:   result.StartedAt,
+		CompletedAt: result.CompletedAt,
+	}
+	
+	return aksResult, nil
+}
+
+// GetTestResult gets a test result by ID (multi-cloud)
+func (c *Client) GetTestResult(id string) (*TestResult, error) {
 	resp, err := c.doRequest("GET", "/api/v1/tests/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -236,7 +448,7 @@ func (c *Client) GetTestResult(id string) (*AKSTestResult, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var result AKSTestResult
+	var result TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -244,8 +456,31 @@ func (c *Client) GetTestResult(id string) (*AKSTestResult, error) {
 	return &result, nil
 }
 
-// ListTestResults lists test results for a cluster
-func (c *Client) ListTestResults(clusterID string) ([]*AKSTestResult, error) {
+// GetAKSTestResult gets an AKS test result by ID (backward compatibility)
+func (c *Client) GetAKSTestResult(id string) (*AKSTestResult, error) {
+	result, err := c.GetTestResult(id)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert to AKSTestResult for backward compatibility
+	aksResult := &AKSTestResult{
+		ID:          result.ID,
+		ClusterID:   result.ClusterID,
+		TestType:    result.TestType,
+		Status:      result.Status,
+		Duration:    result.Duration,
+		Details:     result.Details,
+		ErrorMsg:    result.ErrorMsg,
+		StartedAt:   result.StartedAt,
+		CompletedAt: result.CompletedAt,
+	}
+	
+	return aksResult, nil
+}
+
+// ListTestResults lists test results for a cluster (multi-cloud)
+func (c *Client) ListTestResults(clusterID string) ([]*TestResult, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters/"+clusterID+"/tests", nil)
 	if err != nil {
 		return nil, err
@@ -262,4 +497,30 @@ func (c *Client) ListTestResults(clusterID string) ([]*AKSTestResult, error) {
 	}
 
 	return response.TestResults, nil
+}
+
+// ListAKSTestResults lists test results for an AKS cluster (backward compatibility)
+func (c *Client) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) {
+	results, err := c.ListTestResults(clusterID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert to AKSTestResult for backward compatibility
+	aksResults := make([]*AKSTestResult, len(results))
+	for i, result := range results {
+		aksResults[i] = &AKSTestResult{
+			ID:          result.ID,
+			ClusterID:   result.ClusterID,
+			TestType:    result.TestType,
+			Status:      result.Status,
+			Duration:    result.Duration,
+			Details:     result.Details,
+			ErrorMsg:    result.ErrorMsg,
+			StartedAt:   result.StartedAt,
+			CompletedAt: result.CompletedAt,
+		}
+	}
+	
+	return aksResults, nil
 }
