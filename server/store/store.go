@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"punchbag-cube-testsuite/models"
+	"punchbag-cube-testsuite/server/models"
 )
 
 var (
