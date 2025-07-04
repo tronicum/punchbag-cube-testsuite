@@ -42,7 +42,7 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 			metrics.GET("/health", func(c *gin.Context) {
 				c.JSON(200, gin.H{
 					"status":    "healthy",
-					"timestamp": c.GetTime(),
+					"timestamp": time.Now().Format(time.RFC3339),
 				})
 			})
 
@@ -56,6 +56,23 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 					"version":      "1.0.0",
 				})
 			})
+		}
+
+		// Provider simulation endpoints
+		providerHandlers := NewProviderSimulationHandlers(store, logger)
+		
+		// Validation endpoints
+		validate := v1.Group("/validate")
+		{
+			validate.GET("/:provider", providerHandlers.ValidateProvider)
+		}
+		
+		// Provider-specific endpoints
+		providers := v1.Group("/providers")
+		{
+			providers.GET("/:provider/info", providerHandlers.GetProviderInfo)
+			providers.GET("/:provider/clusters", providerHandlers.ListProviderClusters)
+			providers.POST("/:provider/operations/:operation", providerHandlers.SimulateProviderOperation)
 		}
 	}
 
@@ -80,6 +97,14 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 				"metrics": gin.H{
 					"GET /api/v1/metrics/health": "Health check",
 					"GET /api/v1/metrics/status": "Service status",
+				},
+				"providers": gin.H{
+					"GET /api/v1/providers/:provider/info":         "Get provider information",
+					"GET /api/v1/providers/:provider/clusters":     "List clusters for provider",
+					"POST /api/v1/providers/:provider/operations/:operation": "Simulate provider operation",
+				},
+				"validate": gin.H{
+					"GET /api/v1/validate/:provider": "Validate provider configuration",
 				},
 			},
 		})

@@ -191,6 +191,105 @@ paths:
         '404':
           description: Test result not found
 
+  /validate/{provider}:
+    get:
+      summary: Validate cloud provider configuration
+      tags:
+        - Provider Simulation
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+          description: Cloud provider to validate
+      responses:
+        '200':
+          description: Provider validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderValidation'
+        '400':
+          description: Unsupported provider
+
+  /providers/{provider}/info:
+    get:
+      summary: Get information about a cloud provider
+      tags:
+        - Provider Simulation
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+      responses:
+        '200':
+          description: Provider information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderInfo'
+        '404':
+          description: Provider not found
+
+  /providers/{provider}/clusters:
+    get:
+      summary: List clusters for a specific provider
+      tags:
+        - Provider Simulation
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+      responses:
+        '200':
+          description: Provider-specific cluster list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderClusters'
+
+  /providers/{provider}/operations/{operation}:
+    post:
+      summary: Execute provider-specific operation
+      tags:
+        - Provider Simulation
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+        - name: operation
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Operation to execute (e.g., create, scale, backup)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Operation-specific parameters
+      responses:
+        '200':
+          description: Operation executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderOperation'
+
   /metrics/health:
     get:
       summary: Health check endpoint
@@ -559,6 +658,92 @@ components:
           type: string
           description: Error message
 
+    ProviderValidation:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+          description: Cloud provider
+        valid:
+          type: boolean
+          description: Whether the provider configuration is valid
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+
+    ProviderInfo:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+          description: Cloud provider
+        description:
+          type: string
+          description: Provider description
+        documentation_url:
+          type: string
+          format: uri
+          description: URL to provider documentation
+        console_url:
+          type: string
+          format: uri
+          description: URL to provider console
+        api_url:
+          type: string
+          format: uri
+          description: URL to provider API
+        regions:
+          type: array
+          items:
+            type: string
+          description: List of available regions for the provider
+
+    ProviderClusters:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+          description: Cloud provider
+        clusters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cluster'
+          description: List of clusters for the provider
+
+    ProviderOperation:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [azure, aws, gcp, schwarz-stackit, hetzner-hcloud, united-ionos]
+          description: Cloud provider
+        operation:
+          type: string
+          description: Name of the executed operation
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+          description: Current status of the operation
+        details:
+          type: object
+          description: Operation-specific details and metrics
+        error_message:
+          type: string
+          description: Error message if operation failed
+        started_at:
+          type: string
+          format: date-time
+          description: Operation start timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Operation completion timestamp
+
 tags:
   - name: Clusters
     description: Multi-cloud Kubernetes cluster management operations
@@ -566,3 +751,5 @@ tags:
     description: Test execution and result management
   - name: Monitoring
     description: Health and status monitoring endpoints
+  - name: Provider Simulation
+    description: Cloud provider simulation and validation endpoints

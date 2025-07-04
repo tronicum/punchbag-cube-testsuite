@@ -574,3 +574,103 @@ func (c *Client) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) 
 	
 	return aksResults, nil
 }
+
+// ValidateProvider validates a cloud provider configuration
+func (c *Client) ValidateProvider(provider string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/v1/validate/%s", c.baseURL, provider)
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("validation failed with status: %s", resp.Status)
+	}
+	
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	
+	return result, nil
+}
+
+// GetProviderInfo gets information about a cloud provider
+func (c *Client) GetProviderInfo(provider string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/v1/providers/%s/info", c.baseURL, provider)
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
+	}
+	
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	
+	return result, nil
+}
+
+// ListProviderClusters lists clusters for a specific provider
+func (c *Client) ListProviderClusters(provider string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/v1/providers/%s/clusters", c.baseURL, provider)
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
+	}
+	
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	
+	return result, nil
+}
+
+// ExecuteProviderOperation executes a provider-specific operation
+func (c *Client) ExecuteProviderOperation(provider, operation, params string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/v1/providers/%s/operations/%s", c.baseURL, provider, operation)
+	
+	// Parse params as JSON
+	var paramData map[string]interface{}
+	if err := json.Unmarshal([]byte(params), &paramData); err != nil {
+		return nil, fmt.Errorf("failed to parse params JSON: %w", err)
+	}
+	
+	// Create request body
+	body, err := json.Marshal(paramData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+	
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("operation failed with status: %s", resp.Status)
+	}
+	
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	
+	return result, nil
+}

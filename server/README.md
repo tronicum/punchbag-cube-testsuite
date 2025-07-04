@@ -1,18 +1,35 @@
 # Server
 
-REST API server for the Punchbag Cube Test Suite.
+The `server` component provides a REST API for managing Kubernetes clusters and running tests. It supports multi-cloud environments and includes simulation endpoints for cloud providers.
+
+## Usage
+
+1. Navigate to the `server` directory:
+   ```bash
+   cd server
+   ```
+
+2. Install dependencies:
+   ```bash
+   go mod tidy
+   ```
+
+3. Run the server:
+   ```bash
+   go run main.go
+   ```
+
+The API will be available at `http://localhost:8080`.
+
+## Features
+
+- Multi-cloud support.
+- Simulation endpoints for cloud providers.
+- REST API for cluster management and testing.
 
 ## Overview
 
 The server component provides a REST API for managing AKS clusters and running tests against them. It includes endpoints for cluster management, test execution, and monitoring.
-
-## Features
-
-- **Cluster Management**: Create, read, update, delete AKS clusters
-- **Test Execution**: Run load tests, performance tests, and stress tests
-- **Results Tracking**: Store and retrieve test results with detailed metrics
-- **Health Monitoring**: Health checks and status endpoints
-- **API Documentation**: Complete OpenAPI specification
 
 ## Getting Started
 
