@@ -1,0 +1,8 @@
+# Ignore Terraform provider binaries
+examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*/darwin_arm64/terraform-provider-azurerm_*
+
+# Ignore large binary files
+examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
+*.bin
+*.exe
+*.dll
