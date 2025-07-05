@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/username/punchbag-cube-testsuite/server/models"
+	"github.com/username/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -13,14 +14,14 @@ import (
 
 // ProviderSimulationHandlers contains simulation endpoints for cloud providers
 type ProviderSimulationHandlers struct {
-	store  Store
+	store  store.Store
 	logger *zap.Logger
 }
 
 // NewProviderSimulationHandlers creates a new ProviderSimulationHandlers instance
-func NewProviderSimulationHandlers(store Store, logger *zap.Logger) *ProviderSimulationHandlers {
+func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger) *ProviderSimulationHandlers {
 	return &ProviderSimulationHandlers{
-		store:  store,
+		store:  s,
 		logger: logger,
 	}
 }

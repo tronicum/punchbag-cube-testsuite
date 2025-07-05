@@ -64,13 +64,13 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 		// Validation endpoints
 		validate := v1.Group("/validate")
 		{
-			validate.GET("/:provider", handlers.ValidateProvider)
+			validate.GET("/:provider", providerHandlers.ValidateProvider)
 		}
 
 		// Provider simulation endpoints
 		providers := v1.Group("/providers")
 		{
-			providers.POST("/:provider/operations/:operation", handlers.SimulateProviderOperation)
+			providers.POST("/:provider/operations/:operation", providerHandlers.SimulateProviderOperation)
 		}
 	}
 

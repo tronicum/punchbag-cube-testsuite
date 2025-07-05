@@ -34,11 +34,19 @@ func init() {
 	rootCmd.AddCommand(osDetectCmd)
 	rootCmd.AddCommand(packageInstallCmd)
 	rootCmd.AddCommand(dockerRegistryCmd)
+	rootCmd.AddCommand(listPackagesCmd)
+	
+	// Add enhanced cluster and test commands
+	rootCmd.AddCommand(clusterCmd)
+	rootCmd.AddCommand(testCmd)
+	rootCmd.AddCommand(simulateCmd)
+	rootCmd.AddCommand(configCmd)
+	
+	// Legacy k8s commands (deprecated)
 	k8sCmd.AddCommand(k8sGetCmd)
 	k8sCmd.AddCommand(k8sCreateCmd)
 	k8sCmd.AddCommand(k8sDeleteCmd)
 	rootCmd.AddCommand(k8sCmd)
-	rootCmd.AddCommand(listPackagesCmd)
 }
 
 // Add basic cloud management functionality
@@ -195,7 +203,7 @@ var dockerRegistryLogoutCmd = &cobra.Command{
 var listPackagesCmd = &cobra.Command{
 	Use:   "list-packages",
 	Short: "List installed packages based on the detected OS",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, cmdArgs []string) {
 		os := runtime.GOOS
 		var command string
 		var args []string

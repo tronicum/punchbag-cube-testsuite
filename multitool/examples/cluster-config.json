@@ -1,0 +1,29 @@
+{
+  "_comment": "Example Cluster Configuration - This file can be used with the --config flag for cluster creation",
+  "kubernetes_version": "1.28.0",
+  "node_count": 3,
+  "auto_scaling": true,
+  "auto_scaling_min": 1,
+  "auto_scaling_max": 10,
+  "node_size": "Standard_D2s_v3",
+  "disk_size_gb": 100,
+  "enable_monitoring": true,
+  "enable_logging": true,
+  "enable_rbac": true,
+  "network_plugin": "azure",
+  "dns_service_ip": "10.0.0.10",
+  "service_cidr": "10.0.0.0/16",
+  "docker_bridge_cidr": "172.17.0.1/16",
+  "pod_cidr": "10.244.0.0/16",
+  "tags": {
+    "environment": "development",
+    "team": "devops",
+    "project": "punchbag",
+    "cost-center": "engineering"
+  },
+  "addons": {
+    "dashboard": true,
+    "ingress_controller": true,
+    "cert_manager": false
+  }
+}

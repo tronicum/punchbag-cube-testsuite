@@ -1,0 +1,51 @@
+{
+  "_comment": "Example Test Configuration - This file can be used with the --config flag for test execution",
+  "performance": {
+    "duration_seconds": 300,
+    "concurrent_users": 50,
+    "ramp_up_seconds": 30,
+    "target_rps": 100,
+    "endpoints": [
+      "/api/health",
+      "/api/metrics",
+      "/api/clusters"
+    ],
+    "thresholds": {
+      "avg_response_time_ms": 200,
+      "p95_response_time_ms": 500,
+      "error_rate_percent": 1
+    }
+  },
+  "connectivity": {
+    "timeout_seconds": 30,
+    "retry_count": 3,
+    "endpoints": [
+      "https://kubernetes.default.svc.cluster.local",
+      "https://registry-1.docker.io",
+      "https://github.com"
+    ],
+    "dns_tests": [
+      "kubernetes.default.svc.cluster.local",
+      "google.com"
+    ]
+  },
+  "security": {
+    "scan_types": [
+      "vulnerability",
+      "compliance",
+      "rbac"
+    ],
+    "severity_threshold": "medium",
+    "include_namespaces": ["default", "kube-system"],
+    "exclude_namespaces": ["test"]
+  },
+  "compliance": {
+    "frameworks": [
+      "cis-kubernetes",
+      "nsa-cisa",
+      "pci-dss"
+    ],
+    "severity_threshold": "medium",
+    "report_format": "json"
+  }
+}
