@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"punchbag-cube-testsuite/store"
+	"github.com/username/punchbag-cube-testsuite/server/api"
+	"github.com/username/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -47,10 +48,23 @@ func main() {
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "healthy",
+			"service": "punchbag-cube-testsuite-server",
+		})
 	})
 
-	// Start server
-	logger.Info("Starting Cube Server...")
-	router.Run(":8080")
+	// Set up API routes
+	api.SetupRoutes(router, dataStore, logger)
+
+	// Get port from environment variable or default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	logger.Info("Starting server", zap.String("port", port))
+	if err := router.Run(":" + port); err != nil {
+		logger.Fatal("Failed to start server", zap.Error(err))
+	}
 }

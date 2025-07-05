@@ -3,11 +3,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"os"
 	"os/exec"
 	"runtime"
 	"text/tabwriter"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 )
@@ -103,8 +104,8 @@ var osDetectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		os := runtime.GOOS
 		data := map[string]string{
-			"OS":                os,
-			"Package Manager":   "Unsupported",
+			"OS":              os,
+			"Package Manager": "Unsupported",
 		}
 		if os == "darwin" {
 			data["Package Manager"] = "Homebrew"
@@ -127,7 +128,7 @@ var packageInstallCmd = &cobra.Command{
 		os := runtime.GOOS
 		data := map[string]string{
 			"Package": packageName,
-			"OS": os,
+			"OS":      os,
 			"Command": "Unsupported",
 		}
 		if os == "darwin" {
@@ -156,7 +157,7 @@ var dockerRegistryListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		data := map[string]string{
 			"Registry": "Docker Hub",
-			"Status": "Logged In",
+			"Status":   "Logged In",
 		}
 		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
 	},
@@ -237,7 +238,7 @@ var listPackagesCmd = &cobra.Command{
 		}
 		data := map[string]string{
 			"Command": fmt.Sprintf("%s %s", command, args),
-			"Output": string(output),
+			"Output":  string(output),
 		}
 		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
 	},

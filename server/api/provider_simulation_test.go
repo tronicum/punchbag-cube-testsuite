@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"yourapp/store" // replace with your actual import path
+	// replace with your actual import path
 )
 
 func NewMockLogger() *zap.Logger {
