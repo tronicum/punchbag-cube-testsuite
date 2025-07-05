@@ -28,8 +28,11 @@ func Execute() {
 	}
 }
 
+var proxyServer string
+
 // Initialize commands
 func init() {
+	rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
 	rootCmd.AddCommand(manageCloudCmd)
 	rootCmd.AddCommand(osDetectCmd)
 	rootCmd.AddCommand(packageInstallCmd)
@@ -39,7 +42,6 @@ func init() {
 	// Add enhanced cluster and test commands
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.AddCommand(testCmd)
-	rootCmd.AddCommand(simulateCmd)
 	rootCmd.AddCommand(configCmd)
 	
 	// Legacy k8s commands (deprecated)

@@ -6,3 +6,6 @@ examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
 *.bin
 *.exe
 *.dll
+.terraform/
+*.tfstate*
+terraform.tfvars

@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -394,6 +395,16 @@ func loadConfigFromFile(filename string) (map[string]interface{}, error) {
 	}
 
 	return config, nil
+}
+
+// Helper for HTTP POST in proxy mode
+func httpPost(url string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(body)))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return http.DefaultClient.Do(req)
 }
 
 func init() {

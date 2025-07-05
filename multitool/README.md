@@ -4,7 +4,7 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 
 ## Features
 
-### 🌤️ Multi-Cloud Cluster Management
+### ☀️ Multi-Cloud Cluster Management
 - Create, list, get, and delete Kubernetes clusters across multiple cloud providers
 - Support for Azure AKS, AWS EKS, Google GKE, and other managed Kubernetes services
 - Provider-specific configuration and resource management
@@ -13,11 +13,6 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 - Run various types of tests on clusters (connectivity, performance, security, compliance)
 - Track test results and metrics
 - Integration with the punchbag server for centralized test management
-
-### 🎯 Simulation Mode
-- Simulate cloud operations without creating real resources
-- Test workflows and commands in a safe environment
-- Generate realistic test data for development and demonstration
 
 ### ⚙️ Configuration Management
 - Profile-based configuration for different environments
@@ -29,6 +24,27 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 - OS detection and appropriate package manager selection
 - Support for Homebrew, apt, rpm, pacman, choco, and winget
 
+## Dual-Mode Operation
+
+Multitool can operate in two modes:
+
+- **Direct mode (default):** Calls real cloud provider APIs directly for resource management.
+- **Proxy mode (with `--server` flag):** Forwards all resource management requests to a cube-server instance, which can simulate or proxy to real cloud providers.
+
+### Example Usage
+
+**Direct (real cloud):**
+```sh
+multitool cluster create my-cluster azure --resource-group my-rg --location eastus
+```
+
+**Proxy (via cube-server):**
+```sh
+multitool --server http://localhost:8080 cluster create my-cluster azure --resource-group my-rg --location eastus
+```
+- If the cube-server is in simulation mode, this simulates the operation.
+- If the cube-server is in real mode, this proxies the request to the real cloud provider.
+
 ## Installation
 
 ### Build from Source
@@ -39,15 +55,9 @@ cd multitool
 go build -o multitool
 ```
 
-### Add to PATH (Optional)
+## Note
 
-```bash
-# Copy to a directory in your PATH
-cp multitool /usr/local/bin/
-
-# Or create a symlink
-ln -s $(pwd)/multitool /usr/local/bin/multitool
-```
+Simulation and mock storage are only available in the cube-server and werfty/generator. Multitool is for real cloud management only.
 
 ## Quick Start
 
@@ -57,20 +67,7 @@ ln -s $(pwd)/multitool /usr/local/bin/multitool
 multitool config init
 ```
 
-### 2. Test with Simulation
-
-```bash
-# List simulated clusters
-multitool simulate cluster list
-
-# Create a simulated cluster
-multitool simulate cluster create test-cluster azure --resource-group test-rg --location eastus
-
-# Run a simulated test
-multitool simulate test run sim-cluster-123 performance
-```
-
-### 3. Connect to Server (for Real Operations)
+### 2. Connect to Server (for Real Operations)
 
 ```bash
 # Set server URL
@@ -165,38 +162,6 @@ multitool test list cluster-id
 
 # Get specific test result
 multitool test get test-id
-```
-
-### Simulation Commands
-
-#### Simulate Cluster Operations
-
-```bash
-# List simulated clusters
-multitool simulate cluster list
-multitool simulate cluster list azure
-
-# Create simulated cluster
-multitool simulate cluster create test-cluster azure \
-  --resource-group test-rg \
-  --location eastus
-
-multitool simulate cluster create dev-cluster aws \
-  --region us-west-2
-
-multitool simulate cluster create staging-cluster gcp \
-  --project-id my-project \
-  --region us-central1
-```
-
-#### Simulate Test Operations
-
-```bash
-# Simulate different test types
-multitool simulate test run cluster-id connectivity
-multitool simulate test run cluster-id performance
-multitool simulate test run cluster-id security
-multitool simulate test run cluster-id compliance
 ```
 
 ### Configuration Management
@@ -386,7 +351,6 @@ multitool/
 ├── cmd/                    # Command implementations
 │   ├── root.go            # Root command and CLI setup
 │   ├── cluster.go         # Cluster management commands
-│   ├── simulate.go        # Simulation commands
 │   ├── config.go          # Configuration management
 │   └── ...
 ├── pkg/                   # Shared packages

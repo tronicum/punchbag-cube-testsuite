@@ -1,40 +1,3 @@
-Workspace Context:
-- Current Date: 4 July 2025
-- Current File: /Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/werfty/cmd/root.go
-
-Workspace Structure:
-.git/
-.gitignore
-Dockerfile
-LICENSE
-README.md
-api/
-conf/
-cube-client/
-cube-client.go
-cube-server/
-cube-server.go
-examples/
-generator/
-go.mod
-go.sum
-main.go
-models/
-multitool/
-server/
-store/
-terraform-provider/
-werfty/
-
-Werfty Directory:
-README.md
-client
-cmd/
-main.go
-pkg/
-
-Active File Content:
-```go
 package cmd
 
 import (
@@ -210,3 +173,25 @@ func formatOutput(data interface{}, format string) string {
 	}
 	return fmt.Sprintf("Unknown format: %s", format)
 }
+
+---
+
+# Multitool + Werfty Integration Vision (2025-07-05)
+
+## Workflow
+1. Use multitool to download the current state of Azure services (Monitor, Log Analytics, etc.)
+   - Direct mode: queries real cloud APIs
+   - Proxy mode: forwards to cube-server (which can simulate or proxy to real cloud)
+2. Use werfty/generator to convert the downloaded state (JSON) into real, usable Terraform code
+   - CLI: `werfty generate-terraform --input monitor.json --output monitor.tf`
+3. (Future) Improve werfty Terraform provider to generate multi-cloud code on the fly
+   - Support for Azure, AWS, GCP, etc.
+4. (Future) Werfty can use LLMs (Copilot, Bolt.ai, etc.) to assist with or generate Terraform templates
+   - CLI: `werfty generate-terraform --input monitor.json --cloud azure,aws,gcp --ai-assist`
+
+## Benefits
+- Maximum flexibility: local, direct, and centralized/proxied/simulated workflows
+- Enables both real and simulated infrastructure management
+- Future-proof: ready for AI-assisted codegen and multi-cloud
+
+---

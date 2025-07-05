@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/username/punchbag-cube-testsuite/server/models"
 	"github.com/username/punchbag-cube-testsuite/server/store"
+	"punchbag-cube-testsuite/shared/simulation"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -14,151 +14,72 @@ import (
 
 // ProviderSimulationHandlers contains simulation endpoints for cloud providers
 type ProviderSimulationHandlers struct {
-	store  store.Store
-	logger *zap.Logger
+	store     store.Store
+	logger    *zap.Logger
+	simulator *simulation.SimulationService
 }
 
 // NewProviderSimulationHandlers creates a new ProviderSimulationHandlers instance
 func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger) *ProviderSimulationHandlers {
 	return &ProviderSimulationHandlers{
-		store:  s,
-		logger: logger,
+		store:     s,
+		logger:    logger,
+		simulator: simulation.NewSimulationService(),
 	}
 }
 
-// ValidateProvider handles GET /validate/{provider-name}/
+// ValidateProvider handles POST /api/v1/providers/validate
 func (h *ProviderSimulationHandlers) ValidateProvider(c *gin.Context) {
-	provider := c.Param("provider")
-	
-	// Simulate provider validation
-	switch provider {
-	case "azure":
-		h.validateAzure(c)
-	case "hetzner-hcloud":
-		h.validateHetzner(c)
-	case "united-ionos":
-		h.validateIONOS(c)
-	case "schwarz-stackit":
-		h.validateStackIT(c)
-	case "aws":
-		h.validateAWS(c)
-	case "gcp":
-		h.validateGCP(c)
-	default:
+	var req struct {
+		Provider    string                 `json:"provider" binding:"required"`
+		Credentials map[string]interface{} `json:"credentials,omitempty"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("unsupported provider: %s", provider),
+			"error": "Invalid request body",
 		})
 		return
 	}
+
+	h.logger.Info("Validating provider", zap.String("provider", req.Provider))
+
+	result := h.simulator.ValidateProvider(req.Provider, req.Credentials)
+	
+	if result.Valid {
+		c.JSON(http.StatusOK, result)
+	} else {
+		c.JSON(http.StatusBadRequest, result)
+	}
 }
 
-// Azure simulation endpoints
-func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) {
-	h.logger.Info("Simulating Azure validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "azure",
-		"status":   "valid",
-		"regions":  []string{"eastus", "westus2", "westeurope", "northeurope"},
-		"services": map[string]interface{}{
-			"aks": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"vm_sizes":           []string{"Standard_B2s", "Standard_D2s_v3", "Standard_D4s_v3"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
+// ValidateProviderLegacy handles GET /validate/{provider-name}/ (legacy endpoint)
+// Deprecated: Use ValidateProvider instead. This will be removed in a future release.
+func (h *ProviderSimulationHandlers) ValidateProviderLegacy(c *gin.Context) {
+	provider := c.Param("provider")
+
+	h.logger.Info("Validating provider (legacy)", zap.String("provider", provider))
+
+	result := h.simulator.ValidateProvider(provider, nil)
+	
+	if result.Valid {
+		c.JSON(http.StatusOK, result)
+	} else {
+		c.JSON(http.StatusBadRequest, result)
+	}
 }
 
-// Hetzner simulation endpoints
-func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) {
-	h.logger.Info("Simulating Hetzner Cloud validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "hetzner-hcloud",
-		"status":   "valid",
-		"locations": []string{"ash", "fsn1", "hel1", "nbg1", "hil"},
-		"services": map[string]interface{}{
-			"kubernetes": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"server_types":       []string{"cx11", "cx21", "cx31", "cx41", "cx51"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
-}
-
-// IONOS simulation endpoints
-func (h *ProviderSimulationHandlers) validateIONOS(c *gin.Context) {
-	h.logger.Info("Simulating IONOS Cloud validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "united-ionos",
-		"status":   "valid",
-		"locations": []string{"de/fra", "de/txl", "us/las", "us/ewr"},
-		"services": map[string]interface{}{
-			"kubernetes": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"cpu_families":       []string{"AMD_OPTERON", "INTEL_XEON", "INTEL_SKYLAKE"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
-}
-
-// StackIT simulation endpoints
-func (h *ProviderSimulationHandlers) validateStackIT(c *gin.Context) {
-	h.logger.Info("Simulating StackIT validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "schwarz-stackit",
-		"status":   "valid",
-		"regions":  []string{"eu-central-1", "eu-west-1"},
-		"services": map[string]interface{}{
-			"ske": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"machine_types":      []string{"c1.2", "c1.3", "c1.4", "c1.5"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
-}
-
-// AWS simulation endpoints
-func (h *ProviderSimulationHandlers) validateAWS(c *gin.Context) {
-	h.logger.Info("Simulating AWS validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "aws",
-		"status":   "valid",
-		"regions":  []string{"us-east-1", "us-west-2", "eu-west-1", "eu-central-1"},
-		"services": map[string]interface{}{
-			"eks": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28", "1.27", "1.26"},
-				"instance_types":     []string{"t3.medium", "t3.large", "m5.large", "m5.xlarge"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
-}
-
-// GCP simulation endpoints
-func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) {
-	h.logger.Info("Simulating GCP validation")
-	c.JSON(http.StatusOK, gin.H{
-		"provider": "gcp",
-		"status":   "valid",
-		"regions":  []string{"us-central1", "us-east1", "europe-west1", "europe-west3"},
-		"services": map[string]interface{}{
-			"gke": map[string]interface{}{
-				"available":           true,
-				"kubernetes_versions": []string{"1.28.3-gke.1286000", "1.27.7-gke.1293000"},
-				"machine_types":      []string{"e2-medium", "e2-standard-2", "n1-standard-1", "n1-standard-2"},
-			},
-		},
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
-}
+// The following provider-specific validation endpoints are deprecated and replaced by the shared simulation logic.
+// They are removed to ensure all validation uses the shared simulation service.
+//
+// func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateIONOS(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateStackIT(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateAWS(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) { ... }
+//
+// Please use ValidateProvider instead.
 
 // GetProviderInfo handles GET /providers/{provider-name}/info
 func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
@@ -286,85 +207,103 @@ func (h *ProviderSimulationHandlers) getGCPInfo(c *gin.Context) {
 	})
 }
 
-// SimulateProviderOperation handles POST /providers/{provider-name}/operations/{operation}
+// SimulateProviderOperation handles POST /api/v1/providers/simulate
+// Uses the shared simulation service for all provider operations.
 func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
-	provider := c.Param("provider")
-	operation := c.Param("operation")
-	
-	h.logger.Info("Simulating provider operation", 
-		zap.String("provider", provider), 
-		zap.String("operation", operation))
-	
-	// Parse request body for operation parameters
-	var operationParams map[string]interface{}
-	if err := c.ShouldBindJSON(&operationParams); err != nil {
-		operationParams = make(map[string]interface{})
-	}
-	
-	// Simulate the operation result
-	result := gin.H{
-		"provider":     provider,
-		"operation":    operation,
-		"status":       "success",
-		"operation_id": fmt.Sprintf("%s-%s-%d", provider, operation, time.Now().Unix()),
-		"parameters":   operationParams,
-		"result": gin.H{
-			"message":   fmt.Sprintf("Successfully simulated %s operation for %s", operation, provider),
-			"timestamp": time.Now().Format(time.RFC3339),
-		},
-	}
-	
-	// Add provider-specific result details
-	switch provider {
-	case "azure":
-		result["azure_details"] = gin.H{
-			"resource_group": "rg-" + fmt.Sprintf("%d", time.Now().Unix()),
-			"subscription":   "00000000-0000-0000-0000-000000000000",
-		}
-	case "hetzner-hcloud":
-		result["hetzner_details"] = gin.H{
-			"server_id": fmt.Sprintf("%d", time.Now().Unix()),
-			"datacenter": "fsn1-dc14",
-		}
-	case "united-ionos":
-		result["ionos_details"] = gin.H{
-			"datacenter_id": "8feda53f-15f0-447f-badf-ebe32dad2fc0",
-			"contract_number": fmt.Sprintf("%d", time.Now().Unix()),
-		}
-	}
-	
-	c.JSON(http.StatusOK, result)
-}
+	var req simulation.SimulationRequest
 
-// ListProviderClusters handles GET /providers/{provider-name}/clusters
-func (h *ProviderSimulationHandlers) ListProviderClusters(c *gin.Context) {
-	provider := c.Param("provider")
-	
-	// Get clusters for the specific provider
-	clusters, err := h.store.ListClustersByProvider(models.CloudProvider(provider))
-	if err != nil {
-		h.logger.Error("Failed to list clusters", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list clusters"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
 		return
 	}
+
+	h.logger.Info("Simulating provider operation",
+		zap.String("provider", req.Provider),
+		zap.String("operation", req.Operation))
+
+	result := h.simulator.SimulateOperation(&req)
 	
-	c.JSON(http.StatusOK, gin.H{
-		"provider": provider,
-		"clusters": clusters,
-		"count":    len(clusters),
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
+	if result.Success {
+		c.JSON(http.StatusOK, result)
+	} else {
+		c.JSON(http.StatusBadRequest, result)
+	}
 }
 
-// Enhance simulation endpoint to emulate cloud provider operations
-func simulateProviderOperation(w http.ResponseWriter, r *http.Request) {
-	provider := r.URL.Query().Get("provider")
-	operation := r.URL.Query().Get("operation")
+// CreateSimulatedCluster creates a simulated cluster using the shared simulation service
+func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
+	var req models.ClusterCreateRequest
 
-	if provider == "aws" || provider == "azure" {
-		fmt.Fprintf(w, "Simulating %s operation for provider: %s\n", operation, provider)
-		// Add logic to emulate provider operations (e.g., create, delete clusters)
-	} else {
-		http.Error(w, "Unsupported provider", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
 	}
+
+	h.logger.Info("Creating simulated cluster",
+		zap.String("name", req.Name),
+		zap.String("provider", string(req.Provider)))
+
+	// Generate simulated cluster using shared service
+	cluster := h.simulator.GenerateClusterFromSimulation(string(req.Provider), req.Name, req.Config)
+
+	// Store the simulated cluster
+	if err := h.store.CreateCluster(cluster); err != nil {
+		h.logger.Error("Failed to store simulated cluster", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create simulated cluster",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, cluster)
+}
+
+// RunSimulatedTest runs a simulated test using the shared simulation service
+func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
+	var req models.TestRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	h.logger.Info("Running simulated test",
+		zap.String("cluster_id", req.ClusterID),
+		zap.String("test_type", req.TestType))
+
+	// Check if cluster exists
+	_, err := h.store.GetCluster(req.ClusterID)
+	if err != nil {
+		if err == store.ErrNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cluster not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get cluster", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get cluster",
+		})
+		return
+	}
+
+	// Generate simulated test result using shared service
+	testResult := h.simulator.GenerateTestResultFromSimulation(req.ClusterID, req.TestType)
+
+	// Store the test result
+	if err := h.store.CreateTestResult(testResult); err != nil {
+		h.logger.Error("Failed to store test result", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create test result",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, testResult)
 }
