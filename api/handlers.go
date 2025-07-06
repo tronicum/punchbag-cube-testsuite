@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
 	"punchbag-cube-testsuite/models"
+	"punchbag-cube-testsuite/multitool/pkg/models"
 	"punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
@@ -231,7 +233,48 @@ func (h *Handlers) ListTestResults(c *gin.Context) {
 
 // ProxyS3 handles /api/proxy/aws/s3
 func (h *Handlers) ProxyS3(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"message": "S3 proxy not implemented yet"})
+	if c.Request.Method == http.MethodPost {
+		var bucket models.S3Bucket
+		if err := c.ShouldBindJSON(&bucket); err != nil {
+			h.logger.Error("Failed to bind S3 bucket payload", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		// --- Validation for advanced S3 features ---
+		if bucket.Name == "" || bucket.Region == "" || bucket.Provider == "" {
+			h.logger.Error("Missing required S3 bucket fields")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name, region, and provider are required"})
+			return
+		}
+		if bucket.Policy != nil {
+			if bucket.Policy.Version == "" || len(bucket.Policy.Statement) == 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "policy.version and at least one statement required"})
+				return
+			}
+		}
+		if bucket.Versioning != nil {
+			// No further validation needed for now
+		}
+		if bucket.Lifecycle != nil {
+			for _, rule := range bucket.Lifecycle {
+				if rule.ID == "" || rule.Status == "" {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "lifecycle rule id and status required"})
+					return
+				}
+			}
+		}
+
+		// --- Simulate creation/response ---
+		bucket.ID = bucket.Name + "-" + bucket.Provider
+		bucket.CreatedAt = time.Now().Format(time.RFC3339)
+
+		// TODO: Integrate with real provider APIs here
+
+		c.JSON(http.StatusCreated, bucket)
+		return
+	}
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "S3 proxy only supports POST for now"})
 }
 
 // ProxyBlob handles /api/proxy/azure/blob

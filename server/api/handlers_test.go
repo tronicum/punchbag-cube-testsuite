@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/username/punchbag-cube-testsuite/server/models"
-	"github.com/username/punchbag-cube-testsuite/server/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	serverstore "github.com/tronicum/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -23,37 +23,37 @@ type MockStore struct {
 	mock.Mock
 }
 
-func (m *MockStore) CreateCluster(cluster *models.Cluster) error {
+func (m *MockStore) CreateCluster(cluster *sharedmodels.Cluster) error {
 	args := m.Called(cluster)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetCluster(id string) (*models.Cluster, error) {
+func (m *MockStore) GetCluster(id string) (*sharedmodels.Cluster, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.Cluster), args.Error(1)
+	return args.Get(0).(*sharedmodels.Cluster), args.Error(1)
 }
 
-func (m *MockStore) ListClusters() ([]*models.Cluster, error) {
+func (m *MockStore) ListClusters() ([]*sharedmodels.Cluster, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.Cluster), args.Error(1)
+	return args.Get(0).([]*sharedmodels.Cluster), args.Error(1)
 }
 
-func (m *MockStore) ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error) {
+func (m *MockStore) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) {
 	args := m.Called(provider)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.Cluster), args.Error(1)
+	return args.Get(0).([]*sharedmodels.Cluster), args.Error(1)
 }
 
-func (m *MockStore) UpdateCluster(cluster *models.Cluster) error {
-	args := m.Called(cluster)
+func (m *MockStore) UpdateCluster(id string, cluster *sharedmodels.Cluster) error {
+	args := m.Called(id, cluster)
 	return args.Error(0)
 }
 
@@ -62,55 +62,55 @@ func (m *MockStore) DeleteCluster(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockStore) CreateTestResult(result *models.TestResult) error {
+func (m *MockStore) CreateTestResult(result *sharedmodels.TestResult) error {
 	args := m.Called(result)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetTestResult(id string) (*models.TestResult, error) {
+func (m *MockStore) GetTestResult(id string) (*sharedmodels.TestResult, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.TestResult), args.Error(1)
+	return args.Get(0).(*sharedmodels.TestResult), args.Error(1)
 }
 
-func (m *MockStore) ListTestResults() ([]*models.TestResult, error) {
-	args := m.Called()
+func (m *MockStore) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
+	args := m.Called(clusterID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.TestResult), args.Error(1)
+	return args.Get(0).([]*sharedmodels.TestResult), args.Error(1)
 }
 
-func (m *MockStore) UpdateTestResult(result *models.TestResult) error {
+func (m *MockStore) UpdateTestResult(result *sharedmodels.TestResult) error {
 	args := m.Called(result)
 	return args.Error(0)
 }
 
-func (m *MockStore) CreateNodePool(nodePool *models.NodePool) error {
+func (m *MockStore) CreateNodePool(nodePool *sharedmodels.NodePool) error {
 	args := m.Called(nodePool)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetNodePool(id string) (*models.NodePool, error) {
+func (m *MockStore) GetNodePool(id string) (*sharedmodels.NodePool, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.NodePool), args.Error(1)
+	return args.Get(0).(*sharedmodels.NodePool), args.Error(1)
 }
 
-func (m *MockStore) ListNodePools() ([]*models.NodePool, error) {
-	args := m.Called()
+func (m *MockStore) ListNodePools(clusterID string) ([]*sharedmodels.NodePool, error) {
+	args := m.Called(clusterID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.NodePool), args.Error(1)
+	return args.Get(0).([]*sharedmodels.NodePool), args.Error(1)
 }
 
-func (m *MockStore) UpdateNodePool(nodePool *models.NodePool) error {
-	args := m.Called(nodePool)
+func (m *MockStore) UpdateNodePool(id string, nodePool *sharedmodels.NodePool) error {
+	args := m.Called(id, nodePool)
 	return args.Error(0)
 }
 
@@ -119,28 +119,28 @@ func (m *MockStore) DeleteNodePool(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockStore) CreateAzureBudget(budget *models.AzureBudget) error {
+func (m *MockStore) CreateAzureBudget(budget *sharedmodels.AzureBudget) error {
 	args := m.Called(budget)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetAzureBudget(id string) (*models.AzureBudget, error) {
+func (m *MockStore) GetAzureBudget(id string) (*sharedmodels.AzureBudget, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.AzureBudget), args.Error(1)
+	return args.Get(0).(*sharedmodels.AzureBudget), args.Error(1)
 }
 
-func (m *MockStore) ListAzureBudgets() ([]*models.AzureBudget, error) {
+func (m *MockStore) ListAzureBudgets() ([]*sharedmodels.AzureBudget, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.AzureBudget), args.Error(1)
+	return args.Get(0).([]*sharedmodels.AzureBudget), args.Error(1)
 }
 
-func (m *MockStore) UpdateAzureBudget(id string, budget *models.AzureBudget) error {
+func (m *MockStore) UpdateAzureBudget(id string, budget *sharedmodels.AzureBudget) error {
 	args := m.Called(id, budget)
 	return args.Error(0)
 }
@@ -150,28 +150,28 @@ func (m *MockStore) DeleteAzureBudget(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockStore) CreateAzureMonitoring(monitoring *models.AzureMonitoring) error {
+func (m *MockStore) CreateAzureMonitoring(monitoring *sharedmodels.AzureMonitoring) error {
 	args := m.Called(monitoring)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetAzureMonitoring(id string) (*models.AzureMonitoring, error) {
+func (m *MockStore) GetAzureMonitoring(id string) (*sharedmodels.AzureMonitoring, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.AzureMonitoring), args.Error(1)
+	return args.Get(0).(*sharedmodels.AzureMonitoring), args.Error(1)
 }
 
-func (m *MockStore) ListAzureMonitorings() ([]*models.AzureMonitoring, error) {
+func (m *MockStore) ListAzureMonitorings() ([]*sharedmodels.AzureMonitoring, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.AzureMonitoring), args.Error(1)
+	return args.Get(0).([]*sharedmodels.AzureMonitoring), args.Error(1)
 }
 
-func (m *MockStore) UpdateAzureMonitoring(id string, monitoring *models.AzureMonitoring) error {
+func (m *MockStore) UpdateAzureMonitoring(id string, monitoring *sharedmodels.AzureMonitoring) error {
 	args := m.Called(id, monitoring)
 	return args.Error(0)
 }
@@ -181,28 +181,28 @@ func (m *MockStore) DeleteAzureMonitoring(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockStore) CreateAzureKubernetes(kubernetes *models.AzureKubernetes) error {
+func (m *MockStore) CreateAzureKubernetes(kubernetes *sharedmodels.AzureKubernetes) error {
 	args := m.Called(kubernetes)
 	return args.Error(0)
 }
 
-func (m *MockStore) GetAzureKubernetes(id string) (*models.AzureKubernetes, error) {
+func (m *MockStore) GetAzureKubernetes(id string) (*sharedmodels.AzureKubernetes, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.AzureKubernetes), args.Error(1)
+	return args.Get(0).(*sharedmodels.AzureKubernetes), args.Error(1)
 }
 
-func (m *MockStore) ListAzureKubernetes() ([]*models.AzureKubernetes, error) {
+func (m *MockStore) ListAzureKubernetes() ([]*sharedmodels.AzureKubernetes, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*models.AzureKubernetes), args.Error(1)
+	return args.Get(0).([]*sharedmodels.AzureKubernetes), args.Error(1)
 }
 
-func (m *MockStore) UpdateAzureKubernetes(id string, kubernetes *models.AzureKubernetes) error {
+func (m *MockStore) UpdateAzureKubernetes(id string, kubernetes *sharedmodels.AzureKubernetes) error {
 	args := m.Called(id, kubernetes)
 	return args.Error(0)
 }
@@ -226,13 +226,13 @@ func TestCreateCluster(t *testing.T) {
 	router.POST("/clusters", handlers.CreateCluster)
 
 	t.Run("successful creation", func(t *testing.T) {
-		cluster := models.Cluster{
+		cluster := sharedmodels.Cluster{
 			Name:          "test-cluster",
 			Provider: models.Azure,
 			Status:        models.ClusterStatusCreating,
 		}
 
-		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(nil)
+		mockStore.On("CreateCluster", mock.AnythingOfType("*sharedmodels.Cluster")).Return(nil)
 
 		body, _ := json.Marshal(cluster)
 		w := httptest.NewRecorder()
@@ -243,7 +243,7 @@ func TestCreateCluster(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, w.Code)
 		
-		var response models.Cluster
+		var response sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, cluster.Name, response.Name)
@@ -252,13 +252,13 @@ func TestCreateCluster(t *testing.T) {
 	})
 
 	t.Run("cluster already exists", func(t *testing.T) {
-		cluster := models.Cluster{
+		cluster := sharedmodels.Cluster{
 			Name:          "existing-cluster",
 			Provider: models.Azure,
 			Status:        models.ClusterStatusCreating,
 		}
 
-		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(store.ErrAlreadyExists)
+		mockStore.On("CreateCluster", mock.AnythingOfType("*sharedmodels.Cluster")).Return(serverstore.ErrAlreadyExists)
 
 		body, _ := json.Marshal(cluster)
 		w := httptest.NewRecorder()
@@ -288,7 +288,7 @@ func TestGetCluster(t *testing.T) {
 	router.GET("/clusters/:id", handlers.GetCluster)
 
 	t.Run("existing cluster", func(t *testing.T) {
-		cluster := &models.Cluster{
+		cluster := &sharedmodels.Cluster{
 			ID:            "cluster-1",
 			Name:          "test-cluster",
 			Provider: models.Azure,
@@ -305,7 +305,7 @@ func TestGetCluster(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response models.Cluster
+		var response sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, cluster.ID, response.ID)
@@ -314,7 +314,7 @@ func TestGetCluster(t *testing.T) {
 	})
 
 	t.Run("cluster not found", func(t *testing.T) {
-		mockStore.On("GetCluster", "nonexistent").Return(nil, store.ErrNotFound)
+		mockStore.On("GetCluster", "nonexistent").Return(nil, serverstore.ErrNotFound)
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters/nonexistent", nil)
@@ -332,7 +332,7 @@ func TestListClusters(t *testing.T) {
 	router.GET("/clusters", handlers.ListClusters)
 
 	t.Run("list all clusters", func(t *testing.T) {
-		clusters := []*models.Cluster{
+		clusters := []*sharedmodels.Cluster{
 			{
 				ID:            "cluster-1",
 				Name:          "test-cluster-1",
@@ -356,7 +356,7 @@ func TestListClusters(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.Cluster
+		var response []*sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 2)
@@ -364,7 +364,7 @@ func TestListClusters(t *testing.T) {
 	})
 
 	t.Run("list clusters by provider", func(t *testing.T) {
-		azureClusters := []*models.Cluster{
+		azureClusters := []*sharedmodels.Cluster{
 			{
 				ID:            "cluster-1",
 				Name:          "azure-cluster",
@@ -373,7 +373,7 @@ func TestListClusters(t *testing.T) {
 			},
 		}
 
-		mockStore.On("ListClustersByProvider", models.CloudProvider("azure")).Return(azureClusters, nil)
+		mockStore.On("ListClustersByProvider", sharedmodels.CloudProvider("azure")).Return(azureClusters, nil)
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters?provider=azure", nil)
@@ -382,7 +382,7 @@ func TestListClusters(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.Cluster
+		var response []*sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 1)
@@ -396,20 +396,20 @@ func TestUpdateCluster(t *testing.T) {
 	router.PUT("/clusters/:id", handlers.UpdateCluster)
 
 	t.Run("successful update", func(t *testing.T) {
-		existingCluster := &models.Cluster{
+		existingCluster := &sharedmodels.Cluster{
 			ID:            "cluster-1",
 			Name:          "old-name",
 			Provider: models.Azure,
 			Status:        models.ClusterStatusRunning,
 		}
 
-		updateData := models.Cluster{
+		updateData := sharedmodels.Cluster{
 			Name:   "new-name",
 			Status: "updating",
 		}
 
 		mockStore.On("GetCluster", "cluster-1").Return(existingCluster, nil)
-		mockStore.On("UpdateCluster", mock.AnythingOfType("*models.Cluster")).Return(nil)
+		mockStore.On("UpdateCluster", mock.AnythingOfType("string"), mock.AnythingOfType("*sharedmodels.Cluster")).Return(nil)
 
 		body, _ := json.Marshal(updateData)
 		w := httptest.NewRecorder()
@@ -420,7 +420,7 @@ func TestUpdateCluster(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response models.Cluster
+		var response sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "new-name", response.Name)
@@ -429,9 +429,9 @@ func TestUpdateCluster(t *testing.T) {
 	})
 
 	t.Run("cluster not found", func(t *testing.T) {
-		updateData := models.Cluster{Name: "new-name"}
+		updateData := sharedmodels.Cluster{Name: "new-name"}
 
-		mockStore.On("GetCluster", "nonexistent").Return(nil, store.ErrNotFound)
+		mockStore.On("GetCluster", "nonexistent").Return(nil, serverstore.ErrNotFound)
 
 		body, _ := json.Marshal(updateData)
 		w := httptest.NewRecorder()
@@ -462,7 +462,7 @@ func TestDeleteCluster(t *testing.T) {
 	})
 
 	t.Run("cluster not found", func(t *testing.T) {
-		mockStore.On("DeleteCluster", "nonexistent").Return(store.ErrNotFound)
+		mockStore.On("DeleteCluster", "nonexistent").Return(serverstore.ErrNotFound)
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("DELETE", "/clusters/nonexistent", nil)
@@ -479,7 +479,7 @@ func TestRunTest(t *testing.T) {
 	router.POST("/test", handlers.RunTest)
 
 	t.Run("successful test run", func(t *testing.T) {
-		cluster := &models.Cluster{
+		cluster := &sharedmodels.Cluster{
 			ID:            "cluster-1",
 			Name:          "test-cluster",
 			Provider: models.Azure,
@@ -493,7 +493,7 @@ func TestRunTest(t *testing.T) {
 		}
 
 		mockStore.On("GetCluster", "cluster-1").Return(cluster, nil)
-		mockStore.On("CreateTestResult", mock.AnythingOfType("*models.TestResult")).Return(nil)
+		mockStore.On("CreateTestResult", mock.AnythingOfType("*sharedmodels.TestResult")).Return(nil)
 
 		body, _ := json.Marshal(testRequest)
 		w := httptest.NewRecorder()
@@ -504,7 +504,7 @@ func TestRunTest(t *testing.T) {
 
 		assert.Equal(t, http.StatusAccepted, w.Code)
 		
-		var response models.TestResult
+		var response sharedmodels.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, testRequest.ClusterID, response.ClusterID)
@@ -519,7 +519,7 @@ func TestRunTest(t *testing.T) {
 			TestType:  "connectivity",
 		}
 
-		mockStore.On("GetCluster", "nonexistent").Return(nil, store.ErrNotFound)
+		mockStore.On("GetCluster", "nonexistent").Return(nil, serverstore.ErrNotFound)
 
 		body, _ := json.Marshal(testRequest)
 		w := httptest.NewRecorder()
@@ -554,7 +554,7 @@ func TestGetTestResult(t *testing.T) {
 	router.GET("/test/:id", handlers.GetTestResult)
 
 	t.Run("existing test result", func(t *testing.T) {
-		testResult := &models.TestResult{
+		testResult := &sharedmodels.TestResult{
 			ID:        "test-1",
 			ClusterID: "cluster-1",
 			TestType:  "connectivity",
@@ -572,7 +572,7 @@ func TestGetTestResult(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response models.TestResult
+		var response sharedmodels.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, testResult.ID, response.ID)
@@ -581,7 +581,7 @@ func TestGetTestResult(t *testing.T) {
 	})
 
 	t.Run("test result not found", func(t *testing.T) {
-		mockStore.On("GetTestResult", "nonexistent").Return(nil, store.ErrNotFound)
+		mockStore.On("GetTestResult", "nonexistent").Return(nil, serverstore.ErrNotFound)
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/test/nonexistent", nil)
@@ -598,7 +598,7 @@ func TestListTestResults(t *testing.T) {
 	router.GET("/test", handlers.ListTestResults)
 
 	t.Run("successful list", func(t *testing.T) {
-		testResults := []*models.TestResult{
+		testResults := []*sharedmodels.TestResult{
 			{
 				ID:        "test-1",
 				ClusterID: "cluster-1",
@@ -622,7 +622,7 @@ func TestListTestResults(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.TestResult
+		var response []*sharedmodels.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 2)
@@ -689,14 +689,14 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.POST("/clusters", handlers.CreateCluster)
 		
-		cluster := &models.Cluster{
+		cluster := &sharedmodels.Cluster{
 			ID:       "existing-cluster",
 			Name:     "Test Cluster",
 			Provider: models.Azure,
 			Status:   models.ClusterStatusCreating,
 		}
 
-		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(store.ErrAlreadyExists)
+		mockStore.On("CreateCluster", mock.AnythingOfType("*sharedmodels.Cluster")).Return(serverstore.ErrAlreadyExists)
 
 		body, _ := json.Marshal(cluster)
 		w := httptest.NewRecorder()
@@ -713,7 +713,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.GET("/clusters", handlers.ListClusters)
 		
-		azureClusters := []*models.Cluster{
+		azureClusters := []*sharedmodels.Cluster{
 			{
 				ID:       "azure-cluster-1",
 				Name:     "Azure Cluster 1",
@@ -731,7 +731,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.Cluster
+		var response []*sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 1)
@@ -744,7 +744,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.POST("/clusters/:id/tests", handlers.RunTest)
 		
-		cluster := &models.Cluster{
+		cluster := &sharedmodels.Cluster{
 			ID:       "creating-cluster",
 			Name:     "Creating Cluster",
 			Provider: models.Azure,
@@ -816,14 +816,14 @@ func TestConcurrentOperations(t *testing.T) {
 		router.POST("/clusters", handlers.CreateCluster)
 
 		// Mock expects multiple cluster creations
-		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(nil).Times(5)
+		mockStore.On("CreateCluster", mock.AnythingOfType("*sharedmodels.Cluster")).Return(nil).Times(5)
 
 		// Create 5 concurrent requests
 		results := make(chan int, 5)
 		
 		for i := 0; i < 5; i++ {
 			go func(index int) {
-				cluster := &models.Cluster{
+				cluster := &sharedmodels.Cluster{
 					ID:       fmt.Sprintf("cluster-%d", index),
 					Name:     fmt.Sprintf("Test Cluster %d", index),
 					Provider: models.Azure,
@@ -853,7 +853,7 @@ func TestConcurrentOperations(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.POST("/clusters/:id/tests", handlers.RunTest)
 
-		cluster := &models.Cluster{
+		cluster := &sharedmodels.Cluster{
 			ID:       "test-cluster",
 			Name:     "Test Cluster",
 			Provider: models.Azure,
@@ -862,7 +862,7 @@ func TestConcurrentOperations(t *testing.T) {
 
 		// Mock cluster exists and test results can be created
 		mockStore.On("GetCluster", "test-cluster").Return(cluster, nil).Times(3)
-		mockStore.On("CreateTestResult", mock.AnythingOfType("*models.TestResult")).Return(nil).Times(3)
+		mockStore.On("CreateTestResult", mock.AnythingOfType("*sharedmodels.TestResult")).Return(nil).Times(3)
 
 		results := make(chan int, 3)
 		
@@ -899,9 +899,9 @@ func TestPerformanceScenarios(t *testing.T) {
 		router.GET("/clusters", handlers.ListClusters)
 
 		// Create a large list of clusters
-		clusters := make([]*models.Cluster, 1000)
+		clusters := make([]*sharedmodels.Cluster, 1000)
 		for i := 0; i < 1000; i++ {
-			clusters[i] = &models.Cluster{
+			clusters[i] = &sharedmodels.Cluster{
 				ID:       fmt.Sprintf("cluster-%d", i),
 				Name:     fmt.Sprintf("Cluster %d", i),
 				Provider: models.Azure,
@@ -918,7 +918,7 @@ func TestPerformanceScenarios(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.Cluster
+		var response []*sharedmodels.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 1000)
@@ -931,9 +931,9 @@ func TestPerformanceScenarios(t *testing.T) {
 		router.GET("/clusters/:id/tests", handlers.ListTestResults)
 
 		// Create a large list of test results
-		testResults := make([]*models.TestResult, 500)
+		testResults := make([]*sharedmodels.TestResult, 500)
 		for i := 0; i < 500; i++ {
-			testResults[i] = &models.TestResult{
+			testResults[i] = &sharedmodels.TestResult{
 				ID:        fmt.Sprintf("test-%d", i),
 				ClusterID: "cluster-1",
 				Status:    models.TestStatusPassed,
@@ -950,11 +950,129 @@ func TestPerformanceScenarios(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		
-		var response []*models.TestResult
+		var response []*sharedmodels.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 500)
 		
 		mockStore.AssertExpectations(t)
 	})
+}
+
+func TestProxyS3(t *testing.T) {
+	router, _, handlers := setupTestRouter()
+	router.POST("/api/proxy/aws/s3", handlers.ProxyS3)
+
+	t.Run("valid creation with advanced fields", func(t *testing.T) {
+		bucket := map[string]interface{}{
+			"name": "test-bucket",
+			"region": "us-east-1",
+			"provider": "aws",
+			"policy": map[string]interface{}{
+				"version": "2012-10-17",
+				"statement": []map[string]interface{}{
+					{"effect": "Allow", "action": []string{"s3:GetObject"}, "resource": []string{"*"}, "principal": map[string]interface{}{"AWS": "*"}},
+				},
+			},
+			"versioning": map[string]interface{}{"enabled": true},
+			"lifecycle": []map[string]interface{}{
+				{"id": "rule1", "status": "Enabled", "expiration_days": 30},
+			},
+		}
+		body, _ := json.Marshal(bucket)
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("POST", "/api/proxy/aws/s3", bytes.NewBuffer(body))
+		r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusCreated, w.Code)
+		var resp map[string]interface{}
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Equal(t, "test-bucket-aws", resp["id"])
+		assert.Equal(t, "test-bucket", resp["name"])
+		assert.Equal(t, "aws", resp["provider"])
+		assert.NotEmpty(t, resp["created_at"])
+	})
+
+	t.Run("missing required fields", func(t *testing.T) {
+		bucket := map[string]interface{}{"region": "us-east-1", "provider": "aws"}
+		body, _ := json.Marshal(bucket)
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("POST", "/api/proxy/aws/s3", bytes.NewBuffer(body))
+		r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "name, region, and provider are required")
+	})
+
+	t.Run("invalid policy", func(t *testing.T) {
+		bucket := map[string]interface{}{
+			"name": "test-bucket",
+			"region": "us-east-1",
+			"provider": "aws",
+			"policy": map[string]interface{}{"version": ""},
+		}
+		body, _ := json.Marshal(bucket)
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("POST", "/api/proxy/aws/s3", bytes.NewBuffer(body))
+		r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "policy.version and at least one statement required")
+	})
+
+	t.Run("invalid lifecycle rule", func(t *testing.T) {
+		bucket := map[string]interface{}{
+			"name": "test-bucket",
+			"region": "us-east-1",
+			"provider": "aws",
+			"lifecycle": []map[string]interface{}{{"status": "Enabled"}},
+		}
+		body, _ := json.Marshal(bucket)
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("POST", "/api/proxy/aws/s3", bytes.NewBuffer(body))
+		r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "lifecycle rule id and status required")
+	})
+}
+
+func TestProxyObjectStorage_CreateBucket(t *testing.T) {
+	router, _, handlers := setupTestRouter()
+	router.POST("/api/proxy/:provider/objectstorage", handlers.ProxyObjectStorage)
+
+	bucket := sharedmodels.ObjectStorageBucket{
+		Name:     "test-bucket",
+		Provider: sharedmodels.CloudProviderAWS,
+		Region:   "eu-central-1",
+		Policy: &sharedmodels.ObjectStoragePolicy{
+			Version:   "2025-07-06",
+			Statement: []sharedmodels.ObjectStorageStatement{{
+				Effect:    "Allow",
+				Principal: map[string]interface{}{"AWS": "*"},
+				Action:    []string{"objectstorage:GetObject"},
+				Resource:  []string{"arn:aws:s3:::test-bucket/*"},
+			}},
+		},
+		Lifecycle: []sharedmodels.ObjectStorageRule{{
+			ID:     "rule1",
+			Status: "Enabled",
+		}},
+	}
+	body, _ := json.Marshal(bucket)
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/api/proxy/aws/objectstorage", bytes.NewBuffer(body))
+	r.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusCreated, w.Code)
+	var resp sharedmodels.ObjectStorageBucket
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.Equal(t, bucket.Name, resp.Name)
+	assert.Equal(t, bucket.Region, resp.Region)
+	assert.Equal(t, bucket.Provider, resp.Provider)
+	assert.NotEmpty(t, resp.ID)
+	assert.NotZero(t, resp.CreatedAt)
+	assert.NotNil(t, resp.Policy)
+	assert.NotEmpty(t, resp.Lifecycle)
 }

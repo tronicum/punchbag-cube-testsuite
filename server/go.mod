@@ -1,15 +1,15 @@
-module github.com/username/punchbag-cube-testsuite/server
+module github.com/tronicum/punchbag-cube-testsuite/server
 
 go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/stretchr/testify v1.10.0
+	github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0
 	go.uber.org/zap v1.26.0
-	punchbag-cube-testsuite/shared v0.0.0
 )
 
-replace punchbag-cube-testsuite/shared => ../shared
+replace github.com/tronicum/punchbag-cube-testsuite/shared => ../shared
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect

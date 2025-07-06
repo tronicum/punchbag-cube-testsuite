@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 	
-	"github.com/username/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -98,6 +98,14 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 		mocks.POST(":key/save", SaveMockDataToFile)
 		mocks.POST(":key/load", LoadMockDataFromFile)
 	}
+
+	// S3 proxy endpoint
+	v1.POST("/proxy/:provider/s3", handlers.ProxyS3)
+	// Blob and GCS proxy endpoints
+	v1.Any("/proxy/azure/blob", handlers.ProxyBlob)
+	v1.Any("/proxy/gcp/gcs", handlers.ProxyGCS)
+	// Generic object storage proxy endpoint for all providers
+	v1.POST("/proxy/:provider/objectstorage", handlers.ProxyObjectStorage)
 
 	// Documentation endpoint
 	router.GET("/docs", func(c *gin.Context) {

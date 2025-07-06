@@ -33,7 +33,7 @@ import (
 	"math/rand"
 	"time"
 
-	"punchbag-cube-testsuite/shared/models"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // SimulationService provides cloud provider simulation capabilities

@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/username/punchbag-cube-testsuite/server/models"
-	"github.com/username/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/server/models"
+	"github.com/tronicum/punchbag-cube-testsuite/server/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ func NewHandlers(store store.Store, logger *zap.Logger) *Handlers {
 
 // CreateCluster handles POST /clusters
 func (h *Handlers) CreateCluster(c *gin.Context) {
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -43,7 +44,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 
 	// Validate provider
 	if cluster.Provider == "" {
-		cluster.Provider = models.CloudProviderAzure // default to Azure for backward compatibility
+		cluster.Provider = sharedmodels.CloudProviderAzure // default to Azure for backward compatibility
 	}
 
 	// Validate required fields based on provider
@@ -87,19 +88,19 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 // ListClusters handles GET /clusters
 func (h *Handlers) ListClusters(c *gin.Context) {
 	provider := c.Query("provider")
-	
-	var clusters []*models.Cluster
+
+	var clusters []*sharedmodels.Cluster
 	var err error
-	
+
 	if provider != "" {
 		// Filter by provider
-		cloudProvider := models.CloudProvider(provider)
+		cloudProvider := sharedmodels.CloudProvider(provider)
 		clusters, err = h.store.ListClustersByProvider(cloudProvider)
 	} else {
 		// List all clusters
 		clusters, err = h.store.ListClusters()
 	}
-	
+
 	if err != nil {
 		h.logger.Error("Failed to list clusters", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -112,7 +113,7 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 // UpdateCluster handles PUT /clusters/:id
 func (h *Handlers) UpdateCluster(c *gin.Context) {
 	id := c.Param("id")
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -160,7 +161,7 @@ func (h *Handlers) DeleteCluster(c *gin.Context) {
 // RunTest handles POST /clusters/:id/tests
 func (h *Handlers) RunTest(c *gin.Context) {
 	clusterID := c.Param("id")
-	var testReq models.TestRequest
+	var testReq sharedmodels.TestRequest
 	if err := c.ShouldBindJSON(&testReq); err != nil {
 		h.logger.Error("Failed to bind test request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -180,7 +181,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	}
 
 	// Create test result
-	testResult := &models.TestResult{
+	testResult := &sharedmodels.TestResult{
 		ID:        generateID(),
 		ClusterID: clusterID,
 		TestType:  testReq.TestType,
@@ -205,8 +206,8 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	// For this example, we'll simulate test completion
 	go h.simulateTest(testResult)
 
-	h.logger.Info("Test started", 
-		zap.String("test_id", testResult.ID), 
+	h.logger.Info("Test started",
+		zap.String("test_id", testResult.ID),
 		zap.String("cluster_id", clusterID),
 		zap.String("provider", string(cluster.Provider)))
 	c.JSON(http.StatusAccepted, testResult)
@@ -274,8 +275,78 @@ func (h *Handlers) SimulateProviderOperation(c *gin.Context) {
 	})
 }
 
+// ProxyS3 handles /api/proxy/:provider/s3
+func (h *Handlers) ProxyS3(c *gin.Context) {
+	if c.Request.Method == http.MethodPost {
+		var bucket models.S3Bucket
+		if err := c.ShouldBindJSON(&bucket); err != nil {
+			h.logger.Error("Failed to bind S3 bucket payload", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if bucket.Name == "" || bucket.Region == "" || bucket.Provider == "" {
+			h.logger.Error("Missing required S3 bucket fields")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name, region, and provider are required"})
+			return
+		}
+		if bucket.Policy != nil {
+			if bucket.Policy.Version == "" || len(bucket.Policy.Statement) == 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "policy.version and at least one statement required"})
+				return
+			}
+		}
+		if bucket.Lifecycle != nil {
+			for _, rule := range bucket.Lifecycle {
+				if rule.ID == "" || rule.Status == "" {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "lifecycle rule id and status required"})
+					return
+				}
+			}
+		}
+		bucket.ID = bucket.Name + "-" + bucket.Provider
+		bucket.CreatedAt = time.Now().Format(time.RFC3339)
+		c.JSON(http.StatusCreated, bucket)
+		return
+	}
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "S3 proxy only supports POST for now"})
+}
+
+// ProxyBlob handles /api/proxy/azure/blob
+func (h *Handlers) ProxyBlob(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "Blob proxy not implemented yet"})
+}
+
+// ProxyGCS handles /api/proxy/gcp/gcs
+func (h *Handlers) ProxyGCS(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "GCS proxy not implemented yet"})
+}
+
+// ProxyObjectStorage handles /api/proxy/:provider/objectstorage for all providers
+func (h *Handlers) ProxyObjectStorage(c *gin.Context) {
+	if c.Request.Method == http.MethodPost {
+		var bucket sharedmodels.ObjectStorageBucket
+		if err := c.ShouldBindJSON(&bucket); err != nil {
+			h.logger.Error("Failed to bind object storage bucket payload", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if bucket.Name == "" || bucket.Provider == "" {
+			h.logger.Error("Missing required object storage bucket fields")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name and provider are required"})
+			return
+		}
+		bucket.ID = bucket.Name + "-" + string(bucket.Provider)
+		bucket.CreatedAt = time.Now()
+		bucket.UpdatedAt = time.Now()
+		// Provider-specific logic can be added here if needed
+		c.JSON(http.StatusCreated, bucket)
+		return
+	}
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "Object storage proxy only supports POST for now"})
+}
+
 // simulateTest simulates a test execution and updates the result
-func (h *Handlers) simulateTest(testResult *models.TestResult) {
+func (h *Handlers) simulateTest(testResult *sharedmodels.TestResult) {
 	// Simulate test duration
 	time.Sleep(5 * time.Second)
 
@@ -284,7 +355,7 @@ func (h *Handlers) simulateTest(testResult *models.TestResult) {
 	testResult.Status = "completed"
 	testResult.Duration = now.Sub(testResult.StartedAt)
 	testResult.CompletedAt = &now
-	
+
 	// Add provider-specific test results
 	provider := testResult.Details["provider"].(string)
 	testResult.Details["requests_sent"] = 1000
@@ -305,39 +376,39 @@ func (h *Handlers) simulateTest(testResult *models.TestResult) {
 // getProviderSpecificMetrics returns provider-specific test metrics
 func (h *Handlers) getProviderSpecificMetrics(provider string) map[string]interface{} {
 	switch provider {
-	case string(models.CloudProviderStackIT):
+	case string(sharedmodels.CloudProviderStackIT):
 		return map[string]interface{}{
 			"stackit_specific_metric": "sample_value",
 			"project_usage": "normal",
 			"hibernation_supported": true,
 		}
-	case string(models.CloudProviderHetzner):
+	case string(sharedmodels.CloudProviderHetzner):
 		return map[string]interface{}{
 			"hetzner_specific_metric": "sample_value",
 			"network_zone": "eu-central",
 			"load_balancer_type": "lb11",
 			"server_type": "cx21",
 		}
-	case string(models.CloudProviderIONOS):
+	case string(sharedmodels.CloudProviderIONOS):
 		return map[string]interface{}{
 			"ionos_specific_metric": "sample_value",
 			"datacenter_location": "de/fra",
 			"k8s_cluster_type": "managed",
 			"maintenance_window": "automatic",
 		}
-	case string(models.CloudProviderAzure):
+	case string(sharedmodels.CloudProviderAzure):
 		return map[string]interface{}{
 			"azure_specific_metric": "sample_value",
 			"aks_version": "1.28.0",
 			"resource_group_location": "eastus",
 		}
-	case string(models.CloudProviderAWS):
+	case string(sharedmodels.CloudProviderAWS):
 		return map[string]interface{}{
 			"aws_specific_metric": "sample_value",
 			"eks_version": "1.28",
 			"vpc_configuration": "standard",
 		}
-	case string(models.CloudProviderGCP):
+	case string(sharedmodels.CloudProviderGCP):
 		return map[string]interface{}{
 			"gcp_specific_metric": "sample_value",
 			"gke_version": "1.28.0",
@@ -349,16 +420,16 @@ func (h *Handlers) getProviderSpecificMetrics(provider string) map[string]interf
 }
 
 // validateClusterByProvider validates cluster configuration based on provider
-func (h *Handlers) validateClusterByProvider(cluster *models.Cluster) error {
+func (h *Handlers) validateClusterByProvider(cluster *sharedmodels.Cluster) error {
 	switch cluster.Provider {
-	case models.CloudProviderStackIT:
+	case sharedmodels.CloudProviderStackIT:
 		if cluster.ProjectID == "" {
 			return fmt.Errorf("project_id is required for StackIT clusters")
 		}
 		if cluster.Location == "" && cluster.Region == "" {
 			return fmt.Errorf("location or region is required for StackIT clusters")
 		}
-	case models.CloudProviderHetzner:
+	case sharedmodels.CloudProviderHetzner:
 		if cluster.Location == "" {
 			return fmt.Errorf("location is required for Hetzner Cloud clusters")
 		}
@@ -366,13 +437,14 @@ func (h *Handlers) validateClusterByProvider(cluster *models.Cluster) error {
 		if cluster.ProviderConfig != nil {
 			if hetznerConfig, ok := cluster.ProviderConfig["hetzner_config"]; ok {
 				if config, ok := hetznerConfig.(map[string]interface{}); ok {
+					// Check server_type field
 					if serverType, exists := config["server_type"]; exists && serverType == "" {
 						return fmt.Errorf("server_type cannot be empty for Hetzner clusters")
 					}
 				}
 			}
 		}
-	case models.CloudProviderIONOS:
+	case sharedmodels.CloudProviderIONOS:
 		// Validate IONOS-specific fields from ProviderConfig
 		if cluster.ProviderConfig != nil {
 			if ionosConfig, ok := cluster.ProviderConfig["ionos_config"]; ok {
@@ -387,18 +459,18 @@ func (h *Handlers) validateClusterByProvider(cluster *models.Cluster) error {
 		} else {
 			return fmt.Errorf("configuration is required for IONOS Cloud clusters")
 		}
-	case models.CloudProviderAzure:
+	case sharedmodels.CloudProviderAzure:
 		if cluster.ResourceGroup == "" {
 			return fmt.Errorf("resource_group is required for Azure clusters")
 		}
 		if cluster.Location == "" {
 			return fmt.Errorf("location is required for Azure clusters")
 		}
-	case models.CloudProviderAWS:
+	case sharedmodels.CloudProviderAWS:
 		if cluster.Region == "" {
 			return fmt.Errorf("region is required for AWS clusters")
 		}
-	case models.CloudProviderGCP:
+	case sharedmodels.CloudProviderGCP:
 		if cluster.ProjectID == "" {
 			return fmt.Errorf("project_id is required for GCP clusters")
 		}
