@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"punchbag-cube-testsuite/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
