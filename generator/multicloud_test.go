@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"punchbag-cube-testsuite/generator/internal/generator"
 )
 
 type MultiCloudTestCase struct {
@@ -75,7 +76,7 @@ func TestGenerateTerraformFromJSONMulticloud_S3(t *testing.T) {
 	inputFile := "../testdata/s3.json"
 	outputFile := "test_s3.tf"
 	defer os.Remove(outputFile)
-	if err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws"); err != nil {
+	if err := generator.GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws"); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 	content, err := os.ReadFile(outputFile)
@@ -98,7 +99,7 @@ func TestMultiCloudResourceGeneration_NegativeCases(t *testing.T) {
 		{"azure", "aks", map[string]interface{}{"name": "aks", "location": "loc"}}, // missing resourceGroup, nodeCount
 	}
 	for _, c := range cases {
-		err := validateResourceProperties(c.provider, c.resourceType, c.props)
+		err := ValidateResourceProperties(c.provider, c.resourceType, c.props)
 		if err == nil {
 			t.Errorf("Expected error for %s/%s with props %v", c.provider, c.resourceType, c.props)
 		}
@@ -106,7 +107,7 @@ func TestMultiCloudResourceGeneration_NegativeCases(t *testing.T) {
 }
 
 func TestMultiCloudResourceGeneration_UnknownProviderType(t *testing.T) {
-	err := validateResourceProperties("foo", "bar", map[string]interface{}{"name": "n"})
+	err := ValidateResourceProperties("foo", "bar", map[string]interface{}{"name": "n"})
 	if err == nil {
 		t.Error("Expected error for unknown provider/type")
 	}

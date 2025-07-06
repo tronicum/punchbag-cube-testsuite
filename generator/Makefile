@@ -15,6 +15,18 @@ clean:
 test:
 	go test -v ./...
 
+lint:
+	golangci-lint run
+
+fmt:
+	gofmt -s -w .
+
+vet:
+	go vet ./...
+
+deploy:
+	./deploy.sh
+
 # End-to-end test: simulate multitool, generate Terraform, lint
 end2end: clean build
 	chmod +x $(BINARY)
@@ -27,4 +39,4 @@ end2end: clean build
 		echo "tflint not found, skipping lint."; \
 	fi
 
-.PHONY: all build clean test end2end
+.PHONY: all build clean test lint fmt vet deploy end2end

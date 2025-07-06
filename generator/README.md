@@ -1,50 +1,87 @@
 # Werfty (Terraform Generator)
 
-Werfty is a code generator for Terraform resources, focused on Azure (AKS, Budgets, Monitoring, etc.). It can simulate resources using the cube-server or generate real Terraform code for deployment.
+Werfty is a modular code generator and test suite for Terraform resources, focused on Azure and multicloud (AWS, GCP) infrastructure. It supports YAML/JSON config input, robust CLI workflows, and extensibility for new providers/resources.
 
 ## Features
 
-- **Simulate resources** via cube-server REST API (no cloud calls required)
-- **Generate Terraform code** for AKS clusters, Budgets, and more
-- **Import existing resources** into Terraform state
-- **Supports both simulation and real execution workflows**
+- **YAML/JSON config input** for resource definitions
+- **Cobra CLI** with subcommands: `generate`, `validate`, `simulate`
+- **Generate Terraform code** for AKS, EKS, GKE, S3, Monitor, Log Analytics, App Insights, and more
+- **Schema validation** for resource properties
+- **Terraform output validation** (`terraform validate`, `tflint`) in tests and CI
+- **Extensible**: add new providers/resources easily
 
 ## Quick Start
 
-1. **Simulate an AKS cluster:**
+1. **Generate Terraform from YAML/JSON:**
    ```sh
-   go run main.go --simulate-import --name my-aks --resource-group my-rg --location eastus --node-count 3
-   ```
-   (Requires cube-server running at http://localhost:8080)
-
-2. **Generate Terraform for a new AKS cluster:**
-   ```sh
-   go run main.go --generate-terraform --name my-aks --resource-group my-rg --location eastus --node-count 3
+   go run main.go generate -i examples/example_azure_services.yaml -o output.tf -p azure
+   # or for AWS/GCP:
+   go run main.go generate -i examples/example_aws_eks.json -o output.tf -p aws
    ```
 
-3. **Import an existing AKS cluster into Terraform state:**
+2. **Validate a config file:**
    ```sh
-   terraform import azurerm_kubernetes_cluster.my_aks \
-     /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/my-rg/providers/Microsoft.ContainerService/managedClusters/my-aks
+   go run main.go validate -i examples/example_azure_services.yaml -p azure
    ```
 
-## API Credentials
+3. **Simulate (dry-run) Terraform output:**
+   ```sh
+   go run main.go simulate -o output.tf
+   # Runs terraform validate and tflint on the output
+   ```
 
-- Set as environment variables (recommended):
-  - `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
-- Or use a `.env` file or config YAML for local testing
+## Example YAML Config
 
-## Example Workflow
+```yaml
+resourceType: aks
+properties:
+  name: my-aks
+  location: eastus
+  resourceGroup: my-rg
+  nodeCount: 3
+```
 
-1. Simulate with Werfty → Review output
-2. Generate Terraform code → Apply with `terraform apply`
-3. Import existing resources with `terraform import` if needed
+## Example JSON Config
 
-## Development
+```json
+{
+  "resourceType": "eks",
+  "properties": {
+    "name": "my-eks",
+    "region": "us-west-2",
+    "nodeCount": 2
+  }
+}
+```
 
-- Extend resource support by editing `main.go` and template functions
-- Integrates with `shared/simulation` for simulation logic
+## Architecture & Extensibility
 
-## License
+- All resource generators and providers are modular (see `internal/generator/`)
+- Add new resources by implementing a generator and updating the provider
+- CLI is fully extensible via Cobra subcommands
 
-MIT
+## Advanced Usage
+
+- See `examples/` for more YAML/JSON configs
+- See `docs/` for architecture diagrams and plugin/extensibility notes (coming soon)
+
+## CI/CD & Deployment
+
+- CI runs on every push and PR: lint, test, terraform validate, tflint.
+- Deployment runs on push to `main` (see `.github/workflows/deploy.yml`).
+- Store cloud credentials as GitHub Actions secrets (e.g., `AZURE_CLIENT_ID`, `AWS_ACCESS_KEY_ID`, etc.).
+- Customize `deploy.sh` for your deployment needs (cloud, artifact, etc.).
+
+Example secret usage in workflow:
+```yaml
+      - name: Set up Azure credentials
+        run: |
+          echo "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+```
+
+---
+
+For more, see the [full documentation](docs/) or run `go run main.go --help`.

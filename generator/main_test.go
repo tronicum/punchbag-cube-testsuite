@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"punchbag-cube-testsuite/generator/internal/generator"
 )
 
 func TestGenerateTerraformFromJSON(t *testing.T) {
@@ -13,7 +14,7 @@ func TestGenerateTerraformFromJSON(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err := GenerateTerraformFromJSON(inputFile, outputFile)
+	err := generator.GenerateTerraformFromJSON(inputFile, outputFile)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -148,7 +149,7 @@ func TestGenerateTerraformFromJSON_EdgeCases(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err := GenerateTerraformFromJSON(inputFile, outputFile)
+	err := generator.GenerateTerraformFromJSON(inputFile, outputFile)
 	if err == nil {
 		t.Error("Expected error for missing properties, got nil")
 	}
@@ -160,7 +161,7 @@ func TestGenerateTerraformFromJSON_EdgeCases(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err = GenerateTerraformFromJSON(inputFile, outputFile)
+	err = generator.GenerateTerraformFromJSON(inputFile, outputFile)
 	if err == nil {
 		t.Error("Expected error for unknown resource type, got nil")
 	}
@@ -173,7 +174,7 @@ func TestGenerateTerraformFromJSONMulticloud_AWS(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws")
+	err := generator.GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -193,7 +194,7 @@ func TestGenerateTerraformFromJSONMulticloud_GCP(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "gcp")
+	err := generator.GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "gcp")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -213,7 +214,7 @@ func TestGenerateTerraformFromJSONMulticloud_UnknownProvider(t *testing.T) {
 	os.WriteFile(inputFile, []byte(input), 0644)
 	defer os.Remove(inputFile)
 	defer os.Remove(outputFile)
-	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "unknown")
+	err := generator.GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "unknown")
 	if err == nil {
 		t.Error("Expected error for unknown provider, got nil")
 	}
@@ -233,7 +234,7 @@ func TestValidateResourceProperties_MissingFields(t *testing.T) {
 		{"azure", "monitor", map[string]interface{}{"name": "n", "resourceGroup": "g"}, true}, // missing severity, criteria
 	}
 	for _, c := range cases {
-		err := validateResourceProperties(c.provider, c.resourceType, c.props)
+		err := ValidateResourceProperties(c.provider, c.resourceType, c.props)
 		if c.shouldFail && err == nil {
 			t.Errorf("Expected failure for %s/%s, got nil", c.provider, c.resourceType)
 		}
@@ -244,13 +245,13 @@ func TestValidateResourceProperties_MissingFields(t *testing.T) {
 }
 
 func TestValidateResourceProperties_InvalidProviderOrType(t *testing.T) {
-	err := validateResourceProperties("unknown", "aks", map[string]interface{}{"name": "n"})
-	if err == nil || !contains(err.Error(), "unknown provider or resource type") {
-		t.Errorf("Expected unknown provider/type error, got: %v", err)
+	err := ValidateResourceProperties("unknown", "aks", map[string]interface{}{"name": "n"})
+	if err == nil || !contains(err.Error(), "unknown provider:") {
+		t.Errorf("Expected unknown provider error, got: %v", err)
 	}
-	err = validateResourceProperties("azure", "unknown", map[string]interface{}{"name": "n"})
-	if err == nil || !contains(err.Error(), "unknown provider or resource type") {
-		t.Errorf("Expected unknown provider/type error, got: %v", err)
+	err = ValidateResourceProperties("azure", "unknown", map[string]interface{}{"name": "n"})
+	if err == nil || !contains(err.Error(), "unknown resource type:") {
+		t.Errorf("Expected unknown resource type error, got: %v", err)
 	}
 }
 
