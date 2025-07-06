@@ -110,181 +110,239 @@ provider "azurerm" {
 `
 	// Detect resource type by keys and map fields
 	var tf string
-	if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "monitor") {
-		// Map common Azure Monitor fields
-		name := safeString(props, "name", "example-monitor")
-		resourceGroup := safeString(props, "resourceGroup", "example-rg")
-		severity := safeString(props, "severity", "3")
-		criteria := safeString(props, "criteria", "")
-		enabled := safeBool(props, "enabled", true)
-		description := safeString(props, "description", "")
-		scopes := ""
-		if s, ok := props["scopes"].([]interface{}); ok && len(s) > 0 {
-			scopes = "  scopes = ["
-			for i, v := range s {
-				if i > 0 {
-					scopes += ", "
+	if props, ok := data["properties"].(map[string]interface{}); ok {
+		// Robust resource type detection
+		if _, hasNodeCount := props["nodeCount"]; hasNodeCount && strings.Contains(strings.ToLower(safeString(props, "name", "")), "aks") {
+			// Map AKS cluster fields (expanded)
+			name := safeString(props, "name", "example-aks")
+			location := safeString(props, "location", "eastus")
+			resourceGroup := safeString(props, "resourceGroup", "example-rg")
+			nodeCount := safeInt(props, "nodeCount", 3)
+			// AKS specific fields
+			kubernetesVersion := safeString(props, "kubernetesVersion", "1.21.2")
+			networkPlugin := safeString(props, "networkPlugin", "azure")
+			networkPolicy := safeString(props, "networkPolicy", "azure")
+			dnsPrefix := safeString(props, "dnsPrefix", "exampleaks")
+			agentPoolProfile := safeString(props, "agentPoolProfile", "default")
+			identity := safeString(props, "identity", "")
+			tags := safeString(props, "tags", "")
+			// AKS availability zones (if applicable)
+			var zones string
+			if z, ok := props["availabilityZones"].([]interface{}); ok && len(z) > 0 {
+				zones = "  availability_zones = ["
+				for i, v := range z {
+					if i > 0 {
+						zones += ", "
+					}
+					zones += fmt.Sprintf("\"%s\"", v)
 				}
-				scopes += fmt.Sprintf("\"%s\"", v)
+				zones += "]\n"
 			}
-			scopes += "]\n"
-		}
-		descriptionLine := ""
-		if description != "" {
-			descriptionLine = fmt.Sprintf("  description = \"%s\"\n", description)
-		}
-		enabledLine := ""
-		if !enabled {
-			enabledLine = "  enabled = false\n"
-		}
-		tf = fmt.Sprintf(`resource "azurerm_monitor_metric_alert" "example" {
+			// AKS node pool labels and taints
+			labels := safeString(props, "nodePoolLabels", "")
+			taints := safeString(props, "nodePoolTaints", "")
+			// Build the Terraform resource block for AKS
+			tf = fmt.Sprintf(`resource "azurerm_kubernetes_cluster" "example" {
+  name                = "%s"
+  location            = "%s"
+  resource_group_name = "%s"
+  default_node_pool {
+    name       = "default"
+    node_count = %d
+  }
+  identity {
+    type = "%s"
+  }
+  sku {
+    name     = "Standard_DS2_v2"
+    tier     = "Standard"
+    capacity = %d
+  }
+  network_profile {
+    network_plugin = "%s"
+    network_policy = "%s"
+  }
+  dns_prefix          = "%s"
+  tags                = %s
+  %s%s  // ...map more fields from JSON as needed
+}`,
+				name, location, resourceGroup, nodeCount, identity, nodeCount, networkPlugin, networkPolicy, dnsPrefix, tags, zones, labels, taints)
+		} else if strings.Contains(inputPath, "monitor") {
+			// Map common Azure Monitor fields
+			name := safeString(props, "name", "example-monitor")
+			resourceGroup := safeString(props, "resourceGroup", "example-rg")
+			severity := safeString(props, "severity", "3")
+			criteria := safeString(props, "criteria", "")
+			enabled := safeBool(props, "enabled", true)
+			description := safeString(props, "description", "")
+			scopes := ""
+			if s, ok := props["scopes"].([]interface{}); ok && len(s) > 0 {
+				scopes = "  scopes = ["
+				for i, v := range s {
+					if i > 0 {
+						scopes += ", "
+					}
+					scopes += fmt.Sprintf("\"%s\"", v)
+				}
+				scopes += "]\n"
+			}
+			descriptionLine := ""
+			if description != "" {
+				descriptionLine = fmt.Sprintf("  description = \"%s\"\n", description)
+			}
+			enabledLine := ""
+			if !enabled {
+				enabledLine = "  enabled = false\n"
+			}
+			// Additional Monitor fields
+			evaluationFrequency := safeString(props, "evaluationFrequency", "")
+			windowSize := safeString(props, "windowSize", "")
+			disabled := safeBool(props, "disabled", false)
+			autoMitigate := safeBool(props, "autoMitigate", true)
+			alertRuleResourceId := safeString(props, "alertRuleResourceId", "")
+			criteriaBlock := ""
+			if c, ok := props["criteriaBlock"].(string); ok && c != "" {
+				criteriaBlock = fmt.Sprintf("  criteria_block = \"%s\"\n", c)
+			}
+			evalFreqLine := ""
+			if evaluationFrequency != "" {
+				evalFreqLine = fmt.Sprintf("  evaluation_frequency = \"%s\"\n", evaluationFrequency)
+			}
+			windowSizeLine := ""
+			if windowSize != "" {
+				windowSizeLine = fmt.Sprintf("  window_size = \"%s\"\n", windowSize)
+			}
+			disabledLine := ""
+			if disabled {
+				disabledLine = "  enabled = false\n"
+			}
+			autoMitigateLine := ""
+			if !autoMitigate {
+				autoMitigateLine = "  auto_mitigate = false\n"
+			}
+			alertRuleResourceIdLine := ""
+			if alertRuleResourceId != "" {
+				alertRuleResourceIdLine = fmt.Sprintf("  alert_rule_resource_id = \"%s\"\n", alertRuleResourceId)
+			}
+			tf = fmt.Sprintf(`resource "azurerm_monitor_metric_alert" "example" {
   name                = "%s"
   resource_group_name = "%s"
   severity            = %s
   criteria            = "%s"
-%s%s%s%s  // ...map more fields from JSON as needed
+%s%s%s%s%s%s%s%s%s%s  // ...map more fields from JSON as needed
 }`,
-			name, resourceGroup, severity, criteria, descriptionLine, enabledLine, scopes, "")
-	} else if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "loganalytics") {
-		// Map common Log Analytics fields (expanded)
-		name := safeString(props, "name", "example-log-analytics")
-		location := safeString(props, "location", "West Europe")
-		resourceGroup := safeString(props, "resourceGroup", "example-resource-group")
-		sku := safeString(props, "sku", "PerGB2018")
-		retention := safeInt(props, "retentionInDays", 30)
-		customerId := safeString(props, "customerId", "")
-		workspaceCapping := safeInt(props, "workspaceCapping", 0)
-		internetIngestion := safeBool(props, "internetIngestionEnabled", false)
-		internetQuery := safeBool(props, "internetQueryEnabled", false)
-		tagsBlock := ""
-		if t, ok := props["tags"].(map[string]interface{}); ok && len(t) > 0 {
-			tagsBlock = "  tags = {\n"
-			for k, v := range t {
-				tagsBlock += fmt.Sprintf("    %q = %q\n", k, v)
+				name, resourceGroup, severity, criteria, descriptionLine, enabledLine, scopes, evalFreqLine, windowSizeLine, disabledLine, autoMitigateLine, alertRuleResourceIdLine, criteriaBlock, "")
+		} else if strings.Contains(inputPath, "loganalytics") {
+			// Map Log Analytics fields (expanded)
+			name := safeString(props, "name", "example-log-analytics")
+			location := safeString(props, "location", "West Europe")
+			resourceGroup := safeString(props, "resourceGroup", "example-resource-group")
+			sku := safeString(props, "sku", "PerGB2018")
+			retention := safeInt(props, "retentionInDays", 30)
+			customerId := safeString(props, "customerId", "")
+			workspaceCapping := safeInt(props, "workspaceCapping", 0)
+			internetIngestion := safeBool(props, "internetIngestionEnabled", false)
+			internetQuery := safeBool(props, "internetQueryEnabled", false)
+			reservationCap := safeInt(props, "reservationCapacityInGbPerDay", 0)
+			dailyQuota := safeInt(props, "dailyQuotaGb", 0)
+			publicNetworkAccess := safeString(props, "publicNetworkAccessForIngestion", "")
+			workspaceId := safeString(props, "workspaceId", "")
+			primarySharedKey := safeString(props, "primarySharedKey", "")
+			tagsBlock := ""
+			if t, ok := props["tags"].(map[string]interface{}); ok && len(t) > 0 {
+				tagsBlock = "  tags = {\n"
+				for k, v := range t {
+					tagsBlock += fmt.Sprintf("    %q = %q\n", k, v)
+				}
+				tagsBlock += "  }\n"
 			}
-			tagsBlock += "  }\n"
-		}
-		cappingBlock := ""
-		if workspaceCapping > 0 {
-			cappingBlock = fmt.Sprintf("  workspace_capping {\n    daily_quota_gb = %d\n  }\n", workspaceCapping)
-		}
-		customerIdLine := ""
-		if customerId != "" {
-			customerIdLine = fmt.Sprintf("  customer_id = \"%s\"\n", customerId)
-		}
-		internetIngestionLine := ""
-		if internetIngestion {
-			internetIngestionLine = "  internet_ingestion_enabled = true\n"
-		}
-		internetQueryLine := ""
-		if internetQuery {
-			internetQueryLine = "  internet_query_enabled = true\n"
-		}
-		tf = fmt.Sprintf(`resource "azurerm_log_analytics_workspace" "example" {
+			cappingBlock := ""
+			if workspaceCapping > 0 {
+				cappingBlock = fmt.Sprintf("  workspace_capping {\n    daily_quota_gb = %d\n  }\n", workspaceCapping)
+			}
+			customerIdLine := ""
+			if customerId != "" {
+				customerIdLine = fmt.Sprintf("  customer_id = \"%s\"\n", customerId)
+			}
+			internetIngestionLine := ""
+			if internetIngestion {
+				internetIngestionLine = "  internet_ingestion_enabled = true\n"
+			}
+			internetQueryLine := ""
+			if internetQuery {
+				internetQueryLine = "  internet_query_enabled = true\n"
+			}
+			reservationCapLine := ""
+			if reservationCap > 0 {
+				reservationCapLine = fmt.Sprintf("  reservation_capacity_in_gb_per_day = %d\n", reservationCap)
+			}
+			dailyQuotaLine := ""
+			if dailyQuota > 0 {
+				dailyQuotaLine = fmt.Sprintf("  daily_quota_gb = %d\n", dailyQuota)
+			}
+			publicNetworkAccessLine := ""
+			if publicNetworkAccess != "" {
+				publicNetworkAccessLine = fmt.Sprintf("  public_network_access_for_ingestion = \"%s\"\n", publicNetworkAccess)
+			}
+			workspaceIdLine := ""
+			if workspaceId != "" {
+				workspaceIdLine = fmt.Sprintf("  workspace_id = \"%s\"\n", workspaceId)
+			}
+			primarySharedKeyLine := ""
+			if primarySharedKey != "" {
+				primarySharedKeyLine = fmt.Sprintf("  primary_shared_key = \"%s\"\n", primarySharedKey)
+			}
+			tf = fmt.Sprintf(`resource "azurerm_log_analytics_workspace" "example" {
   name                = "%s"
   location            = "%s"
   resource_group_name = "%s"
   sku                 = "%s"
   retention_in_days   = %d
-%s%s%s%s%s  // ...map more fields from JSON as needed
+%s%s%s%s%s%s%s%s%s%s%s  // ...map more fields from JSON as needed
 }`,
-			name, location, resourceGroup, sku, retention, customerIdLine, cappingBlock, internetIngestionLine, internetQueryLine, tagsBlock)
-	} else if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "aks") {
-		// Map AKS cluster fields (expanded)
-		name := safeString(props, "name", "example-aks")
-		location := safeString(props, "location", "eastus")
-		resourceGroup := safeString(props, "resourceGroup", "example-rg")
-		nodeCount := safeInt(props, "nodeCount", 3)
-		kubernetesVersion := safeString(props, "kubernetesVersion", "")
-		identityType := safeString(props, "identityType", "")
-		vnetSubnetId := safeString(props, "vnetSubnetId", "")
-		dnsPrefix := safeString(props, "dnsPrefix", "")
-		privateCluster := safeBool(props, "privateClusterEnabled", false)
-		httpAppRouting := safeBool(props, "httpApplicationRoutingEnabled", false)
-		linuxProfile := ""
-		if lp, ok := props["linuxProfile"].(map[string]interface{}); ok && len(lp) > 0 {
-			linuxProfile = "  linux_profile {\n"
-			if admin, ok := lp["adminUsername"].(string); ok {
-				linuxProfile += fmt.Sprintf("    admin_username = \"%s\"\n", admin)
-			}
-			if ssh, ok := lp["sshKey"].(string); ok {
-				linuxProfile += fmt.Sprintf("    ssh_key {\n      key_data = \"%s\"\n    }\n", ssh)
-			}
-			linuxProfile += "  }\n"
-		}
-		servicePrincipal := ""
-		if sp, ok := props["servicePrincipal"].(map[string]interface{}); ok && len(sp) > 0 {
-			servicePrincipal = "  service_principal {\n"
-			if cid, ok := sp["clientId"].(string); ok {
-				servicePrincipal += fmt.Sprintf("    client_id = \"%s\"\n", cid)
-			}
-			if secret, ok := sp["clientSecret"].(string); ok {
-				servicePrincipal += fmt.Sprintf("    client_secret = \"%s\"\n", secret)
-			}
-			servicePrincipal += "  }\n"
-		}
-		apiServerIPs := ""
-		if ips, ok := props["apiServerAuthorizedIpRanges"].([]interface{}); ok && len(ips) > 0 {
-			apiServerIPs = "  api_server_authorized_ip_ranges = ["
-			for i, ip := range ips {
-				if i > 0 {
-					apiServerIPs += ", "
+				name, location, resourceGroup, sku, retention, customerIdLine, cappingBlock, internetIngestionLine, internetQueryLine, reservationCapLine, dailyQuotaLine, publicNetworkAccessLine, workspaceIdLine, primarySharedKeyLine, tagsBlock, "")
+		} else if strings.Contains(inputPath, "appinsights") {
+			// Map Application Insights fields
+			name := safeString(props, "name", "example-appinsights")
+			location := safeString(props, "location", "West Europe")
+			resourceGroup := safeString(props, "resourceGroup", "example-resource-group")
+			appType := safeString(props, "applicationType", "web")
+			retention := safeInt(props, "retentionInDays", 90)
+			workspaceId := safeString(props, "workspaceId", "")
+			dailyCap := safeInt(props, "dailyDataCapInGb", 0)
+			disableIpMasking := safeBool(props, "disableIpMasking", false)
+			tagsBlock := ""
+			if t, ok := props["tags"].(map[string]interface{}); ok && len(t) > 0 {
+				tagsBlock = "  tags = {\n"
+				for k, v := range t {
+					tagsBlock += fmt.Sprintf("    %q = %q\n", k, v)
 				}
-				apiServerIPs += fmt.Sprintf("\"%s\"", ip)
+				tagsBlock += "  }\n"
 			}
-			apiServerIPs += "]\n"
-		}
-		tagsBlock := ""
-		if t, ok := props["tags"].(map[string]interface{}); ok && len(t) > 0 {
-			tagsBlock = "  tags = {\n"
-			for k, v := range t {
-				tagsBlock += fmt.Sprintf("    %q = %q\n", k, v)
+			workspaceIdLine := ""
+			if workspaceId != "" {
+				workspaceIdLine = fmt.Sprintf("  workspace_id = \"%s\"\n", workspaceId)
 			}
-			tagsBlock += "  }\n"
-		}
-		identityBlock := ""
-		if identityType != "" {
-			identityBlock = fmt.Sprintf("  identity {\n    type = \"%s\"\n  }\n", identityType)
-		}
-		networkBlock := ""
-		if vnetSubnetId != "" {
-			networkBlock = fmt.Sprintf(`  network_profile {\n    network_plugin      = "azure"\n    network_policy      = "azure"\n    dns_service_ip      = "10.0.0.10"\n    service_cidr        = "10.0.0.0/16"\n    docker_bridge_cidr  = "172.17.0.1/16"\n    outbound_type       = "loadBalancer"\n    load_balancer_sku   = "standard"\n    network_plugin_mode = "overlay"\n    subnet_id           = "%s"\n  }\n`, vnetSubnetId)
-		}
-		k8sVersionLine := ""
-		if kubernetesVersion != "" {
-			k8sVersionLine = fmt.Sprintf("  kubernetes_version  = \"%s\"\n", kubernetesVersion)
-		}
-		dnsPrefixLine := ""
-		if dnsPrefix != "" {
-			dnsPrefixLine = fmt.Sprintf("  dns_prefix = \"%s\"\n", dnsPrefix)
-		}
-		privateClusterLine := ""
-		if privateCluster {
-			privateClusterLine = "  private_cluster_enabled = true\n"
-		}
-		httpAppRoutingLine := ""
-		if httpAppRouting {
-			httpAppRoutingLine = "  http_application_routing_enabled = true\n"
-		}
-		addonProfileBlock := ""
-		if ap, ok := props["addonProfile"].(map[string]interface{}); ok && len(ap) > 0 {
-			addonProfileBlock = "  addon_profile {\n"
-			for k, v := range ap {
-				addonProfileBlock += fmt.Sprintf("    %s = %v\n", k, v)
+			dailyCapLine := ""
+			if dailyCap > 0 {
+				dailyCapLine = fmt.Sprintf("  daily_data_cap_in_gb = %d\n", dailyCap)
 			}
-			addonProfileBlock += "  }\n"
-		}
-		tf = fmt.Sprintf(`resource "azurerm_kubernetes_cluster" "example" {
+			disableIpMaskingLine := ""
+			if disableIpMasking {
+				disableIpMaskingLine = "  disable_ip_masking = true\n"
+			}
+			tf = fmt.Sprintf(`resource "azurerm_application_insights" "example" {
   name                = "%s"
   location            = "%s"
   resource_group_name = "%s"
-%s%s%s%s%s%s  default_node_pool {
-    name       = "default"
-    node_count = %d
-  }
-%s%s%s%s%s  // ...map more fields from JSON as needed
+  application_type    = "%s"
+  retention_in_days   = %d
+%s%s%s%s  // ...map more fields from JSON as needed
 }`,
-			name, location, resourceGroup, k8sVersionLine, dnsPrefixLine, privateClusterLine, httpAppRoutingLine, linuxProfile, servicePrincipal, nodeCount, identityBlock, apiServerIPs, networkBlock, addonProfileBlock, tagsBlock)
+				name, location, resourceGroup, appType, retention, workspaceIdLine, dailyCapLine, disableIpMaskingLine, tagsBlock)
+		} else {
+			return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
+		}
 	} else {
 		return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
 	}
@@ -338,6 +396,36 @@ func main() {
 	resourceGroup := flag.String("resource-group", "", "Resource group (mock)")
 	nodeCount := flag.Int("node-count", 3, "Node count (AKS, mock)")
 	flag.Parse()
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, `werfty - Azure resource simulation and Terraform codegen
+
+USAGE:
+  werfty [flags]
+
+FLAGS:
+  --simulate-import         Simulate resource import (mock, outputs JSON)
+  --generate-terraform      Generate Terraform from JSON input
+  --input <file>            Input JSON file (from multitool)
+  --output <file>           Output Terraform file
+  --resource-type <type>    Resource type: monitor|loganalytics|aks|budget (mock)
+  --name <name>             Resource name (mock)
+  --location <location>     Resource location (mock)
+  --resource-group <group>  Resource group (mock)
+  --node-count <n>          Node count (AKS, mock)
+  -h, --help                Show this help
+
+EXAMPLES:
+  Simulate AKS:
+    werfty --simulate-import --resource-type aks --name my-aks --resource-group my-rg --location eastus --node-count 3
+
+  Generate Terraform from JSON:
+    werfty --generate-terraform --input test_aks_expanded.json --output test_aks_expanded.tf
+
+  Import existing AKS to Terraform state:
+    terraform import azurerm_kubernetes_cluster.my_aks /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/my-rg/providers/Microsoft.ContainerService/managedClusters/my-aks
+`)
+	}
 
 	if *simulate {
 		// Output a mock JSON for the requested resource type
