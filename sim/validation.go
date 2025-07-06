@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"punchbag-cube-testsuite/multitool/pkg/models"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // ValidationResult is a generic response for validation
@@ -23,7 +23,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(r.Body)
 	switch {
 	case provider == "azure" && resource == "aks":
-		var c models.Cluster
+		var c sharedmodels.Cluster
 		if err := dec.Decode(&c); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode AKS payload for validation: %v", r.Method, r.URL.Path, err)
 			valid = false
@@ -35,7 +35,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "AKS payload valid"
 		}
 	case provider == "azure" && resource == "loganalytics":
-		var ws models.LogAnalyticsWorkspace
+		var ws sharedmodels.LogAnalyticsWorkspace
 		if err := dec.Decode(&ws); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode Log Analytics payload for validation: %v", r.Method, r.URL.Path, err)
 			valid = false
@@ -47,7 +47,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "Log Analytics payload valid"
 		}
 	case provider == "azure" && resource == "budget":
-		var b models.AzureBudget
+		var b sharedmodels.AzureBudget
 		if err := dec.Decode(&b); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode Budget payload for validation: %v", r.Method, r.URL.Path, err)
 			valid = false
@@ -59,7 +59,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "Budget payload valid"
 		}
 	case provider == "azure" && resource == "appinsights":
-		var a models.AppInsightsResource
+		var a sharedmodels.AppInsightsResource
 		if err := dec.Decode(&a); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode App Insights payload for validation: %v", r.Method, r.URL.Path, err)
 			valid = false
@@ -71,7 +71,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "App Insights payload valid"
 		}
 	case provider == "aws" && resource == "s3":
-		var b models.S3Bucket
+		var b sharedmodels.ObjectStorageBucket
 		if err := dec.Decode(&b); err != nil {
 			valid = false
 			msg = "Invalid S3 payload: " + err.Error()
@@ -82,7 +82,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "S3 payload valid"
 		}
 	case provider == "azure" && resource == "blob":
-		var b models.BlobStorage
+		var b sharedmodels.ObjectStorageBucket
 		if err := dec.Decode(&b); err != nil {
 			valid = false
 			msg = "Invalid Blob payload: " + err.Error()
@@ -93,7 +93,7 @@ func HandleValidation(w http.ResponseWriter, r *http.Request) {
 			msg = "Blob payload valid"
 		}
 	case provider == "gcp" && resource == "gcs":
-		var b models.GCSBucket
+		var b sharedmodels.ObjectStorageBucket
 		if err := dec.Decode(&b); err != nil {
 			valid = false
 			msg = "Invalid GCS payload: " + err.Error()

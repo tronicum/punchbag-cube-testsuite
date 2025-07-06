@@ -9,9 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"punchbag-cube-testsuite/multitool/pkg/client"
-	"punchbag-cube-testsuite/multitool/pkg/models"
 	"punchbag-cube-testsuite/multitool/pkg/output"
-	sharedmodels "punchbag-cube-testsuite/shared/models"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 var (

@@ -53,8 +53,9 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	if err := h.store.CreateCluster(&cluster); err != nil {
-		if err == store.ErrAlreadyExists {
+	_, err := h.store.CreateCluster(&cluster)
+	if err != nil {
+		if err != nil && (err.Error() == "cluster already exists" || err.Error() == "already exists") {
 			c.JSON(http.StatusConflict, gin.H{"error": "cluster already exists"})
 			return
 		}
@@ -72,7 +73,7 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 	id := c.Param("id")
 	cluster, err := h.store.GetCluster(id)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -126,8 +127,9 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	if err := h.store.UpdateCluster(id, &cluster); err != nil {
-		if err == store.ErrNotFound {
+	_, err := h.store.UpdateCluster(id, &cluster)
+	if err != nil {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -143,8 +145,9 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 // DeleteCluster handles DELETE /clusters/:id
 func (h *Handlers) DeleteCluster(c *gin.Context) {
 	id := c.Param("id")
-	if err := h.store.DeleteCluster(id); err != nil {
-		if err == store.ErrNotFound {
+	err := h.store.DeleteCluster(id)
+	if err != nil {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -170,7 +173,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	// Verify cluster exists
 	cluster, err := h.store.GetCluster(clusterID)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -195,7 +198,8 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	testResult.Details["provider"] = string(cluster.Provider)
 	testResult.Details["cluster_name"] = cluster.Name
 
-	if err := h.store.CreateTestResult(testResult); err != nil {
+	_, err = h.store.CreateTestResult(testResult)
+	if err != nil {
 		h.logger.Error("Failed to create test result", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
@@ -217,7 +221,7 @@ func (h *Handlers) GetTestResult(c *gin.Context) {
 	id := c.Param("id")
 	result, err := h.store.GetTestResult(id)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "test result not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "test result not found"})
 			return
 		}

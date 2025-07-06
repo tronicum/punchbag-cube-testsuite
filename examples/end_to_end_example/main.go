@@ -1,0 +1,3 @@
+package main
+
+// ...existing code from end_to_end_example.go...

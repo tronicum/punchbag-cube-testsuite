@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"punchbag-cube-testsuite/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -340,7 +341,7 @@ func (h *ProviderSimulationHandlers) ListProviderClusters(c *gin.Context) {
 	provider := c.Param("provider")
 	
 	// Get clusters for the specific provider
-	clusters, err := h.store.ListClustersByProvider(provider)
+	clusters, err := h.store.ListClustersByProvider(sharedmodels.CloudProvider(provider))
 	if err != nil {
 		h.logger.Error("Failed to list clusters", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list clusters"})

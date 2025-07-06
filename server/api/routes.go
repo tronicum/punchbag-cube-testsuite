@@ -2,8 +2,8 @@ package api
 
 import (
 	"time"
-	
-	"github.com/tronicum/punchbag-cube-testsuite/store"
+
+	store "github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -60,7 +60,7 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 
 		// Provider simulation endpoints
 		providerHandlers := NewProviderSimulationHandlers(store, logger)
-		
+
 		// Validation endpoints
 		validate := v1.Group("/validate")
 		{
@@ -114,27 +114,27 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 			"version": "v1",
 			"endpoints": gin.H{
 				"clusters": gin.H{
-					"POST /api/v1/clusters":           "Create a new AKS cluster",
+					"POST /api/v1/clusters": "Create a new AKS cluster",
 				},
 				"metrics": gin.H{
 					"GET /api/v1/metrics/health": "Health check",
 					"GET /api/v1/metrics/status": "Service status",
 				},
 				"providers": gin.H{
-					"GET /api/v1/providers/:provider/info":         "Get provider information",
-					"GET /api/v1/providers/:provider/clusters":     "List clusters for provider",
+					"GET /api/v1/providers/:provider/info":                   "Get provider information",
+					"GET /api/v1/providers/:provider/clusters":               "List clusters for provider",
 					"POST /api/v1/providers/:provider/operations/:operation": "Simulate provider operation",
 				},
 				"validate": gin.H{
 					"GET /api/v1/validate/:provider": "Validate provider configuration",
 				},
 				"simulator": gin.H{
-					"POST /api/v1/simulator/azure/aks":     "Simulate AKS cluster creation",
-					"POST /api/v1/simulator/azure/budget":  "Simulate Azure budget",
+					"POST /api/v1/simulator/azure/aks":    "Simulate AKS cluster creation",
+					"POST /api/v1/simulator/azure/budget": "Simulate Azure budget",
 				},
 				"executor": gin.H{
-					"POST /api/v1/executor/azure/aks":     "Execute AKS cluster creation (real cloud)",
-					"POST /api/v1/executor/azure/budget":  "Execute Azure budget (real cloud)",
+					"POST /api/v1/executor/azure/aks":    "Execute AKS cluster creation (real cloud)",
+					"POST /api/v1/executor/azure/budget": "Execute Azure budget (real cloud)",
 				},
 			},
 		})

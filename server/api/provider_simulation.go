@@ -251,7 +251,8 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 	cluster := h.simulator.GenerateClusterFromSimulation(string(req.Provider), req.Name, req.Config)
 
 	// Store the simulated cluster
-	if err := h.store.CreateCluster(cluster); err != nil {
+	_, err := h.store.CreateCluster(cluster)
+	if err != nil {
 		h.logger.Error("Failed to store simulated cluster", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create simulated cluster",
@@ -280,7 +281,7 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 	// Check if cluster exists
 	_, err := h.store.GetCluster(req.ClusterID)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cluster not found",
 			})
@@ -297,7 +298,8 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 	testResult := h.simulator.GenerateTestResultFromSimulation(req.ClusterID, req.TestType)
 
 	// Store the test result
-	if err := h.store.CreateTestResult(testResult); err != nil {
+	_, err = h.store.CreateTestResult(testResult)
+	if err != nil {
 		h.logger.Error("Failed to store test result", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create test result",

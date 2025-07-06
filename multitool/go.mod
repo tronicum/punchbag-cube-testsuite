@@ -1,9 +1,10 @@
-module punchbag-cube-testsuite/multitool
+module github.com/tronicum/punchbag-cube-testsuite/multitool
 
 go 1.21
 
 require (
 	github.com/spf13/cobra v1.8.0
+	github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0-20250706185856-eceb415ddeb0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

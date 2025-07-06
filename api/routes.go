@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 	
-	"punchbag-cube-testsuite/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

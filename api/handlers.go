@@ -1,14 +1,12 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
-	"punchbag-cube-testsuite/models"
-	"punchbag-cube-testsuite/multitool/pkg/models"
-	"punchbag-cube-testsuite/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -30,7 +28,7 @@ func NewHandlers(store store.Store, logger *zap.Logger) *Handlers {
 
 // CreateCluster handles POST /clusters
 func (h *Handlers) CreateCluster(c *gin.Context) {
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -38,25 +36,23 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 	}
 
 	// Validate cloud provider
-	validProviders := []string{
-		models.CloudProviderAzure,
-		models.CloudProviderAWS,
-		models.CloudProviderGCP,
-		models.CloudProviderStackit,
-		models.CloudProviderHetzner,
-		models.CloudProviderIONOS,
+	validProviders := []sharedmodels.CloudProvider{
+		sharedmodels.Azure,
+		sharedmodels.AWS,
+		sharedmodels.GCP,
+		sharedmodels.StackIT,
+		sharedmodels.Hetzner,
+		sharedmodels.IONOS,
 	}
-	
 	valid := false
 	for _, provider := range validProviders {
-		if cluster.CloudProvider == provider {
+		if cluster.Provider == provider {
 			valid = true
 			break
 		}
 	}
-	
 	if !valid {
-		h.logger.Error("Invalid cloud provider", zap.String("provider", cluster.CloudProvider))
+		h.logger.Error("Invalid cloud provider", zap.String("provider", string(cluster.Provider)))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid cloud provider"})
 		return
 	}
@@ -74,7 +70,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster created", zap.String("id", created.ID), zap.String("provider", created.CloudProvider))
+	h.logger.Info("Cluster created", zap.String("id", created.ID), zap.String("provider", string(created.Provider)))
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -98,16 +94,16 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 // ListClusters handles GET /clusters
 func (h *Handlers) ListClusters(c *gin.Context) {
 	provider := c.Query("provider")
-	
-	var clusters []*models.Cluster
+
+	var clusters []*sharedmodels.Cluster
 	var err error
-	
+
 	if provider != "" {
-		clusters, err = h.store.ListClustersByProvider(provider)
+		clusters, err = h.store.ListClustersByProvider(sharedmodels.CloudProvider(provider))
 	} else {
 		clusters, err = h.store.ListClusters()
 	}
-	
+
 	if err != nil {
 		h.logger.Error("Failed to list clusters", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -120,7 +116,7 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 // UpdateCluster handles PUT /clusters/:id
 func (h *Handlers) UpdateCluster(c *gin.Context) {
 	id := c.Param("id")
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := c.ShouldBindJSON(&cluster); err != nil {
 		h.logger.Error("Failed to bind cluster data", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -134,7 +130,7 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", updated.CloudProvider))
+	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", string(updated.Provider)))
 	c.JSON(http.StatusOK, updated)
 }
 
@@ -158,7 +154,7 @@ func (h *Handlers) DeleteCluster(c *gin.Context) {
 // RunTest handles POST /clusters/:id/tests
 func (h *Handlers) RunTest(c *gin.Context) {
 	clusterID := c.Param("id")
-	var testReq models.TestRequest
+	var testReq sharedmodels.TestRequest
 	if err := c.ShouldBindJSON(&testReq); err != nil {
 		h.logger.Error("Failed to bind test request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -178,7 +174,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	}
 
 	// Create test result
-	testResult := &models.TestResult{
+	testResult := &sharedmodels.TestResult{
 		ID:        generateID(),
 		ClusterID: clusterID,
 		TestType:  testReq.TestType,
@@ -234,7 +230,7 @@ func (h *Handlers) ListTestResults(c *gin.Context) {
 // ProxyS3 handles /api/proxy/aws/s3
 func (h *Handlers) ProxyS3(c *gin.Context) {
 	if c.Request.Method == http.MethodPost {
-		var bucket models.S3Bucket
+		var bucket sharedmodels.ObjectStorageBucket
 		if err := c.ShouldBindJSON(&bucket); err != nil {
 			h.logger.Error("Failed to bind S3 bucket payload", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -253,9 +249,6 @@ func (h *Handlers) ProxyS3(c *gin.Context) {
 				return
 			}
 		}
-		if bucket.Versioning != nil {
-			// No further validation needed for now
-		}
 		if bucket.Lifecycle != nil {
 			for _, rule := range bucket.Lifecycle {
 				if rule.ID == "" || rule.Status == "" {
@@ -266,8 +259,8 @@ func (h *Handlers) ProxyS3(c *gin.Context) {
 		}
 
 		// --- Simulate creation/response ---
-		bucket.ID = bucket.Name + "-" + bucket.Provider
-		bucket.CreatedAt = time.Now().Format(time.RFC3339)
+		bucket.ID = bucket.Name + "-" + string(bucket.Provider)
+		bucket.CreatedAt = time.Now()
 
 		// TODO: Integrate with real provider APIs here
 
@@ -288,7 +281,7 @@ func (h *Handlers) ProxyGCS(c *gin.Context) {
 }
 
 // simulateTest simulates a test execution and updates the result
-func (h *Handlers) simulateTest(testResult *models.TestResult) {
+func (h *Handlers) simulateTest(testResult *sharedmodels.TestResult) {
 	// Simulate test duration
 	time.Sleep(5 * time.Second)
 
