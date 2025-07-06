@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"punchbag-cube-testsuite/shared/simulation"
+
 	"github.com/username/punchbag-cube-testsuite/server/models"
 	"github.com/username/punchbag-cube-testsuite/server/store"
-	"punchbag-cube-testsuite/shared/simulation"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -45,7 +46,7 @@ func (h *ProviderSimulationHandlers) ValidateProvider(c *gin.Context) {
 	h.logger.Info("Validating provider", zap.String("provider", req.Provider))
 
 	result := h.simulator.ValidateProvider(req.Provider, req.Credentials)
-	
+
 	if result.Valid {
 		c.JSON(http.StatusOK, result)
 	} else {
@@ -61,7 +62,7 @@ func (h *ProviderSimulationHandlers) ValidateProviderLegacy(c *gin.Context) {
 	h.logger.Info("Validating provider (legacy)", zap.String("provider", provider))
 
 	result := h.simulator.ValidateProvider(provider, nil)
-	
+
 	if result.Valid {
 		c.JSON(http.StatusOK, result)
 	} else {
@@ -84,7 +85,7 @@ func (h *ProviderSimulationHandlers) ValidateProviderLegacy(c *gin.Context) {
 // GetProviderInfo handles GET /providers/{provider-name}/info
 func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
 	provider := c.Param("provider")
-	
+
 	switch provider {
 	case "azure":
 		h.getAzureInfo(c)
@@ -107,14 +108,14 @@ func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getAzureInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "azure",
-		"name":     "Microsoft Azure",
-		"description": "Microsoft's cloud computing platform",
+		"provider":      "azure",
+		"name":          "Microsoft Azure",
+		"description":   "Microsoft's cloud computing platform",
 		"documentation": "https://docs.microsoft.com/en-us/azure/aks/",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
 			"auto-scaling",
-			"load-balancing", 
+			"load-balancing",
 			"monitoring",
 			"rbac",
 			"network-policies",
@@ -124,9 +125,9 @@ func (h *ProviderSimulationHandlers) getAzureInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getHetznerInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "hetzner-hcloud",
-		"name":     "Hetzner Cloud",
-		"description": "German cloud hosting provider with competitive pricing",
+		"provider":      "hetzner-hcloud",
+		"name":          "Hetzner Cloud",
+		"description":   "German cloud hosting provider with competitive pricing",
 		"documentation": "https://docs.hetzner.com/cloud/",
 		"pricing_model": "hourly-billing",
 		"supported_features": []string{
@@ -141,9 +142,9 @@ func (h *ProviderSimulationHandlers) getHetznerInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getIONOSInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "united-ionos",
-		"name":     "IONOS Cloud",
-		"description": "European cloud provider with data sovereignty focus",
+		"provider":      "united-ionos",
+		"name":          "IONOS Cloud",
+		"description":   "European cloud provider with data sovereignty focus",
 		"documentation": "https://docs.ionos.com/cloud/",
 		"pricing_model": "hourly-billing",
 		"supported_features": []string{
@@ -158,9 +159,9 @@ func (h *ProviderSimulationHandlers) getIONOSInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getStackITInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "schwarz-stackit",
-		"name":     "StackIT",
-		"description": "Schwarz Group's cloud platform for enterprise customers",
+		"provider":      "schwarz-stackit",
+		"name":          "StackIT",
+		"description":   "Schwarz Group's cloud platform for enterprise customers",
 		"documentation": "https://docs.stackit.cloud/",
 		"pricing_model": "enterprise-contracts",
 		"supported_features": []string{
@@ -175,9 +176,9 @@ func (h *ProviderSimulationHandlers) getStackITInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getAWSInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "aws",
-		"name":     "Amazon Web Services",
-		"description": "Amazon's comprehensive cloud computing platform",
+		"provider":      "aws",
+		"name":          "Amazon Web Services",
+		"description":   "Amazon's comprehensive cloud computing platform",
 		"documentation": "https://docs.aws.amazon.com/eks/",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
@@ -192,9 +193,9 @@ func (h *ProviderSimulationHandlers) getAWSInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getGCPInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "gcp",
-		"name":     "Google Cloud Platform",
-		"description": "Google's cloud computing services",
+		"provider":      "gcp",
+		"name":          "Google Cloud Platform",
+		"description":   "Google's cloud computing services",
 		"documentation": "https://cloud.google.com/kubernetes-engine/docs",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
@@ -224,7 +225,7 @@ func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
 		zap.String("operation", req.Operation))
 
 	result := h.simulator.SimulateOperation(&req)
-	
+
 	if result.Success {
 		c.JSON(http.StatusOK, result)
 	} else {

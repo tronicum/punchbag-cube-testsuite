@@ -227,9 +227,9 @@ func TestCreateCluster(t *testing.T) {
 
 	t.Run("successful creation", func(t *testing.T) {
 		cluster := models.Cluster{
-			Name:          "test-cluster",
+			Name:     "test-cluster",
 			Provider: models.Azure,
-			Status:        models.ClusterStatusCreating,
+			Status:   models.ClusterStatusCreating,
 		}
 
 		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(nil)
@@ -238,11 +238,11 @@ func TestCreateCluster(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/clusters", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
-		
+
 		var response models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -253,9 +253,9 @@ func TestCreateCluster(t *testing.T) {
 
 	t.Run("cluster already exists", func(t *testing.T) {
 		cluster := models.Cluster{
-			Name:          "existing-cluster",
+			Name:     "existing-cluster",
 			Provider: models.Azure,
-			Status:        models.ClusterStatusCreating,
+			Status:   models.ClusterStatusCreating,
 		}
 
 		mockStore.On("CreateCluster", mock.AnythingOfType("*models.Cluster")).Return(store.ErrAlreadyExists)
@@ -264,7 +264,7 @@ func TestCreateCluster(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/clusters", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
@@ -276,7 +276,7 @@ func TestCreateCluster(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/clusters", bytes.NewBuffer([]byte("invalid json")))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -289,22 +289,22 @@ func TestGetCluster(t *testing.T) {
 
 	t.Run("existing cluster", func(t *testing.T) {
 		cluster := &models.Cluster{
-			ID:            "cluster-1",
-			Name:          "test-cluster",
-			Provider: models.Azure,
-			Status:        models.ClusterStatusRunning,
-			CreatedAt:     time.Now(),
+			ID:        "cluster-1",
+			Name:      "test-cluster",
+			Provider:  models.Azure,
+			Status:    models.ClusterStatusRunning,
+			CreatedAt: time.Now(),
 		}
 
 		mockStore.On("GetCluster", "cluster-1").Return(cluster, nil)
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters/cluster-1", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -318,7 +318,7 @@ func TestGetCluster(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters/nonexistent", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -334,16 +334,16 @@ func TestListClusters(t *testing.T) {
 	t.Run("list all clusters", func(t *testing.T) {
 		clusters := []*models.Cluster{
 			{
-				ID:            "cluster-1",
-				Name:          "test-cluster-1",
+				ID:       "cluster-1",
+				Name:     "test-cluster-1",
 				Provider: models.Azure,
-				Status:        models.ClusterStatusRunning,
+				Status:   models.ClusterStatusRunning,
 			},
 			{
-				ID:            "cluster-2",
-				Name:          "test-cluster-2",
+				ID:       "cluster-2",
+				Name:     "test-cluster-2",
 				Provider: models.AWS,
-				Status:        models.ClusterStatusRunning,
+				Status:   models.ClusterStatusRunning,
 			},
 		}
 
@@ -351,11 +351,11 @@ func TestListClusters(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -366,10 +366,10 @@ func TestListClusters(t *testing.T) {
 	t.Run("list clusters by provider", func(t *testing.T) {
 		azureClusters := []*models.Cluster{
 			{
-				ID:            "cluster-1",
-				Name:          "azure-cluster",
+				ID:       "cluster-1",
+				Name:     "azure-cluster",
 				Provider: models.Azure,
-				Status:        models.ClusterStatusRunning,
+				Status:   models.ClusterStatusRunning,
 			},
 		}
 
@@ -377,11 +377,11 @@ func TestListClusters(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters?provider=azure", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -397,10 +397,10 @@ func TestUpdateCluster(t *testing.T) {
 
 	t.Run("successful update", func(t *testing.T) {
 		existingCluster := &models.Cluster{
-			ID:            "cluster-1",
-			Name:          "old-name",
+			ID:       "cluster-1",
+			Name:     "old-name",
 			Provider: models.Azure,
-			Status:        models.ClusterStatusRunning,
+			Status:   models.ClusterStatusRunning,
 		}
 
 		updateData := models.Cluster{
@@ -415,11 +415,11 @@ func TestUpdateCluster(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("PUT", "/clusters/cluster-1", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -437,7 +437,7 @@ func TestUpdateCluster(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("PUT", "/clusters/nonexistent", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -454,7 +454,7 @@ func TestDeleteCluster(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("DELETE", "/clusters/cluster-1", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNoContent, w.Code)
@@ -466,7 +466,7 @@ func TestDeleteCluster(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("DELETE", "/clusters/nonexistent", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -480,10 +480,10 @@ func TestRunTest(t *testing.T) {
 
 	t.Run("successful test run", func(t *testing.T) {
 		cluster := &models.Cluster{
-			ID:            "cluster-1",
-			Name:          "test-cluster",
+			ID:       "cluster-1",
+			Name:     "test-cluster",
 			Provider: models.Azure,
-			Status:        models.ClusterStatusRunning,
+			Status:   models.ClusterStatusRunning,
 		}
 
 		testRequest := models.TestRequest{
@@ -499,11 +499,11 @@ func TestRunTest(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/test", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusAccepted, w.Code)
-		
+
 		var response models.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -525,7 +525,7 @@ func TestRunTest(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/test", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -542,7 +542,7 @@ func TestRunTest(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/test", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -567,11 +567,11 @@ func TestGetTestResult(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/test/test-1", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response models.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -585,7 +585,7 @@ func TestGetTestResult(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/test/nonexistent", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -617,11 +617,11 @@ func TestListTestResults(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/test", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
@@ -638,7 +638,7 @@ func TestHandlersValidateProvider(t *testing.T) {
 	t.Run("azure provider validation", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/validate/azure", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -649,7 +649,7 @@ func TestHandlersValidateProvider(t *testing.T) {
 	t.Run("invalid provider", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/validate/invalid", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -675,7 +675,7 @@ func TestHandlersSimulateProviderOperation(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/simulate", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -688,7 +688,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 	t.Run("create cluster with existing ID", func(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.POST("/clusters", handlers.CreateCluster)
-		
+
 		cluster := &models.Cluster{
 			ID:       "existing-cluster",
 			Name:     "Test Cluster",
@@ -702,7 +702,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/clusters", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
@@ -712,7 +712,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 	t.Run("list clusters with provider filter", func(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.GET("/clusters", handlers.ListClusters)
-		
+
 		azureClusters := []*models.Cluster{
 			{
 				ID:       "azure-cluster-1",
@@ -726,24 +726,24 @@ func TestHandlersErrorScenarios(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters?provider=azure", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 1)
 		assert.Equal(t, models.Azure, response[0].Provider)
-		
+
 		mockStore.AssertExpectations(t)
 	})
 
 	t.Run("run test on non-running cluster", func(t *testing.T) {
 		router, mockStore, handlers := setupTestRouter()
 		router.POST("/clusters/:id/tests", handlers.RunTest)
-		
+
 		cluster := &models.Cluster{
 			ID:       "creating-cluster",
 			Name:     "Creating Cluster",
@@ -761,7 +761,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/clusters/creating-cluster/tests", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -782,7 +782,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/validate", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -802,7 +802,7 @@ func TestHandlersErrorScenarios(t *testing.T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/simulate", bytes.NewBuffer(body))
 		r.Header.Set("Content-Type", "application/json")
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -820,7 +820,7 @@ func TestConcurrentOperations(t *testing.T) {
 
 		// Create 5 concurrent requests
 		results := make(chan int, 5)
-		
+
 		for i := 0; i < 5; i++ {
 			go func(index int) {
 				cluster := &models.Cluster{
@@ -834,7 +834,7 @@ func TestConcurrentOperations(t *testing.T) {
 				w := httptest.NewRecorder()
 				r, _ := http.NewRequest("POST", "/clusters", bytes.NewBuffer(body))
 				r.Header.Set("Content-Type", "application/json")
-				
+
 				router.ServeHTTP(w, r)
 				results <- w.Code
 			}(i)
@@ -865,7 +865,7 @@ func TestConcurrentOperations(t *testing.T) {
 		mockStore.On("CreateTestResult", mock.AnythingOfType("*models.TestResult")).Return(nil).Times(3)
 
 		results := make(chan int, 3)
-		
+
 		for i := 0; i < 3; i++ {
 			go func(index int) {
 				testRequest := map[string]interface{}{
@@ -876,7 +876,7 @@ func TestConcurrentOperations(t *testing.T) {
 				w := httptest.NewRecorder()
 				r, _ := http.NewRequest("POST", "/clusters/test-cluster/tests", bytes.NewBuffer(body))
 				r.Header.Set("Content-Type", "application/json")
-				
+
 				router.ServeHTTP(w, r)
 				results <- w.Code
 			}(i)
@@ -913,16 +913,16 @@ func TestPerformanceScenarios(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.Cluster
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 1000)
-		
+
 		mockStore.AssertExpectations(t)
 	})
 
@@ -945,16 +945,16 @@ func TestPerformanceScenarios(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("GET", "/clusters/cluster-1/tests", nil)
-		
+
 		router.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response []*models.TestResult
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response, 500)
-		
+
 		mockStore.AssertExpectations(t)
 	})
 }

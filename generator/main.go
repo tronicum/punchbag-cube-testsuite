@@ -2,12 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"flag"
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // LoadConfig loads the YAML configuration file
@@ -92,6 +93,21 @@ func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 	if err := json.Unmarshal(content, &data); err != nil {
 		return fmt.Errorf("invalid JSON: %w", err)
 	}
+	// Terraform required blocks
+	tfHeader := `terraform {
+  required_version = ">= 1.0.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.0.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+`
 	// Detect resource type by keys and map fields
 	var tf string
 	if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "monitor") {
@@ -144,7 +160,7 @@ func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 	} else {
 		return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
 	}
-	return os.WriteFile(outputPath, []byte(tf), 0644)
+	return os.WriteFile(outputPath, []byte(tfHeader+tf), 0644)
 }
 
 // safeString returns a string value from a map or a default

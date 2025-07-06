@@ -5,33 +5,34 @@ import (
 	"os"
 	"path/filepath"
 
+	"punchbag-cube-testsuite/multitool/pkg/output"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-	"punchbag-cube-testsuite/multitool/pkg/output"
 )
 
 // Config represents the multitool configuration
 type Config struct {
-	ServerURL       string            `json:"server_url" yaml:"server_url"`
-	DefaultProvider string            `json:"default_provider" yaml:"default_provider"`
-	DefaultRegion   string            `json:"default_region" yaml:"default_region"`
-	DefaultOutput   string            `json:"default_output" yaml:"default_output"`
+	ServerURL       string             `json:"server_url" yaml:"server_url"`
+	DefaultProvider string             `json:"default_provider" yaml:"default_provider"`
+	DefaultRegion   string             `json:"default_region" yaml:"default_region"`
+	DefaultOutput   string             `json:"default_output" yaml:"default_output"`
 	Profiles        map[string]Profile `json:"profiles" yaml:"profiles"`
 }
 
 // Profile represents a configuration profile for different environments
 type Profile struct {
-	ServerURL       string            `json:"server_url" yaml:"server_url"`
-	Provider        string            `json:"provider" yaml:"provider"`
-	Region          string            `json:"region" yaml:"region"`
-	ResourceGroup   string            `json:"resource_group,omitempty" yaml:"resource_group,omitempty"`
-	ProjectID       string            `json:"project_id,omitempty" yaml:"project_id,omitempty"`
-	Location        string            `json:"location,omitempty" yaml:"location,omitempty"`
-	Tags            map[string]string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ServerURL     string            `json:"server_url" yaml:"server_url"`
+	Provider      string            `json:"provider" yaml:"provider"`
+	Region        string            `json:"region" yaml:"region"`
+	ResourceGroup string            `json:"resource_group,omitempty" yaml:"resource_group,omitempty"`
+	ProjectID     string            `json:"project_id,omitempty" yaml:"project_id,omitempty"`
+	Location      string            `json:"location,omitempty" yaml:"location,omitempty"`
+	Tags          map[string]string `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
 var (
-	configDir      = filepath.Join(os.Getenv("HOME"), ".multitool")
+	configDir           = filepath.Join(os.Getenv("HOME"), ".multitool")
 	multitoolConfigFile = filepath.Join(configDir, "config.yaml")
 )
 
@@ -247,12 +248,12 @@ var configListProfilesCmd = &cobra.Command{
 		var profileData []map[string]interface{}
 		for name, profile := range config.Profiles {
 			profileData = append(profileData, map[string]interface{}{
-				"Name":         name,
-				"ServerURL":    profile.ServerURL,
-				"Provider":     profile.Provider,
-				"Region":       profile.Region,
+				"Name":          name,
+				"ServerURL":     profile.ServerURL,
+				"Provider":      profile.Provider,
+				"Region":        profile.Region,
 				"ResourceGroup": profile.ResourceGroup,
-				"ProjectID":    profile.ProjectID,
+				"ProjectID":     profile.ProjectID,
 			})
 		}
 

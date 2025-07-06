@@ -80,7 +80,7 @@ type SimulationResult struct {
 // ValidateProvider simulates provider validation
 func (s *SimulationService) ValidateProvider(provider string, credentials map[string]interface{}) *ProviderValidationResult {
 	now := time.Now()
-	
+
 	result := &ProviderValidationResult{
 		Provider:  provider,
 		Timestamp: now.Format(time.RFC3339),
@@ -95,11 +95,11 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"aks": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"vm_sizes":           []string{"Standard_D2s_v3", "Standard_D4s_v3", "Standard_B2s"},
+				"vm_sizes":            []string{"Standard_D2s_v3", "Standard_D4s_v3", "Standard_B2s"},
 			},
 			"monitoring": map[string]interface{}{
-				"available": true,
-				"log_analytics": true,
+				"available":            true,
+				"log_analytics":        true,
 				"application_insights": true,
 			},
 		}
@@ -111,12 +111,12 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"eks": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28", "1.27", "1.26"},
-				"instance_types":     []string{"t3.medium", "t3.large", "m5.large", "m5.xlarge"},
+				"instance_types":      []string{"t3.medium", "t3.large", "m5.large", "m5.xlarge"},
 			},
 			"cloudwatch": map[string]interface{}{
 				"available": true,
-				"logs": true,
-				"metrics": true,
+				"logs":      true,
+				"metrics":   true,
 			},
 		}
 	case "gcp":
@@ -127,11 +127,11 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"gke": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.3-gke.1286000", "1.27.7-gke.1056000"},
-				"machine_types":      []string{"e2-medium", "e2-standard-4", "n1-standard-2"},
+				"machine_types":       []string{"e2-medium", "e2-standard-4", "n1-standard-2"},
 			},
 			"stackdriver": map[string]interface{}{
-				"available": true,
-				"logging": true,
+				"available":  true,
+				"logging":    true,
 				"monitoring": true,
 			},
 		}
@@ -143,7 +143,7 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"kubernetes": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"server_types":       []string{"cx11", "cx21", "cx31", "cx41"},
+				"server_types":        []string{"cx11", "cx21", "cx31", "cx41"},
 			},
 		}
 	case "ionos":
@@ -154,7 +154,7 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"kubernetes": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"cpu_families":       []string{"AMD_OPTERON", "INTEL_XEON", "INTEL_SKYLAKE"},
+				"cpu_families":        []string{"AMD_OPTERON", "INTEL_XEON", "INTEL_SKYLAKE"},
 			},
 		}
 	case "stackit":
@@ -165,7 +165,7 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 			"ske": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"machine_types":      []string{"c1.2", "c1.3", "c1.4", "c1.5"},
+				"machine_types":       []string{"c1.2", "c1.3", "c1.4", "c1.5"},
 			},
 		}
 	default:
@@ -180,7 +180,7 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 // SimulateOperation simulates a cloud provider operation
 func (s *SimulationService) SimulateOperation(req *SimulationRequest) *SimulationResult {
 	start := time.Now()
-	
+
 	result := &SimulationResult{
 		Provider:  req.Provider,
 		Operation: req.Operation,
@@ -223,14 +223,14 @@ func (s *SimulationService) SimulateOperation(req *SimulationRequest) *Simulatio
 // simulateCreateCluster simulates cluster creation
 func (s *SimulationService) simulateCreateCluster(provider string, params map[string]interface{}) map[string]interface{} {
 	clusterID := fmt.Sprintf("sim-%s-%d", provider, s.rand.Intn(10000))
-	
+
 	result := map[string]interface{}{
-		"cluster_id":     clusterID,
-		"name":          params["name"],
-		"provider":      provider,
-		"status":        "creating",
-		"node_count":    s.getParamOrDefault(params, "node_count", 3),
-		"created_at":    time.Now().Format(time.RFC3339),
+		"cluster_id": clusterID,
+		"name":       params["name"],
+		"provider":   provider,
+		"status":     "creating",
+		"node_count": s.getParamOrDefault(params, "node_count", 3),
+		"created_at": time.Now().Format(time.RFC3339),
 	}
 
 	// Add provider-specific fields
@@ -255,18 +255,18 @@ func (s *SimulationService) simulateCreateCluster(provider string, params map[st
 // simulateListClusters simulates listing clusters
 func (s *SimulationService) simulateListClusters(provider string) map[string]interface{} {
 	clusters := make([]map[string]interface{}, 0)
-	
+
 	// Generate 2-4 sample clusters
 	numClusters := s.rand.Intn(3) + 2
 	for i := 0; i < numClusters; i++ {
 		clusterID := fmt.Sprintf("sim-%s-%d", provider, s.rand.Intn(10000))
 		cluster := map[string]interface{}{
-			"cluster_id":  clusterID,
-			"name":        fmt.Sprintf("%s-cluster-%d", provider, i+1),
-			"provider":    provider,
-			"status":      []string{"running", "creating", "stopped"}[s.rand.Intn(3)],
-			"node_count":  s.rand.Intn(5) + 1,
-			"created_at":  time.Now().Add(-time.Duration(s.rand.Intn(168)) * time.Hour).Format(time.RFC3339),
+			"cluster_id": clusterID,
+			"name":       fmt.Sprintf("%s-cluster-%d", provider, i+1),
+			"provider":   provider,
+			"status":     []string{"running", "creating", "stopped"}[s.rand.Intn(3)],
+			"node_count": s.rand.Intn(5) + 1,
+			"created_at": time.Now().Add(-time.Duration(s.rand.Intn(168)) * time.Hour).Format(time.RFC3339),
 		}
 		clusters = append(clusters, cluster)
 	}
@@ -280,15 +280,15 @@ func (s *SimulationService) simulateListClusters(provider string) map[string]int
 // simulateGetCluster simulates getting cluster details
 func (s *SimulationService) simulateGetCluster(provider string, params map[string]interface{}) map[string]interface{} {
 	clusterID := s.getParamOrDefault(params, "cluster_id", "sim-"+provider+"-1234").(string)
-	
+
 	return map[string]interface{}{
 		"cluster_id":         clusterID,
-		"name":              "sample-cluster",
-		"provider":          provider,
-		"status":            "running",
-		"node_count":        3,
+		"name":               "sample-cluster",
+		"provider":           provider,
+		"status":             "running",
+		"node_count":         3,
 		"kubernetes_version": "1.28.0",
-		"created_at":        time.Now().Add(-time.Duration(s.rand.Intn(168)) * time.Hour).Format(time.RFC3339),
+		"created_at":         time.Now().Add(-time.Duration(s.rand.Intn(168)) * time.Hour).Format(time.RFC3339),
 		"endpoints": map[string]interface{}{
 			"api_server": "https://api-" + clusterID + ".example.com",
 			"dashboard":  "https://dashboard-" + clusterID + ".example.com",
@@ -300,7 +300,7 @@ func (s *SimulationService) simulateGetCluster(provider string, params map[strin
 func (s *SimulationService) simulateRunTest(params map[string]interface{}) map[string]interface{} {
 	testID := fmt.Sprintf("test-%d", s.rand.Intn(10000))
 	testType := s.getParamOrDefault(params, "test_type", "connectivity").(string)
-	
+
 	// 90% success rate
 	status := "passed"
 	if s.rand.Float32() < 0.1 {
@@ -308,12 +308,12 @@ func (s *SimulationService) simulateRunTest(params map[string]interface{}) map[s
 	}
 
 	result := map[string]interface{}{
-		"test_id":     testID,
-		"cluster_id":  params["cluster_id"],
-		"test_type":   testType,
-		"status":      status,
-		"started_at":  time.Now().Format(time.RFC3339),
-		"duration":    fmt.Sprintf("%ds", s.rand.Intn(300)+30),
+		"test_id":    testID,
+		"cluster_id": params["cluster_id"],
+		"test_type":  testType,
+		"status":     status,
+		"started_at": time.Now().Format(time.RFC3339),
+		"duration":   fmt.Sprintf("%ds", s.rand.Intn(300)+30),
 	}
 
 	// Add test-specific results
@@ -368,27 +368,27 @@ func (s *SimulationService) GenerateClusterFromSimulation(provider string, name 
 		cluster.ResourceGroup = s.getParamOrDefault(config, "resource_group", "rg-"+name).(string)
 		cluster.Location = s.getParamOrDefault(config, "location", "eastus").(string)
 		cluster.ProviderConfig = map[string]interface{}{
-			"sku":                "Standard_D2s_v3",
-			"network_plugin":     "azure",
-			"enable_rbac":        true,
-			"enable_monitoring":  true,
+			"sku":               "Standard_D2s_v3",
+			"network_plugin":    "azure",
+			"enable_rbac":       true,
+			"enable_monitoring": true,
 		}
 	case models.AWS:
 		cluster.Region = s.getParamOrDefault(config, "region", "us-west-2").(string)
 		cluster.ProviderConfig = map[string]interface{}{
-			"instance_type":      "t3.medium",
-			"vpc_id":            "vpc-" + s.generateRandomID(),
-			"subnet_ids":        []string{"subnet-" + s.generateRandomID(), "subnet-" + s.generateRandomID()},
-			"endpoint_private":   false,
+			"instance_type":    "t3.medium",
+			"vpc_id":           "vpc-" + s.generateRandomID(),
+			"subnet_ids":       []string{"subnet-" + s.generateRandomID(), "subnet-" + s.generateRandomID()},
+			"endpoint_private": false,
 		}
 	case models.GCP:
 		cluster.ProjectID = s.getParamOrDefault(config, "project_id", "project-"+s.generateRandomID()).(string)
 		cluster.Region = s.getParamOrDefault(config, "region", "us-central1").(string)
 		cluster.ProviderConfig = map[string]interface{}{
-			"machine_type":       "e2-medium",
-			"disk_size_gb":       100,
-			"network":           "default",
-			"enable_autopilot":   false,
+			"machine_type":     "e2-medium",
+			"disk_size_gb":     100,
+			"network":          "default",
+			"enable_autopilot": false,
 		}
 	}
 

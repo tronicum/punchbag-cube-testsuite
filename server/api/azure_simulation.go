@@ -3,13 +3,13 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"punchbag-cube-testsuite/shared/simulation"
+
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 // AzureHandlers provides endpoints for Azure resource simulation
-//
 type AzureHandlers struct {
 	simulator *simulation.SimulationService
 	logger    *zap.Logger

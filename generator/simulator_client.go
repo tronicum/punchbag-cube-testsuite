@@ -10,7 +10,6 @@ import (
 )
 
 // SimulatorClient allows generator to call the cube-server simulation endpoints
-//
 type SimulatorClient struct {
 	BaseURL string
 }

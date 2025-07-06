@@ -7,10 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"punchbag-cube-testsuite/multitool/pkg/client"
 	"punchbag-cube-testsuite/multitool/pkg/models"
 	"punchbag-cube-testsuite/multitool/pkg/output"
+
+	"github.com/spf13/cobra"
 )
 
 var (

@@ -38,12 +38,12 @@ func init() {
 	rootCmd.AddCommand(packageInstallCmd)
 	rootCmd.AddCommand(dockerRegistryCmd)
 	rootCmd.AddCommand(listPackagesCmd)
-	
+
 	// Add enhanced cluster and test commands
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.AddCommand(testCmd)
 	rootCmd.AddCommand(configCmd)
-	
+
 	// Legacy k8s commands (deprecated)
 	k8sCmd.AddCommand(k8sGetCmd)
 	k8sCmd.AddCommand(k8sCreateCmd)

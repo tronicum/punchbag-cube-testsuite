@@ -1,5 +1,6 @@
 # Makefile for generator CLI and end-to-end testing
 
+# Use the new tflint CLI style for v0.47+
 BINARY=werfty-generator
 
 all: build
@@ -21,7 +22,7 @@ end2end: clean build
 	./$(BINARY) --generate-terraform --input test_aks.json --output test_aks.tf
 	@if command -v tflint >/dev/null 2>&1; then \
 		echo "Running tflint on test_aks.tf..."; \
-		tflint test_aks.tf; \
+		mkdir -p .tflint-tmp && cp test_aks.tf .tflint-tmp/main.tf && cd .tflint-tmp && tflint --chdir=. --filter=main.tf && cd .. && rm -rf .tflint-tmp; \
 	else \
 		echo "tflint not found, skipping lint."; \
 	fi
