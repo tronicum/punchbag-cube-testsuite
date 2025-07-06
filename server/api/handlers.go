@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tronicum/punchbag-cube-testsuite/server/models"
-	"github.com/tronicum/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 
 	"github.com/gin-gonic/gin"
@@ -278,7 +277,7 @@ func (h *Handlers) SimulateProviderOperation(c *gin.Context) {
 // ProxyS3 handles /api/proxy/:provider/s3
 func (h *Handlers) ProxyS3(c *gin.Context) {
 	if c.Request.Method == http.MethodPost {
-		var bucket models.S3Bucket
+		var bucket sharedmodels.ObjectStorageBucket
 		if err := c.ShouldBindJSON(&bucket); err != nil {
 			h.logger.Error("Failed to bind S3 bucket payload", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -289,22 +288,8 @@ func (h *Handlers) ProxyS3(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "name, region, and provider are required"})
 			return
 		}
-		if bucket.Policy != nil {
-			if bucket.Policy.Version == "" || len(bucket.Policy.Statement) == 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "policy.version and at least one statement required"})
-				return
-			}
-		}
-		if bucket.Lifecycle != nil {
-			for _, rule := range bucket.Lifecycle {
-				if rule.ID == "" || rule.Status == "" {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "lifecycle rule id and status required"})
-					return
-				}
-			}
-		}
-		bucket.ID = bucket.Name + "-" + bucket.Provider
-		bucket.CreatedAt = time.Now().Format(time.RFC3339)
+		bucket.ID = bucket.Name + "-" + string(bucket.Provider)
+		bucket.CreatedAt = time.Now()
 		c.JSON(http.StatusCreated, bucket)
 		return
 	}
