@@ -29,10 +29,12 @@ func Execute() {
 }
 
 var proxyServer string
+var simulateMode bool
 
 // Initialize commands
 func init() {
 	rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
+	rootCmd.PersistentFlags().BoolVar(&simulateMode, "simulate", false, "Enable simulation/mock mode for all cloud operations")
 	rootCmd.AddCommand(manageCloudCmd)
 	rootCmd.AddCommand(osDetectCmd)
 	rootCmd.AddCommand(packageInstallCmd)

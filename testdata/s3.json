@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "name": "test-s3-bucket",
+    "acl": "private",
+    "versioning": true
+  }
+}

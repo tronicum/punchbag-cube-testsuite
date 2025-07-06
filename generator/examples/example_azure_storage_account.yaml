@@ -1,0 +1,9 @@
+# Example Azure Storage Account config for Werfty
+resourceType: storageaccount
+properties:
+  name: mystorageacct123
+  resourceGroup: my-rg
+  location: eastus2
+  sku: Standard_LRS
+  kind: StorageV2
+  accessTier: Hot

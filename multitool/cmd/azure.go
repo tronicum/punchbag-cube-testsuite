@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"punchbag-cube-testsuite/multitool/pkg/client"
+	"punchbag-cube-testsuite/multitool/pkg/mock"
 	"punchbag-cube-testsuite/multitool/pkg/models"
 	"punchbag-cube-testsuite/multitool/pkg/output"
 
@@ -136,7 +137,13 @@ var azureAksCreateCmd = &cobra.Command{
 			Location:      location,
 			ProjectID:     projectID,
 		}
-		cluster, err := clusterClient.CreateCluster(req)
+		var cluster *models.Cluster
+		var err error
+		if simulateMode {
+			cluster = mock.MockCreateAks(req)
+		} else {
+			cluster, err = clusterClient.CreateCluster(req)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to create AKS cluster: %v", err))
 			os.Exit(1)
@@ -156,7 +163,13 @@ var azureAksGetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		clusterClient := client.NewClusterClient(api)
-		cluster, err := clusterClient.GetCluster(id)
+		var cluster *models.Cluster
+		var err error
+		if simulateMode {
+			cluster = mock.MockGetAks(id)
+		} else {
+			cluster, err = clusterClient.GetCluster(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to get AKS cluster: %v", err))
 			os.Exit(1)
@@ -176,7 +189,13 @@ var azureAksListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		clusterClient := client.NewClusterClient(api)
-		clusters, err := clusterClient.ListClustersByProvider(models.Azure)
+		var clusters []*models.Cluster
+		var err error
+		if simulateMode {
+			clusters = mock.MockListAks()
+		} else {
+			clusters, err = clusterClient.ListClustersByProvider(models.Azure)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to list AKS clusters: %v", err))
 			os.Exit(1)
@@ -205,7 +224,12 @@ var azureAksDeleteCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		clusterClient := client.NewClusterClient(api)
-		err := clusterClient.DeleteCluster(id)
+		var err error
+		if simulateMode {
+			mock.MockDeleteAks(id)
+		} else {
+			err = clusterClient.DeleteCluster(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to delete AKS cluster: %v", err))
 			os.Exit(1)
@@ -254,7 +278,13 @@ var azureLogCreateCmd = &cobra.Command{
 			Sku:           sku,
 			RetentionDays: retention,
 		}
-		result, err := logClient.Create(workspace)
+		var result *models.LogAnalyticsWorkspace
+		var err error
+		if simulateMode {
+			result = mock.MockCreateLogAnalytics(workspace)
+		} else {
+			result, err = logClient.Create(workspace)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to create Log Analytics workspace: %v", err))
 			os.Exit(1)
@@ -274,7 +304,13 @@ var azureLogGetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		logClient := client.NewLogAnalyticsClient(api)
-		result, err := logClient.Get(id)
+		var result *models.LogAnalyticsWorkspace
+		var err error
+		if simulateMode {
+			result = mock.MockGetLogAnalytics(id)
+		} else {
+			result, err = logClient.Get(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to get Log Analytics workspace: %v", err))
 			os.Exit(1)
@@ -294,7 +330,13 @@ var azureLogListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		logClient := client.NewLogAnalyticsClient(api)
-		results, err := logClient.List()
+		var results []*models.LogAnalyticsWorkspace
+		var err error
+		if simulateMode {
+			results = mock.MockListLogAnalytics()
+		} else {
+			results, err = logClient.List()
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to list Log Analytics workspaces: %v", err))
 			os.Exit(1)
@@ -323,7 +365,12 @@ var azureLogDeleteCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		logClient := client.NewLogAnalyticsClient(api)
-		err := logClient.Delete(id)
+		var err error
+		if simulateMode {
+			mock.MockDeleteLogAnalytics(id)
+		} else {
+			err = logClient.Delete(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to delete Log Analytics workspace: %v", err))
 			os.Exit(1)
@@ -379,7 +426,13 @@ var azureBudgetCreateCmd = &cobra.Command{
 			StartDate:     startDate,
 			EndDate:       endDate,
 		}
-		result, err := budgetClient.Create(budget)
+		var result *models.AzureBudget
+		var err error
+		if simulateMode {
+			result = mock.MockCreateBudget(budget)
+		} else {
+			result, err = budgetClient.Create(budget)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to create Azure Budget: %v", err))
 			os.Exit(1)
@@ -399,7 +452,13 @@ var azureBudgetGetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		budgetClient := client.NewAzureBudgetClient(api)
-		result, err := budgetClient.Get(id)
+		var result *models.AzureBudget
+		var err error
+		if simulateMode {
+			result = mock.MockGetBudget(id)
+		} else {
+			result, err = budgetClient.Get(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to get Azure Budget: %v", err))
 			os.Exit(1)
@@ -419,7 +478,13 @@ var azureBudgetListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		budgetClient := client.NewAzureBudgetClient(api)
-		results, err := budgetClient.List()
+		var results []*models.AzureBudget
+		var err error
+		if simulateMode {
+			results = mock.MockListBudgets()
+		} else {
+			results, err = budgetClient.List()
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to list Azure Budgets: %v", err))
 			os.Exit(1)
@@ -448,7 +513,12 @@ var azureBudgetDeleteCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		budgetClient := client.NewAzureBudgetClient(api)
-		err := budgetClient.Delete(id)
+		var err error
+		if simulateMode {
+			mock.MockDeleteBudget(id)
+		} else {
+			err = budgetClient.Delete(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to delete Azure Budget: %v", err))
 			os.Exit(1)
@@ -497,7 +567,13 @@ var azureAppInsightsCreateCmd = &cobra.Command{
 			AppType:       appType,
 			RetentionDays: retention,
 		}
-		result, err := appClient.Create(app)
+		var result *models.AppInsightsResource
+		var err error
+		if simulateMode {
+			result = mock.MockCreateAppInsights(app)
+		} else {
+			result, err = appClient.Create(app)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to create Application Insights: %v", err))
 			os.Exit(1)
@@ -517,7 +593,13 @@ var azureAppInsightsGetCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		appClient := client.NewAppInsightsClient(api)
-		result, err := appClient.Get(id)
+		var result *models.AppInsightsResource
+		var err error
+		if simulateMode {
+			result = mock.MockGetAppInsights(id)
+		} else {
+			result, err = appClient.Get(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to get Application Insights: %v", err))
 			os.Exit(1)
@@ -537,7 +619,13 @@ var azureAppInsightsListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		appClient := client.NewAppInsightsClient(api)
-		results, err := appClient.List()
+		var results []*models.AppInsightsResource
+		var err error
+		if simulateMode {
+			results = mock.MockListAppInsights()
+		} else {
+			results, err = appClient.List()
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to list Application Insights: %v", err))
 			os.Exit(1)
@@ -566,7 +654,12 @@ var azureAppInsightsDeleteCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		appClient := client.NewAppInsightsClient(api)
-		err := appClient.Delete(id)
+		var err error
+		if simulateMode {
+			mock.MockDeleteAppInsights(id)
+		} else {
+			err = appClient.Delete(id)
+		}
 		if err != nil {
 			output.Error(fmt.Sprintf("Failed to delete Application Insights: %v", err))
 			os.Exit(1)

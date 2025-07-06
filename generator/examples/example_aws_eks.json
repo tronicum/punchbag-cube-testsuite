@@ -1,0 +1,8 @@
+{
+  "resourceType": "eks",
+  "properties": {
+    "name": "my-eks",
+    "region": "us-west-2",
+    "nodeCount": 2
+  }
+}

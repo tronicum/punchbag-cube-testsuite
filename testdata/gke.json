@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "name": "test-gke",
+    "location": "us-central1",
+    "nodeCount": 1
+  }
+}
