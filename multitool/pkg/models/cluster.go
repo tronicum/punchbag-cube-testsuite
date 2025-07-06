@@ -2,48 +2,16 @@ package models
 
 import (
 	"time"
-)
-
-// CloudProvider represents the cloud provider type
-type CloudProvider string
-
-const (
-	Azure   CloudProvider = "azure"
-	AWS     CloudProvider = "aws"
-	GCP     CloudProvider = "gcp"
-	Hetzner CloudProvider = "hetzner"
-	IONOS   CloudProvider = "ionos"
-	StackIT CloudProvider = "stackit"
-)
-
-// ClusterStatus represents the status of a cluster
-type ClusterStatus string
-
-const (
-	ClusterStatusCreating ClusterStatus = "creating"
-	ClusterStatusRunning  ClusterStatus = "running"
-	ClusterStatusStopping ClusterStatus = "stopping"
-	ClusterStatusStopped  ClusterStatus = "stopped"
-	ClusterStatusDeleting ClusterStatus = "deleting"
-	ClusterStatusFailed   ClusterStatus = "failed"
-)
-
-// TestStatus represents the status of a test
-type TestStatus string
-
-const (
-	TestStatusPending TestStatus = "pending"
-	TestStatusRunning TestStatus = "running"
-	TestStatusPassed  TestStatus = "passed"
-	TestStatusFailed  TestStatus = "failed"
+	sharedmodels "punchbag-cube-testsuite/shared/models"
 )
 
 // Cluster represents a Kubernetes cluster across different cloud providers
+// Use sharedmodels.CloudProvider, sharedmodels.ClusterStatus, etc.
 type Cluster struct {
 	ID             string                 `json:"id"`
 	Name           string                 `json:"name"`
-	Provider       CloudProvider          `json:"provider"`
-	Status         ClusterStatus          `json:"status"`
+	Provider       sharedmodels.CloudProvider          `json:"provider"`
+	Status         sharedmodels.ClusterStatus          `json:"status"`
 	Config         map[string]interface{} `json:"config,omitempty"`
 	ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
 	ProjectID      string                 `json:"project_id,omitempty"`
@@ -59,7 +27,7 @@ type TestResult struct {
 	ID          string                 `json:"id"`
 	ClusterID   string                 `json:"cluster_id"`
 	TestType    string                 `json:"test_type"`
-	Status      TestStatus             `json:"status"`
+	Status      sharedmodels.TestStatus             `json:"status"`
 	Duration    time.Duration          `json:"duration"`
 	Details     map[string]interface{} `json:"details,omitempty"`
 	ErrorMsg    string                 `json:"error_message,omitempty"`
@@ -92,7 +60,7 @@ type NodePool struct {
 // ClusterCreateRequest represents a request to create a cluster
 type ClusterCreateRequest struct {
 	Name           string                 `json:"name" binding:"required"`
-	Provider       CloudProvider          `json:"provider" binding:"required"`
+	Provider       sharedmodels.CloudProvider          `json:"provider" binding:"required"`
 	Config         map[string]interface{} `json:"config,omitempty"`
 	ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
 	ProjectID      string                 `json:"project_id,omitempty"`

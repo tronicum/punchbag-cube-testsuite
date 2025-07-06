@@ -14,13 +14,37 @@ var objectStorageCmd = &cobra.Command{
 	Short: "Manage S3-like object storage buckets (AWS, Azure, GCP)",
 }
 
+var policyFile string
+var versioning bool
+var lifecycleFile string
+
 var createBucketCmd = &cobra.Command{
 	Use:   "create [provider] [name] [region]",
-	Short: "Create a new bucket",
+	Short: "Create a new bucket (supports --policy, --versioning, --lifecycle)",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, name, region := args[0], args[1], args[2]
 		bucket := &models.Bucket{Name: name, Region: region, Provider: provider}
+		// Advanced S3 features
+		if policyFile != "" {
+			data, err := os.ReadFile(policyFile)
+			if err != nil {
+				fmt.Println("Failed to read policy file:", err)
+				os.Exit(1)
+			}
+			bucket.Policy = string(data)
+		}
+		if versioning {
+			bucket.Versioning = true
+		}
+		if lifecycleFile != "" {
+			data, err := os.ReadFile(lifecycleFile)
+			if err != nil {
+				fmt.Println("Failed to read lifecycle file:", err)
+				os.Exit(1)
+			}
+			bucket.Lifecycle = string(data)
+		}
 		var store models.ObjectStorage
 		switch provider {
 		case "aws":
@@ -126,6 +150,9 @@ var deleteBucketCmd = &cobra.Command{
 }
 
 func init() {
+	createBucketCmd.Flags().StringVar(&policyFile, "policy", "", "Path to bucket policy JSON file")
+	createBucketCmd.Flags().BoolVar(&versioning, "versioning", false, "Enable versioning")
+	createBucketCmd.Flags().StringVar(&lifecycleFile, "lifecycle", "", "Path to lifecycle rules JSON file")
 	objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd)
 	rootCmd.AddCommand(objectStorageCmd)
 }

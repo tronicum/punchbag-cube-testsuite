@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"punchbag-cube-testsuite/multitool/pkg/models"
+	sharedmodels "punchbag-cube-testsuite/shared/models"
 )
 
 // APIClient represents a client for interacting with the punchbag server API
@@ -111,7 +112,7 @@ func (c *ClusterClient) ListClusters() ([]*models.Cluster, error) {
 }
 
 // ListClustersByProvider retrieves clusters filtered by provider
-func (c *ClusterClient) ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error) {
+func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*models.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters?provider=%s", c.client.baseURL, provider)
 	
 	resp, err := c.client.httpClient.Get(url)

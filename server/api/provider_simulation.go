@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/username/punchbag-cube-testsuite/server/models"
-	"github.com/username/punchbag-cube-testsuite/server/store"
-	"punchbag-cube-testsuite/shared/simulation"
+	"github.com/tronicum/punchbag-cube-testsuite/server/store"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -234,7 +234,7 @@ func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
 
 // CreateSimulatedCluster creates a simulated cluster using the shared simulation service
 func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
-	var req models.ClusterCreateRequest
+	var req sharedmodels.ClusterCreateRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -264,7 +264,7 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 
 // RunSimulatedTest runs a simulated test using the shared simulation service
 func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
-	var req models.TestRequest
+	var req sharedmodels.TestRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

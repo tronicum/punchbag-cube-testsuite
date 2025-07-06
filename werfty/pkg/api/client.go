@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // Werfty represents the API werfty
@@ -23,81 +25,6 @@ func NewWerfty(baseURL string) *Werfty {
 			Timeout: 30 * time.Second,
 		},
 	}
-}
-
-// Cluster represents a Kubernetes cluster across different cloud providers
-type Cluster struct {
-	ID            string                 `json:"id"`
-	Name          string                 `json:"name"`
-	CloudProvider string                 `json:"cloud_provider"` // azure, schwarz-stackit, aws, gcp
-	Status        string                 `json:"status"`
-	Config        map[string]interface{} `json:"config,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at"`
-}
-
-// AKSCluster represents an Azure Kubernetes Service cluster (for backward compatibility)
-type AKSCluster struct {
-	ID                string            `json:"id"`
-	Name              string            `json:"name"`
-	ResourceGroup     string            `json:"resource_group"`
-	Location          string            `json:"location"`
-	KubernetesVersion string            `json:"kubernetes_version"`
-	Status            string            `json:"status"`
-	NodeCount         int               `json:"node_count"`
-	Tags              map[string]string `json:"tags,omitempty"`
-	CreatedAt         time.Time         `json:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at"`
-}
-
-// TestResult represents the result of a cluster test
-type TestResult struct {
-	ID          string                 `json:"id"`
-	ClusterID   string                 `json:"cluster_id"`
-	TestType    string                 `json:"test_type"`
-	Status      string                 `json:"status"`
-	Duration    time.Duration          `json:"duration"`
-	Details     map[string]interface{} `json:"details,omitempty"`
-	ErrorMsg    string                 `json:"error_message,omitempty"`
-	StartedAt   time.Time              `json:"started_at"`
-	CompletedAt *time.Time             `json:"completed_at,omitempty"`
-}
-
-// AKSTestResult represents the result of an AKS test (for backward compatibility)
-type AKSTestResult struct {
-	ID          string                 `json:"id"`
-	ClusterID   string                 `json:"cluster_id"`
-	TestType    string                 `json:"test_type"`
-	Status      string                 `json:"status"`
-	Duration    time.Duration          `json:"duration"`
-	Details     map[string]interface{} `json:"details,omitempty"`
-	ErrorMsg    string                 `json:"error_message,omitempty"`
-	StartedAt   time.Time              `json:"started_at"`
-	CompletedAt *time.Time             `json:"completed_at,omitempty"`
-}
-
-// TestRequest represents a request to run a test on a cluster
-type TestRequest struct {
-	ClusterID string                 `json:"cluster_id"`
-	TestType  string                 `json:"test_type"`
-	Config    map[string]interface{} `json:"config,omitempty"`
-}
-
-// AKSTestRequest represents a request to run a test on an AKS cluster (for backward compatibility)
-type AKSTestRequest struct {
-	ClusterID string                 `json:"cluster_id"`
-	TestType  string                 `json:"test_type"`
-	Config    map[string]interface{} `json:"config,omitempty"`
-}
-
-// ClustersResponse represents the response for listing clusters
-type ClustersResponse struct {
-	Clusters []*Cluster `json:"clusters"`
-}
-
-// TestResultsResponse represents the response for listing test results
-type TestResultsResponse struct {
-	TestResults []*TestResult `json:"test_results"`
 }
 
 // doRequest performs an HTTP request
@@ -126,7 +53,7 @@ func (c *Werfty) doRequest(method, path string, body interface{}) (*http.Respons
 }
 
 // ListClusters lists all clusters (multi-cloud)
-func (c *Werfty) ListClusters() ([]*Cluster, error) {
+func (c *Werfty) ListClusters() ([]*sharedmodels.Cluster, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters", nil)
 	if err != nil {
 		return nil, err
@@ -137,7 +64,7 @@ func (c *Werfty) ListClusters() ([]*Cluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var response ClustersResponse
+	var response sharedmodels.ClustersResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -146,7 +73,7 @@ func (c *Werfty) ListClusters() ([]*Cluster, error) {
 }
 
 // ListClustersByProvider lists clusters filtered by provider
-func (c *Werfty) ListClustersByProvider(provider string) ([]*Cluster, error) {
+func (c *Werfty) ListClustersByProvider(provider string) ([]*sharedmodels.Cluster, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters?provider="+provider, nil)
 	if err != nil {
 		return nil, err
@@ -157,7 +84,7 @@ func (c *Werfty) ListClustersByProvider(provider string) ([]*Cluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var response ClustersResponse
+	var response sharedmodels.ClustersResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -166,14 +93,14 @@ func (c *Werfty) ListClustersByProvider(provider string) ([]*Cluster, error) {
 }
 
 // ListAKSClusters lists all AKS clusters (backward compatibility)
-func (c *Werfty) ListAKSClusters() ([]*AKSCluster, error) {
+func (c *Werfty) ListAKSClusters() ([]*sharedmodels.AKSCluster, error) {
 	clusters, err := c.ListClustersByProvider("azure")
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert to AKSCluster format for backward compatibility
-	aksClusters := make([]*AKSCluster, len(clusters))
+	aksClusters := make([]*sharedmodels.AKSCluster, len(clusters))
 	for i, cluster := range clusters {
 		aksClusters[i] = c.convertToAKSCluster(cluster)
 	}
@@ -182,8 +109,8 @@ func (c *Werfty) ListAKSClusters() ([]*AKSCluster, error) {
 }
 
 // Helper method to convert Cluster to AKSCluster
-func (c *Werfty) convertToAKSCluster(cluster *Cluster) *AKSCluster {
-	aksCluster := &AKSCluster{
+func (c *Werfty) convertToAKSCluster(cluster *sharedmodels.Cluster) *sharedmodels.AKSCluster {
+	aksCluster := &sharedmodels.AKSCluster{
 		ID:        cluster.ID,
 		Name:      cluster.Name,
 		Status:    cluster.Status,
@@ -211,7 +138,7 @@ func (c *Werfty) convertToAKSCluster(cluster *Cluster) *AKSCluster {
 }
 
 // GetCluster gets a cluster by ID (multi-cloud)
-func (c *Werfty) GetCluster(id string) (*Cluster, error) {
+func (c *Werfty) GetCluster(id string) (*sharedmodels.Cluster, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -225,7 +152,7 @@ func (c *Werfty) GetCluster(id string) (*Cluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var cluster Cluster
+	var cluster sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -234,14 +161,14 @@ func (c *Werfty) GetCluster(id string) (*Cluster, error) {
 }
 
 // GetAKSCluster gets an AKS cluster by ID (backward compatibility)
-func (c *Werfty) GetAKSCluster(id string) (*AKSCluster, error) {
+func (c *Werfty) GetAKSCluster(id string) (*sharedmodels.AKSCluster, error) {
 	cluster, err := c.GetCluster(id)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert to AKSCluster format for backward compatibility
-	aksCluster := &AKSCluster{
+	aksCluster := &sharedmodels.AKSCluster{
 		ID:        cluster.ID,
 		Name:      cluster.Name,
 		Status:    cluster.Status,
@@ -269,7 +196,7 @@ func (c *Werfty) GetAKSCluster(id string) (*AKSCluster, error) {
 }
 
 // CreateCluster creates a new cluster (multi-cloud)
-func (c *Werfty) CreateMultiCloudCluster(cluster *Cluster) (*Cluster, error) {
+func (c *Werfty) CreateMultiCloudCluster(cluster *sharedmodels.Cluster) (*sharedmodels.Cluster, error) {
 	resp, err := c.doRequest("POST", "/api/v1/clusters", cluster)
 	if err != nil {
 		return nil, err
@@ -280,7 +207,7 @@ func (c *Werfty) CreateMultiCloudCluster(cluster *Cluster) (*Cluster, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var created Cluster
+	var created sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -289,8 +216,8 @@ func (c *Werfty) CreateMultiCloudCluster(cluster *Cluster) (*Cluster, error) {
 }
 
 // CreateStackITCluster creates a new StackIT cluster
-func (c *Werfty) CreateStackITCluster(name, projectID, region string, config map[string]interface{}) (*Cluster, error) {
-	cluster := &Cluster{
+func (c *Werfty) CreateStackITCluster(name, projectID, region string, config map[string]interface{}) (*sharedmodels.Cluster, error) {
+	cluster := &sharedmodels.Cluster{
 		Name:          name,
 		CloudProvider: "schwarz-stackit",
 		Status:        "creating",
@@ -315,8 +242,8 @@ func (c *Werfty) CreateStackITCluster(name, projectID, region string, config map
 }
 
 // CreateAzureCluster creates a new Azure cluster
-func (c *Werfty) CreateAzureCluster(name, resourceGroup, location string, config map[string]interface{}) (*Cluster, error) {
-	cluster := &Cluster{
+func (c *Werfty) CreateAzureCluster(name, resourceGroup, location string, config map[string]interface{}) (*sharedmodels.Cluster, error) {
+	cluster := &sharedmodels.Cluster{
 		Name:          name,
 		CloudProvider: "azure",
 		Status:        "creating",
@@ -341,8 +268,8 @@ func (c *Werfty) CreateAzureCluster(name, resourceGroup, location string, config
 }
 
 // CreateHetznerCluster creates a new Hetzner Cloud cluster
-func (c *Werfty) CreateHetznerCluster(name, location string, config map[string]interface{}) (*Cluster, error) {
-	cluster := &Cluster{
+func (c *Werfty) CreateHetznerCluster(name, location string, config map[string]interface{}) (*sharedmodels.Cluster, error) {
+	cluster := &sharedmodels.Cluster{
 		Name:          name,
 		CloudProvider: "hetzner-hcloud",
 		Status:        "creating",
@@ -366,8 +293,8 @@ func (c *Werfty) CreateHetznerCluster(name, location string, config map[string]i
 }
 
 // CreateIONOSCluster creates a new IONOS Cloud cluster
-func (c *Werfty) CreateIONOSCluster(name, datacenterID string, config map[string]interface{}) (*Cluster, error) {
-	cluster := &Cluster{
+func (c *Werfty) CreateIONOSCluster(name, datacenterID string, config map[string]interface{}) (*sharedmodels.Cluster, error) {
+	cluster := &sharedmodels.Cluster{
 		Name:          name,
 		CloudProvider: "united-ionos",
 		Status:        "creating",
@@ -391,7 +318,7 @@ func (c *Werfty) CreateIONOSCluster(name, datacenterID string, config map[string
 }
 
 // UpdateCluster updates an existing cluster
-func (c *Werfty) UpdateCluster(id string, cluster *AKSCluster) (*AKSCluster, error) {
+func (c *Werfty) UpdateCluster(id string, cluster *sharedmodels.AKSCluster) (*sharedmodels.AKSCluster, error) {
 	resp, err := c.doRequest("PUT", "/api/v1/clusters/"+id, cluster)
 	if err != nil {
 		return nil, err
@@ -405,7 +332,7 @@ func (c *Werfty) UpdateCluster(id string, cluster *AKSCluster) (*AKSCluster, err
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var updated AKSCluster
+	var updated sharedmodels.AKSCluster
 	if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -432,7 +359,7 @@ func (c *Werfty) DeleteCluster(id string) error {
 }
 
 // RunTest runs a test on a cluster (multi-cloud)
-func (c *Werfty) RunTest(clusterID string, testReq *TestRequest) (*TestResult, error) {
+func (c *Werfty) RunTest(clusterID string, testReq *sharedmodels.TestRequest) (*sharedmodels.TestResult, error) {
 	resp, err := c.doRequest("POST", "/api/v1/clusters/"+clusterID+"/tests", testReq)
 	if err != nil {
 		return nil, err
@@ -446,7 +373,7 @@ func (c *Werfty) RunTest(clusterID string, testReq *TestRequest) (*TestResult, e
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var result TestResult
+	var result sharedmodels.TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -455,8 +382,8 @@ func (c *Werfty) RunTest(clusterID string, testReq *TestRequest) (*TestResult, e
 }
 
 // RunAKSTest runs a test on an AKS cluster (backward compatibility)
-func (c *Werfty) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTestResult, error) {
-	multiTestReq := &TestRequest{
+func (c *Werfty) RunAKSTest(clusterID string, testReq *sharedmodels.AKSTestRequest) (*sharedmodels.AKSTestResult, error) {
+	multiTestReq := &sharedmodels.TestRequest{
 		ClusterID: testReq.ClusterID,
 		TestType:  testReq.TestType,
 		Config:    testReq.Config,
@@ -468,7 +395,7 @@ func (c *Werfty) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTest
 	}
 	
 	// Convert to AKSTestResult for backward compatibility
-	aksResult := &AKSTestResult{
+	aksResult := &sharedmodels.AKSTestResult{
 		ID:          result.ID,
 		ClusterID:   result.ClusterID,
 		TestType:    result.TestType,
@@ -484,7 +411,7 @@ func (c *Werfty) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTest
 }
 
 // GetTestResult gets a test result by ID (multi-cloud)
-func (c *Werfty) GetTestResult(id string) (*TestResult, error) {
+func (c *Werfty) GetTestResult(id string) (*sharedmodels.TestResult, error) {
 	resp, err := c.doRequest("GET", "/api/v1/tests/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -498,7 +425,7 @@ func (c *Werfty) GetTestResult(id string) (*TestResult, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var result TestResult
+	var result sharedmodels.TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -507,14 +434,14 @@ func (c *Werfty) GetTestResult(id string) (*TestResult, error) {
 }
 
 // GetAKSTestResult gets an AKS test result by ID (backward compatibility)
-func (c *Werfty) GetAKSTestResult(id string) (*AKSTestResult, error) {
+func (c *Werfty) GetAKSTestResult(id string) (*sharedmodels.AKSTestResult, error) {
 	result, err := c.GetTestResult(id)
 	if err != nil {
 		return nil, err
 	}
 	
 	// Convert to AKSTestResult for backward compatibility
-	aksResult := &AKSTestResult{
+	aksResult := &sharedmodels.AKSTestResult{
 		ID:          result.ID,
 		ClusterID:   result.ClusterID,
 		TestType:    result.TestType,
@@ -530,7 +457,7 @@ func (c *Werfty) GetAKSTestResult(id string) (*AKSTestResult, error) {
 }
 
 // ListTestResults lists test results for a cluster (multi-cloud)
-func (c *Werfty) ListTestResults(clusterID string) ([]*TestResult, error) {
+func (c *Werfty) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
 	resp, err := c.doRequest("GET", "/api/v1/clusters/"+clusterID+"/tests", nil)
 	if err != nil {
 		return nil, err
@@ -541,7 +468,7 @@ func (c *Werfty) ListTestResults(clusterID string) ([]*TestResult, error) {
 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
 	}
 
-	var response TestResultsResponse
+	var response sharedmodels.TestResultsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -550,16 +477,16 @@ func (c *Werfty) ListTestResults(clusterID string) ([]*TestResult, error) {
 }
 
 // ListAKSTestResults lists test results for an AKS cluster (backward compatibility)
-func (c *Werfty) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) {
+func (c *Werfty) ListAKSTestResults(clusterID string) ([]*sharedmodels.AKSTestResult, error) {
 	results, err := c.ListTestResults(clusterID)
 	if err != nil {
 		return nil, err
 	}
 	
 	// Convert to AKSTestResult for backward compatibility
-	aksResults := make([]*AKSTestResult, len(results))
+	aksResults := make([]*sharedmodels.AKSTestResult, len(results))
 	for i, result := range results {
-		aksResults[i] = &AKSTestResult{
+		aksResults[i] = &sharedmodels.AKSTestResult{
 			ID:          result.ID,
 			ClusterID:   result.ClusterID,
 			TestType:    result.TestType,

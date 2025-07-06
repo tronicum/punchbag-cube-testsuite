@@ -11,6 +11,7 @@ import (
 	"punchbag-cube-testsuite/multitool/pkg/client"
 	"punchbag-cube-testsuite/multitool/pkg/models"
 	"punchbag-cube-testsuite/multitool/pkg/output"
+	sharedmodels "punchbag-cube-testsuite/shared/models"
 )
 
 var (
@@ -47,7 +48,7 @@ Examples:
 		clusterName := args[0]
 		providerStr := args[1]
 
-		provider := models.CloudProvider(providerStr)
+		provider := sharedmodels.CloudProvider(providerStr)
 		if !isValidProvider(provider) {
 			output.FormatError(fmt.Errorf("invalid provider: %s. Supported providers: azure, aws, gcp, hetzner, ionos, stackit", providerStr))
 			os.Exit(1)
@@ -150,7 +151,7 @@ Examples:
 		var err error
 
 		if len(args) > 0 {
-			provider := models.CloudProvider(args[0])
+			provider := sharedmodels.CloudProvider(args[0])
 			if !isValidProvider(provider) {
 				output.FormatError(fmt.Errorf("invalid provider: %s", args[0]))
 				os.Exit(1)
@@ -370,13 +371,17 @@ Examples:
 
 // Helper functions
 
-func isValidProvider(provider models.CloudProvider) bool {
-	validProviders := []models.CloudProvider{
-		models.Azure, models.AWS, models.GCP,
-		models.Hetzner, models.IONOS, models.StackIT,
+func isValidProvider(provider sharedmodels.CloudProvider) bool {
+	validProviders := []sharedmodels.CloudProvider{
+		sharedmodels.CloudProviderAzure,
+		sharedmodels.CloudProviderAWS,
+		sharedmodels.CloudProviderGCP,
+		sharedmodels.CloudProviderHetzner,
+		sharedmodels.CloudProviderIONOS,
+		sharedmodels.CloudProviderStackIT,
 	}
 	for _, p := range validProviders {
-		if p == provider {
+		if provider == p {
 			return true
 		}
 	}

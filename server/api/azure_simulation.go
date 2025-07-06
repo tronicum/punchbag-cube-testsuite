@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"punchbag-cube-testsuite/shared/simulation"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 	"go.uber.org/zap"
 )
 

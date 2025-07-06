@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/username/punchbag-cube-testsuite/server/api"
-	"github.com/username/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/server/api"
+	"github.com/tronicum/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

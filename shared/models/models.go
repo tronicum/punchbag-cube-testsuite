@@ -165,3 +165,40 @@ type ClusterCreateRequest struct {
 	Location       string                 `json:"location,omitempty"`
 	Region         string                 `json:"region,omitempty"`
 }
+
+// ObjectStorageBucket represents a generic object storage bucket for any provider
+// Provider-specific fields can be added via the ProviderConfig map.
+type ObjectStorageBucket struct {
+	ID            string                 `json:"id,omitempty"`
+	Name          string                 `json:"name" binding:"required"`
+	Provider      CloudProvider          `json:"provider" binding:"required"`
+	Region        string                 `json:"region,omitempty"`
+	Location      string                 `json:"location,omitempty"`
+	CreatedAt     time.Time              `json:"created_at,omitempty"`
+	UpdatedAt     time.Time              `json:"updated_at,omitempty"`
+	Policy        *ObjectStoragePolicy   `json:"policy,omitempty"`
+	Lifecycle     []ObjectStorageRule    `json:"lifecycle,omitempty"`
+	ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
+}
+
+// ObjectStoragePolicy represents a generic bucket policy
+// This can be extended for provider-specific policy fields.
+type ObjectStoragePolicy struct {
+	Version   string                   `json:"version"`
+	Statement []ObjectStorageStatement `json:"statement"`
+}
+
+type ObjectStorageStatement struct {
+	Effect    string                 `json:"effect"`
+	Action    []string               `json:"action"`
+	Resource  []string               `json:"resource"`
+	Principal map[string]interface{} `json:"principal,omitempty"`
+	Condition map[string]interface{} `json:"condition,omitempty"`
+}
+
+// ObjectStorageRule represents a lifecycle rule for a bucket
+type ObjectStorageRule struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+	// Add more fields as needed for expiration, transitions, etc.
+}
