@@ -110,6 +110,59 @@ resource "punchbag_test" "load_test" {
 - `id` - Test identifier
 - `status` - Current test status
 
+### `multipass_cloud_layer_bucket`
+
+A generic, cross-cloud object storage bucket resource. This abstraction allows you to manage S3-like storage (AWS S3, Azure Blob, GCP GCS) using a unified resource.
+
+```hcl
+resource "multipass_cloud_layer_bucket" "example" {
+  name         = "my-bucket"
+  region       = "us-west-2"
+  provider     = "aws" # or "azure", "gcp"
+  storage_class = "STANDARD"
+  tier         = "Hot" # For Azure Blob, optional
+}
+```
+
+- `name`: The bucket/container name.
+- `region`: The region for the bucket.
+- `provider`: The cloud provider (`aws`, `azure`, or `gcp`).
+- `storage_class`: (Optional) Storage class (e.g., `STANDARD`, `COOL`).
+- `tier`: (Optional) Tier for Azure Blob or similar.
+
+This resource will be mapped to the correct cloud-specific resource at apply time.
+
+#### Example: AWS S3
+
+```hcl
+resource "multipass_cloud_layer_bucket" "aws_bucket" {
+  name     = "my-s3-bucket"
+  region   = "us-west-2"
+  provider = "aws"
+}
+```
+
+#### Example: Azure Blob
+
+```hcl
+resource "multipass_cloud_layer_bucket" "azure_blob" {
+  name     = "myblob"
+  region   = "westeurope"
+  provider = "azure"
+  tier     = "Hot"
+}
+```
+
+#### Example: GCP GCS
+
+```hcl
+resource "multipass_cloud_layer_bucket" "gcs_bucket" {
+  name     = "my-gcs-bucket"
+  region   = "us-central1"
+  provider = "gcp"
+}
+```
+
 ## Data Sources
 
 ### `punchbag_clusters`

@@ -50,6 +50,12 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
+	// Proxy endpoints for S3-like resources
+	handlers := api.NewHandlers(dataStore, logger)
+	router.Any("/api/proxy/aws/s3", handlers.ProxyS3)
+	router.Any("/api/proxy/azure/blob", handlers.ProxyBlob)
+	router.Any("/api/proxy/gcp/gcs", handlers.ProxyGCS)
+
 	// Start server
 	logger.Info("Starting Cube Server...")
 	router.Run(":8080")
