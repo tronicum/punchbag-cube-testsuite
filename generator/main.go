@@ -118,12 +118,9 @@ provider "azurerm" {
 			location := safeString(props, "location", "eastus")
 			resourceGroup := safeString(props, "resourceGroup", "example-rg")
 			nodeCount := safeInt(props, "nodeCount", 3)
-			// AKS specific fields
-			kubernetesVersion := safeString(props, "kubernetesVersion", "1.21.2")
 			networkPlugin := safeString(props, "networkPlugin", "azure")
 			networkPolicy := safeString(props, "networkPolicy", "azure")
 			dnsPrefix := safeString(props, "dnsPrefix", "exampleaks")
-			agentPoolProfile := safeString(props, "agentPoolProfile", "default")
 			identity := safeString(props, "identity", "")
 			tags := safeString(props, "tags", "")
 			// AKS availability zones (if applicable)
@@ -140,7 +137,10 @@ provider "azurerm" {
 			}
 			// AKS node pool labels and taints
 			labels := safeString(props, "nodePoolLabels", "")
-			taints := safeString(props, "nodePoolTaints", "")
+			tagsLine := ""
+			if tags != "" {
+				tagsLine = fmt.Sprintf("  tags = %s\n", tags)
+			}
 			// Build the Terraform resource block for AKS
 			tf = fmt.Sprintf(`resource "azurerm_kubernetes_cluster" "example" {
   name                = "%s"
@@ -163,10 +163,9 @@ provider "azurerm" {
     network_policy = "%s"
   }
   dns_prefix          = "%s"
-  tags                = %s
-  %s%s  // ...map more fields from JSON as needed
+%s  %s%s  // ...map more fields from JSON as needed
 }`,
-				name, location, resourceGroup, nodeCount, identity, nodeCount, networkPlugin, networkPolicy, dnsPrefix, tags, zones, labels, taints)
+				name, location, resourceGroup, nodeCount, identity, nodeCount, networkPlugin, networkPolicy, dnsPrefix, tagsLine, zones, labels)
 		} else if strings.Contains(inputPath, "monitor") {
 			// Map common Azure Monitor fields
 			name := safeString(props, "name", "example-monitor")
