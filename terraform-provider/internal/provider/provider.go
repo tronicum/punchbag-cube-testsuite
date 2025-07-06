@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -205,12 +204,12 @@ func (c *PunchbagClient) CreateCluster(cluster *Cluster) (*Cluster, error) {
 	// Implementation would make HTTP request to create cluster
 	cluster.ID = "generated-id"
 	cluster.Status = "creating"
-	
+
 	// Set default provider if not specified
 	if cluster.Provider == "" {
 		cluster.Provider = "azure" // default to Azure for backward compatibility
 	}
-	
+
 	return cluster, nil
 }
 
@@ -221,15 +220,15 @@ func (c *PunchbagClient) CreateStackITCluster(cluster *Cluster, stackitConfig *S
 	cluster.Status = "creating"
 	cluster.Provider = "schwarz-stackit"
 	cluster.ProjectID = stackitConfig.ProjectID
-	
+
 	// Store StackIT-specific config
 	cluster.ProviderConfig = map[string]interface{}{
-		"maintenance_time_start":       stackitConfig.MaintenanceTimeStart,
-		"maintenance_time_end":         stackitConfig.MaintenanceTimeEnd,
-		"maintenance_time_zone":        stackitConfig.MaintenanceTimeZone,
-		"allow_privileged_containers":  stackitConfig.AllowPrivilegedContainers,
+		"maintenance_time_start":      stackitConfig.MaintenanceTimeStart,
+		"maintenance_time_end":        stackitConfig.MaintenanceTimeEnd,
+		"maintenance_time_zone":       stackitConfig.MaintenanceTimeZone,
+		"allow_privileged_containers": stackitConfig.AllowPrivilegedContainers,
 	}
-	
+
 	return cluster, nil
 }
 
@@ -240,7 +239,7 @@ func (c *PunchbagClient) CreateHetznerCluster(cluster *Cluster, hetznerConfig *H
 	cluster.Status = "creating"
 	cluster.Provider = "hetzner-hcloud"
 	cluster.Location = hetznerConfig.Location
-	
+
 	// Store Hetzner-specific config
 	cluster.ProviderConfig = map[string]interface{}{
 		"token":                  hetznerConfig.Token,
@@ -250,7 +249,7 @@ func (c *PunchbagClient) CreateHetznerCluster(cluster *Cluster, hetznerConfig *H
 		"enable_public_network":  hetznerConfig.EnablePublicNetwork,
 		"enable_private_network": hetznerConfig.EnablePrivateNetwork,
 	}
-	
+
 	return cluster, nil
 }
 
@@ -260,20 +259,20 @@ func (c *PunchbagClient) CreateIONOSCluster(cluster *Cluster, ionosConfig *IONOS
 	cluster.ID = "ionos-" + ionosConfig.DatacenterID + "-cluster"
 	cluster.Status = "creating"
 	cluster.Provider = "united-ionos"
-	
+
 	// Store IONOS-specific config
 	cluster.ProviderConfig = map[string]interface{}{
-		"datacenter_id":     ionosConfig.DatacenterID,
-		"username":          ionosConfig.Username,
-		"k8s_cluster_name":  ionosConfig.K8sClusterName,
-		"public":            ionosConfig.Public,
-		"gateway_ip":        ionosConfig.GatewayIP,
+		"datacenter_id":    ionosConfig.DatacenterID,
+		"username":         ionosConfig.Username,
+		"k8s_cluster_name": ionosConfig.K8sClusterName,
+		"public":           ionosConfig.Public,
+		"gateway_ip":       ionosConfig.GatewayIP,
 		"maintenance_window": map[string]string{
 			"day_of_the_week": ionosConfig.MaintenanceWindow.DayOfTheWeek,
-			"time":           ionosConfig.MaintenanceWindow.Time,
+			"time":            ionosConfig.MaintenanceWindow.Time,
 		},
 	}
-	
+
 	return cluster, nil
 }
 
@@ -323,26 +322,26 @@ func (c *PunchbagClient) ListClusters() ([]*Cluster, error) {
 
 // Cluster represents a cluster resource with multi-cloud support
 type Cluster struct {
-	ID                string            `json:"id"`
-	Name              string            `json:"name"`
-	Provider          string            `json:"provider"`                     // azure, schwarz-stackit, aws, gcp
-	ResourceGroup     string            `json:"resource_group,omitempty"`     // Azure specific
-	Location          string            `json:"location,omitempty"`           // Azure/General location
-	Region            string            `json:"region,omitempty"`             // AWS/GCP/StackIT region
-	ProjectID         string            `json:"project_id,omitempty"`         // StackIT/GCP specific
-	KubernetesVersion string            `json:"kubernetes_version"`
-	Status            string            `json:"status"`
-	NodeCount         int               `json:"node_count"`
-	Tags              map[string]string `json:"tags,omitempty"`
+	ID                string                 `json:"id"`
+	Name              string                 `json:"name"`
+	Provider          string                 `json:"provider"`                 // azure, schwarz-stackit, aws, gcp
+	ResourceGroup     string                 `json:"resource_group,omitempty"` // Azure specific
+	Location          string                 `json:"location,omitempty"`       // Azure/General location
+	Region            string                 `json:"region,omitempty"`         // AWS/GCP/StackIT region
+	ProjectID         string                 `json:"project_id,omitempty"`     // StackIT/GCP specific
+	KubernetesVersion string                 `json:"kubernetes_version"`
+	Status            string                 `json:"status"`
+	NodeCount         int                    `json:"node_count"`
+	Tags              map[string]string      `json:"tags,omitempty"`
 	ProviderConfig    map[string]interface{} `json:"provider_config,omitempty"` // Provider-specific config
 }
 
 // StackITConfig represents StackIT-specific configuration
 type StackITConfig struct {
-	ProjectID                string `json:"project_id"`
-	MaintenanceTimeStart     string `json:"maintenance_time_start,omitempty"`
-	MaintenanceTimeEnd       string `json:"maintenance_time_end,omitempty"`
-	MaintenanceTimeZone      string `json:"maintenance_time_zone,omitempty"`
+	ProjectID                 string `json:"project_id"`
+	MaintenanceTimeStart      string `json:"maintenance_time_start,omitempty"`
+	MaintenanceTimeEnd        string `json:"maintenance_time_end,omitempty"`
+	MaintenanceTimeZone       string `json:"maintenance_time_zone,omitempty"`
 	AllowPrivilegedContainers bool   `json:"allow_privileged_containers,omitempty"`
 }
 
@@ -362,18 +361,18 @@ type HetznerConfig struct {
 
 // IONOSConfig represents IONOS Cloud-specific configuration
 type IONOSConfig struct {
-	DatacenterID         string `json:"datacenter_id"`
-	Username             string `json:"username,omitempty"`
-	Password             string `json:"password,omitempty"`
-	Token                string `json:"token,omitempty"`
-	Endpoint             string `json:"endpoint,omitempty"`
-	K8sClusterName       string `json:"k8s_cluster_name,omitempty"`
-	MaintenanceWindow    struct {
+	DatacenterID      string `json:"datacenter_id"`
+	Username          string `json:"username,omitempty"`
+	Password          string `json:"password,omitempty"`
+	Token             string `json:"token,omitempty"`
+	Endpoint          string `json:"endpoint,omitempty"`
+	K8sClusterName    string `json:"k8s_cluster_name,omitempty"`
+	MaintenanceWindow struct {
 		DayOfTheWeek string `json:"day_of_the_week,omitempty"`
 		Time         string `json:"time,omitempty"`
 	} `json:"maintenance_window,omitempty"`
-	AllowReplace         bool     `json:"allow_replace,omitempty"`
-	Public               bool     `json:"public,omitempty"`
-	GatewayIP            string   `json:"gateway_ip,omitempty"`
+	AllowReplace             bool     `json:"allow_replace,omitempty"`
+	Public                   bool     `json:"public,omitempty"`
+	GatewayIP                string   `json:"gateway_ip,omitempty"`
 	AvailableUpgradeVersions []string `json:"available_upgrade_versions,omitempty"`
 }

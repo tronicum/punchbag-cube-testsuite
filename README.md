@@ -242,6 +242,78 @@ resource "punchbag_cluster" "example_stackit" {
 }
 ```
 
+## 🔄 Werfty-Transformator: Terraform Conversion Tool
+
+The `werfty-transformator` tool allows you to convert Terraform files between cloud providers (AWS, Azure, GCP) or to the generic multipass-cloud-layer provider.
+
+### Usage
+
+```bash
+cd werfty-transformator
+
+go run main.go --input <input.tf> --src-provider <azure|aws|gcp> --destination-provider <azure|aws|gcp|multipass-cloud-layer>
+```
+
+### Supported Conversions
+- Azure Blob Storage ↔ AWS S3
+- Any S3-like resource → multipass-cloud-layer
+
+### Examples
+
+**Convert Azure Blob Storage to AWS S3:**
+```bash
+go run main.go --input azure_blob_example.tf --src-provider azure --destination-provider aws
+```
+
+**Convert AWS S3 to Azure Blob Storage:**
+```bash
+go run main.go --input aws_s3_example.tf --src-provider aws --destination-provider azure
+```
+
+**Convert AWS S3 to multipass-cloud-layer:**
+```bash
+go run main.go --input aws_s3_example.tf --src-provider aws --destination-provider multipass-cloud-layer
+```
+
+### How it Works
+- The tool parses the input Terraform file, detects supported resources, and rewrites them for the target provider.
+- Only S3-like resources are supported for now, but the tool is extensible for more resource types and providers.
+
+### Adding More Mappings
+- Extend the `ConvertTerraform` function in `werfty-transformator/main.go` to add new provider/resource conversions.
+- See the code comments for guidance.
+
+## 🏃 Local Development & Testing
+
+### Start the API Server
+```bash
+# From project root
+cd cmd/cube-server
+# Or use Go workspace mode
+PORT=8081 go run main.go
+```
+
+### Run Automated API Tests
+```bash
+bash scripts/test_api.sh
+```
+
+### Run Linting
+```bash
+bash scripts/lint.sh
+```
+
+## 🧪 API Usage Examples
+
+- Health check: `curl http://localhost:8081/health`
+- List clusters: `curl http://localhost:8081/api/v1/clusters`
+- Create cluster:
+  ```bash
+  curl -X POST http://localhost:8081/api/v1/clusters \
+    -H 'Content-Type: application/json' \
+    -d '{"name":"test-cluster","provider":"azure","location":"eastus"}'
+  ```
+
 ## Contributing
 
 Each component has its own documentation and development guidelines. See the README.md files in each directory for specific instructions.

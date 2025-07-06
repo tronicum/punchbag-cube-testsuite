@@ -49,9 +49,14 @@ func GenerateAzureTemplates(config map[string]interface{}) {
 		fmt.Println("Generating Azure Log Analytics template...")
 		// Add logic to generate Log Analytics template
 	}
-}
 
-// Extend template generation for Azure services
+	// Extend template generation for Azure services
+
+	if _, ok := config["object_storage"].(map[string]interface{}); ok {
+		fmt.Println("Generating Object Storage template...")
+		// Add logic to generate object storage template
+	}
+}
 
 func GenerateAzureMonitoringTemplate(config map[string]interface{}) string {
 	// Stub logic for generating Azure Monitoring template
@@ -80,6 +85,38 @@ resource "azurerm_log_analytics_workspace" "example" {
   retention_in_days   = 30
 }
 `
+}
+
+// GenerateObjectStorageTemplate generates a Terraform template for Object Storage
+func GenerateObjectStorageTemplate(config map[string]interface{}) string {
+	// Stub logic for generating a generic object storage template
+	return `# Object Storage Template
+resource "generic_object_storage_bucket" "example" {
+  name         = "example-bucket"
+  region       = "us-west-1"
+  provider     = "aws"
+  storage_class = "STANDARD"
+}`
+}
+
+// GenerateMultipassCloudLayerTemplate generates a Terraform template for multipass-cloud-layer provider using the generic Bucket abstraction
+func GenerateMultipassCloudLayerTemplate(bucket *models.Bucket) string {
+	return fmt.Sprintf(`# multipass-cloud-layer Bucket
+resource "multipass_cloud_layer_bucket" "%s" {
+  name         = "%s"
+  region       = "%s"
+  provider     = "%s"
+  storage_class = "%s"
+  tier         = "%s"
+}
+`,
+		bucket.Name,
+		bucket.Name,
+		bucket.Region,
+		bucket.Provider,
+		bucket.StorageClass,
+		bucket.Tier,
+	)
 }
 
 // GenerateTerraformFromJSON reads a JSON file and outputs a Terraform file for supported Azure resources

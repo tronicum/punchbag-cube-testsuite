@@ -37,3 +37,18 @@ jobs:
         env:
           API_KEY: dev-secret-key
           BASE_URL: http://localhost:8080
+      - name: Start cube-server (background)
+        run: |
+          nohup go run cmd/cube-server/main.go > cube-server.log 2>&1 &
+          for i in {1..10}; do
+            curl --fail http://localhost:8081/health && break
+            sleep 2
+          done
+      - name: Run API tests
+        run: |
+          chmod +x scripts/test_api.sh
+          bash scripts/test_api.sh
+      - name: Lint (golangci-lint)
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: v1.55

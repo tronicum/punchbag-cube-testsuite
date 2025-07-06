@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"punchbag-cube-testsuite/api"
 	"punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
@@ -12,17 +13,14 @@ import (
 )
 
 func main() {
-	// Initialize logger
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
 
-	// Initialize store
 	dataStore := store.NewMemoryStore()
 
-	// Set up Gin router
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -31,8 +29,8 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Add CORS middleware
 	router.Use(func(c *gin.Context) {
+		log.Printf("[DEBUG] %s %s", c.Request.Method, c.Request.URL.Path)
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -41,22 +39,25 @@ func main() {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-
 		c.Next()
 	})
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "healthy",
+			"service": "punchbag-cube-testsuite",
+		})
 	})
 
-	// Proxy endpoints for S3-like resources
-	handlers := api.NewHandlers(dataStore, logger)
-	router.Any("/api/proxy/aws/s3", handlers.ProxyS3)
-	router.Any("/api/proxy/azure/blob", handlers.ProxyBlob)
-	router.Any("/api/proxy/gcp/gcs", handlers.ProxyGCS)
+	api.SetupRoutes(router, dataStore, logger)
 
-	// Start server
-	logger.Info("Starting Cube Server...")
-	router.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
+	}
+
+	logger.Info("Starting server", zap.String("port", port))
+	if err := router.Run(":" + port); err != nil {
+		logger.Fatal("Failed to start server", zap.Error(err))
+	}
 }

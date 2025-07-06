@@ -229,6 +229,21 @@ func (h *Handlers) ListTestResults(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"test_results": results})
 }
 
+// ProxyS3 handles /api/proxy/aws/s3
+func (h *Handlers) ProxyS3(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "S3 proxy not implemented yet"})
+}
+
+// ProxyBlob handles /api/proxy/azure/blob
+func (h *Handlers) ProxyBlob(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "Blob proxy not implemented yet"})
+}
+
+// ProxyGCS handles /api/proxy/gcp/gcs
+func (h *Handlers) ProxyGCS(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"message": "GCS proxy not implemented yet"})
+}
+
 // simulateTest simulates a test execution and updates the result
 func (h *Handlers) simulateTest(testResult *models.TestResult) {
 	// Simulate test duration

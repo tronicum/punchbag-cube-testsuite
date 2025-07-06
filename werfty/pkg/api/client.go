@@ -577,7 +577,7 @@ func (c *Werfty) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) 
 
 // ValidateProvider validates a cloud provider configuration
 func (c *Werfty) ValidateProvider(provider string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/api/v1/validate/%s", c.baseURL, provider)
+	url := fmt.Sprintf("%s/api/v1/validate/%s", c.BaseURL, provider)
 	
 	resp, err := http.Get(url)
 	if err != nil {
@@ -599,7 +599,7 @@ func (c *Werfty) ValidateProvider(provider string) (map[string]interface{}, erro
 
 // GetProviderInfo gets information about a cloud provider
 func (c *Werfty) GetProviderInfo(provider string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/api/v1/providers/%s/info", c.baseURL, provider)
+	url := fmt.Sprintf("%s/api/v1/providers/%s/info", c.BaseURL, provider)
 	
 	resp, err := http.Get(url)
 	if err != nil {
@@ -621,7 +621,7 @@ func (c *Werfty) GetProviderInfo(provider string) (map[string]interface{}, error
 
 // ListProviderClusters lists clusters for a specific provider
 func (c *Werfty) ListProviderClusters(provider string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/api/v1/providers/%s/clusters", c.baseURL, provider)
+	url := fmt.Sprintf("%s/api/v1/providers/%s/clusters", c.BaseURL, provider)
 	
 	resp, err := http.Get(url)
 	if err != nil {
@@ -643,7 +643,7 @@ func (c *Werfty) ListProviderClusters(provider string) (map[string]interface{}, 
 
 // ExecuteProviderOperation executes a provider-specific operation
 func (c *Werfty) ExecuteProviderOperation(provider, operation, params string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/api/v1/providers/%s/operations/%s", c.baseURL, provider, operation)
+	url := fmt.Sprintf("%s/api/v1/providers/%s/operations/%s", c.BaseURL, provider, operation)
 	
 	// Parse params as JSON
 	var paramData map[string]interface{}

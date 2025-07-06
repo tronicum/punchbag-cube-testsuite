@@ -1,0 +1,27 @@
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /health                   --> main.main.func2 (4 handlers)
+[GIN-debug] POST   /api/v1/clusters          --> punchbag-cube-testsuite/api.(*Handlers).CreateCluster-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters          --> punchbag-cube-testsuite/api.(*Handlers).ListClusters-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id      --> punchbag-cube-testsuite/api.(*Handlers).GetCluster-fm (4 handlers)
+[GIN-debug] PUT    /api/v1/clusters/:id      --> punchbag-cube-testsuite/api.(*Handlers).UpdateCluster-fm (4 handlers)
+[GIN-debug] DELETE /api/v1/clusters/:id      --> punchbag-cube-testsuite/api.(*Handlers).DeleteCluster-fm (4 handlers)
+[GIN-debug] POST   /api/v1/clusters/:id/tests --> punchbag-cube-testsuite/api.(*Handlers).RunTest-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id/tests --> punchbag-cube-testsuite/api.(*Handlers).ListTestResults-fm (4 handlers)
+[GIN-debug] GET    /api/v1/tests/:id         --> punchbag-cube-testsuite/api.(*Handlers).GetTestResult-fm (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/health    --> punchbag-cube-testsuite/api.SetupRoutes.func1 (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/status    --> punchbag-cube-testsuite/api.SetupRoutes.func2 (4 handlers)
+[GIN-debug] GET    /api/v1/validate/:provider --> punchbag-cube-testsuite/api.(*ProviderSimulationHandlers).ValidateProvider-fm (4 handlers)
+[GIN-debug] GET    /api/v1/providers/:provider/info --> punchbag-cube-testsuite/api.(*ProviderSimulationHandlers).GetProviderInfo-fm (4 handlers)
+[GIN-debug] GET    /api/v1/providers/:provider/clusters --> punchbag-cube-testsuite/api.(*ProviderSimulationHandlers).ListProviderClusters-fm (4 handlers)
+[GIN-debug] POST   /api/v1/providers/:provider/operations/:operation --> punchbag-cube-testsuite/api.(*ProviderSimulationHandlers).SimulateProviderOperation-fm (4 handlers)
+[GIN-debug] GET    /docs                     --> punchbag-cube-testsuite/api.SetupRoutes.func3 (4 handlers)
+{"level":"info","ts":1751802213.525814,"caller":"cube-server/main.go:59","msg":"Starting server","port":"8081"}
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8081
+[GIN-debug] [ERROR] listen tcp :8081: bind: address already in use
+{"level":"fatal","ts":1751802213.5260448,"caller":"cube-server/main.go:61","msg":"Failed to start server","error":"listen tcp :8081: bind: address already in use","stacktrace":"main.main\n\t/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/cmd/cube-server/main.go:61\nruntime.main\n\t/opt/homebrew/Cellar/go/1.24.4/libexec/src/runtime/proc.go:283"}
+exit status 1
