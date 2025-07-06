@@ -30,7 +30,9 @@ if [ -s large_files_to_purge.txt ]; then
   cat large_files_to_purge.txt
   ARGS=""
   while read -r file; do
-    ARGS+=" --path '$file'"
+    # Remove leading './' if present
+    clean_file="${file#./}"
+    ARGS+=" --path '$clean_file'"
   done < large_files_to_purge.txt
   # shellcheck disable=SC2086
   eval "$GIT_FILTER_REPO_BIN $ARGS --invert-paths"
