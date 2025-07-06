@@ -26,6 +26,12 @@ func NewAPIClient(baseURL string) *APIClient {
 	}
 }
 
+// Authenticate mocks Azure login/credentials for local/dev use
+func (c *APIClient) Authenticate() error {
+	// No-op: always succeed in dev/mock mode
+	return nil
+}
+
 // ClusterClient provides methods for cluster operations
 type ClusterClient struct {
 	client *APIClient

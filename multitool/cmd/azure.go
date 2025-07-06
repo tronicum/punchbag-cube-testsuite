@@ -1,10 +1,17 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
+	"text/tabwriter"
+
+	"punchbag-cube-testsuite/multitool/pkg/client"
+	"punchbag-cube-testsuite/multitool/pkg/models"
+	"punchbag-cube-testsuite/multitool/pkg/output"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +41,7 @@ var azureGetMonitorCmd = &cobra.Command{
 		}
 		resp, err := http.Get(url)
 		if err != nil {
-			fmt.Printf("Failed to fetch Azure Monitor: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to fetch Azure Monitor: %v", err))
 			os.Exit(1)
 		}
 		defer resp.Body.Close()
@@ -42,14 +49,14 @@ var azureGetMonitorCmd = &cobra.Command{
 		json.NewDecoder(resp.Body).Decode(&data)
 		f, err := os.Create(output)
 		if err != nil {
-			fmt.Printf("Failed to write file: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to write file: %v", err))
 			os.Exit(1)
 		}
 		defer f.Close()
 		enc := json.NewEncoder(f)
 		enc.SetIndent("", "  ")
 		enc.Encode(data)
-		fmt.Printf("Azure Monitor state saved to %s\n", output)
+		output.Success(fmt.Sprintf("Azure Monitor state saved to %s", output))
 	},
 }
 
@@ -72,7 +79,7 @@ var azureGetLogAnalyticsCmd = &cobra.Command{
 		}
 		resp, err := http.Get(url)
 		if err != nil {
-			fmt.Printf("Failed to fetch Azure Log Analytics: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to fetch Azure Log Analytics: %v", err))
 			os.Exit(1)
 		}
 		defer resp.Body.Close()
@@ -80,14 +87,14 @@ var azureGetLogAnalyticsCmd = &cobra.Command{
 		json.NewDecoder(resp.Body).Decode(&data)
 		f, err := os.Create(output)
 		if err != nil {
-			fmt.Printf("Failed to write file: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to write file: %v", err))
 			os.Exit(1)
 		}
 		defer f.Close()
 		enc := json.NewEncoder(f)
 		enc.SetIndent("", "  ")
 		enc.Encode(data)
-		fmt.Printf("Azure Log Analytics state saved to %s\n", output)
+		output.Success(fmt.Sprintf("Azure Log Analytics state saved to %s", output))
 	},
 }
 
@@ -95,6 +102,14 @@ var azureGetLogAnalyticsCmd = &cobra.Command{
 var azureAksCmd = &cobra.Command{
 	Use:   "aks",
 	Short: "Manage Azure Kubernetes Service (AKS) clusters",
+	Long: `Create, get, list, and delete AKS clusters in your Azure subscription.
+
+Examples:
+  multitool azure aks create --name my-aks --resource-group my-rg --location eastus
+  multitool azure aks list
+  multitool azure aks get --id <cluster-id>
+  multitool azure aks delete --id <cluster-id>
+`,
 }
 
 var azureAksCreateCmd = &cobra.Command{
@@ -105,7 +120,14 @@ var azureAksCreateCmd = &cobra.Command{
 		resourceGroup, _ := cmd.Flags().GetString("resource-group")
 		location, _ := cmd.Flags().GetString("location")
 		projectID, _ := cmd.Flags().GetString("project-id")
+		name = promptIfEmpty(name, "AKS cluster name")
+		resourceGroup = promptIfEmpty(resourceGroup, "Azure resource group name")
+		location = promptIfEmpty(location, "Azure region/location")
 		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
 		clusterClient := client.NewClusterClient(api)
 		req := &models.ClusterCreateRequest{
 			Name:          name,
@@ -116,10 +138,10 @@ var azureAksCreateCmd = &cobra.Command{
 		}
 		cluster, err := clusterClient.CreateCluster(req)
 		if err != nil {
-			fmt.Printf("Failed to create AKS cluster: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to create AKS cluster: %v", err))
 			os.Exit(1)
 		}
-		fmt.Printf("AKS cluster created: %s (ID: %s)\n", cluster.Name, cluster.ID)
+		output.Success(fmt.Sprintf("AKS cluster created: %s (ID: %s)", cluster.Name, cluster.ID))
 	},
 }
 
@@ -129,10 +151,14 @@ var azureAksGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		id, _ := cmd.Flags().GetString("id")
 		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
 		clusterClient := client.NewClusterClient(api)
 		cluster, err := clusterClient.GetCluster(id)
 		if err != nil {
-			fmt.Printf("Failed to get AKS cluster: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to get AKS cluster: %v", err))
 			os.Exit(1)
 		}
 		b, _ := json.MarshalIndent(cluster, "", "  ")
@@ -145,14 +171,26 @@ var azureAksListCmd = &cobra.Command{
 	Short: "List AKS clusters",
 	Run: func(cmd *cobra.Command, args []string) {
 		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
 		clusterClient := client.NewClusterClient(api)
 		clusters, err := clusterClient.ListClustersByProvider(models.Azure)
 		if err != nil {
-			fmt.Printf("Failed to list AKS clusters: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to list AKS clusters: %v", err))
 			os.Exit(1)
 		}
-		b, _ := json.MarshalIndent(clusters, "", "  ")
-		fmt.Println(string(b))
+		if len(clusters) == 0 {
+			output.Warn("No AKS clusters found.")
+			return
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tName\tResource Group\tLocation\tStatus")
+		for _, c := range clusters {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", c.ID, c.Name, c.ResourceGroup, c.Location, c.Status)
+		}
+		w.Flush()
 	},
 }
 
@@ -162,13 +200,17 @@ var azureAksDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		id, _ := cmd.Flags().GetString("id")
 		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
 		clusterClient := client.NewClusterClient(api)
 		err := clusterClient.DeleteCluster(id)
 		if err != nil {
-			fmt.Printf("Failed to delete AKS cluster: %v\n", err)
+			output.Error(fmt.Sprintf("Failed to delete AKS cluster: %v", err))
 			os.Exit(1)
 		}
-		fmt.Printf("AKS cluster deleted: %s\n", id)
+		output.Success(fmt.Sprintf("AKS cluster deleted: %s", id))
 	},
 }
 
@@ -176,14 +218,48 @@ var azureAksDeleteCmd = &cobra.Command{
 var azureLogCmd = &cobra.Command{
 	Use:   "loganalytics",
 	Short: "Manage Azure Log Analytics workspaces",
+	Long: `Create, get, list, and delete Log Analytics workspaces in Azure.
+
+Examples:
+  multitool azure loganalytics create --name mylog --resource-group my-rg --location eastus --sku PerGB2018
+  multitool azure loganalytics list
+  multitool azure loganalytics get --id <workspace-id>
+  multitool azure loganalytics delete --id <workspace-id>
+`,
 }
 
 var azureLogCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a Log Analytics workspace",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Creating Log Analytics workspace (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		name, _ := cmd.Flags().GetString("name")
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		location, _ := cmd.Flags().GetString("location")
+		sku, _ := cmd.Flags().GetString("sku")
+		retention, _ := cmd.Flags().GetInt("retention-days")
+		name = promptIfEmpty(name, "Log Analytics workspace name")
+		resourceGroup = promptIfEmpty(resourceGroup, "Azure resource group name")
+		location = promptIfEmpty(location, "Azure region/location")
+		sku = promptIfEmpty(sku, "SKU (e.g. PerGB2018)")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		logClient := client.NewLogAnalyticsClient(api)
+		workspace := &models.LogAnalyticsWorkspace{
+			Name:          name,
+			ResourceGroup: resourceGroup,
+			Location:      location,
+			Sku:           sku,
+			RetentionDays: retention,
+		}
+		result, err := logClient.Create(workspace)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to create Log Analytics workspace: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Log Analytics workspace created: %s (ID: %s)", result.Name, result.ID))
 	},
 }
 
@@ -191,8 +267,20 @@ var azureLogGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get Log Analytics workspace details",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Getting Log Analytics workspace (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		logClient := client.NewLogAnalyticsClient(api)
+		result, err := logClient.Get(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to get Log Analytics workspace: %v", err))
+			os.Exit(1)
+		}
+		b, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(b))
 	},
 }
 
@@ -200,8 +288,27 @@ var azureLogListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Log Analytics workspaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Listing Log Analytics workspaces (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		logClient := client.NewLogAnalyticsClient(api)
+		results, err := logClient.List()
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to list Log Analytics workspaces: %v", err))
+			os.Exit(1)
+		}
+		if len(results) == 0 {
+			output.Warn("No Log Analytics workspaces found.")
+			return
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tName\tResource Group\tLocation\tSKU\tRetention Days")
+		for _, ws := range results {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n", ws.ID, ws.Name, ws.ResourceGroup, ws.Location, ws.Sku, ws.RetentionDays)
+		}
+		w.Flush()
 	},
 }
 
@@ -209,8 +316,19 @@ var azureLogDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a Log Analytics workspace",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Deleting Log Analytics workspace (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		logClient := client.NewLogAnalyticsClient(api)
+		err := logClient.Delete(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to delete Log Analytics workspace: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Log Analytics workspace deleted: %s", id))
 	},
 }
 
@@ -218,14 +336,55 @@ var azureLogDeleteCmd = &cobra.Command{
 var azureBudgetCmd = &cobra.Command{
 	Use:   "budget",
 	Short: "Manage Azure Budgets",
+	Long: `Create, get, list, and delete Azure Budgets for cost management.
+
+Examples:
+  multitool azure budget create --name mybudget --resource-group my-rg --amount 100 --time-grain Monthly --start-date 2025-01-01 --end-date 2025-12-31
+  multitool azure budget list
+  multitool azure budget get --id <budget-id>
+  multitool azure budget delete --id <budget-id>
+`,
 }
 
 var azureBudgetCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an Azure Budget",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Creating Azure Budget (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		name, _ := cmd.Flags().GetString("name")
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		amount, _ := cmd.Flags().GetFloat64("amount")
+		timeGrain, _ := cmd.Flags().GetString("time-grain")
+		startDate, _ := cmd.Flags().GetString("start-date")
+		endDate, _ := cmd.Flags().GetString("end-date")
+		name = promptIfEmpty(name, "Budget name")
+		resourceGroup = promptIfEmpty(resourceGroup, "Azure resource group name")
+		timeGrain = promptIfEmpty(timeGrain, "Time grain (e.g. Monthly)")
+		startDate = promptIfEmpty(startDate, "Start date (YYYY-MM-DD)")
+		endDate = promptIfEmpty(endDate, "End date (YYYY-MM-DD)")
+		if amount == 0 {
+			fmt.Print("Budget amount: ")
+			fmt.Scanf("%f\n", &amount)
+		}
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		budgetClient := client.NewAzureBudgetClient(api)
+		budget := &models.AzureBudget{
+			Name:          name,
+			ResourceGroup: resourceGroup,
+			Amount:        amount,
+			TimeGrain:     timeGrain,
+			StartDate:     startDate,
+			EndDate:       endDate,
+		}
+		result, err := budgetClient.Create(budget)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to create Azure Budget: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Azure Budget created: %s (ID: %s)", result.Name, result.ID))
 	},
 }
 
@@ -233,8 +392,20 @@ var azureBudgetGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get Azure Budget details",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Getting Azure Budget (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		budgetClient := client.NewAzureBudgetClient(api)
+		result, err := budgetClient.Get(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to get Azure Budget: %v", err))
+			os.Exit(1)
+		}
+		b, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(b))
 	},
 }
 
@@ -242,8 +413,27 @@ var azureBudgetListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Azure Budgets",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Listing Azure Budgets (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		budgetClient := client.NewAzureBudgetClient(api)
+		results, err := budgetClient.List()
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to list Azure Budgets: %v", err))
+			os.Exit(1)
+		}
+		if len(results) == 0 {
+			output.Warn("No Azure Budgets found.")
+			return
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tName\tResource Group\tAmount\tTime Grain\tStart Date\tEnd Date")
+		for _, b := range results {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%s\t%s\t%s\n", b.ID, b.Name, b.ResourceGroup, b.Amount, b.TimeGrain, b.StartDate, b.EndDate)
+		}
+		w.Flush()
 	},
 }
 
@@ -251,8 +441,19 @@ var azureBudgetDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete an Azure Budget",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Deleting Azure Budget (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		budgetClient := client.NewAzureBudgetClient(api)
+		err := budgetClient.Delete(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to delete Azure Budget: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Azure Budget deleted: %s", id))
 	},
 }
 
@@ -260,14 +461,48 @@ var azureBudgetDeleteCmd = &cobra.Command{
 var azureAppInsightsCmd = &cobra.Command{
 	Use:   "appinsights",
 	Short: "Manage Azure Application Insights instances",
+	Long: `Create, get, list, and delete Application Insights resources in Azure.
+
+Examples:
+  multitool azure appinsights create --name myapp --resource-group my-rg --location eastus --app-type web
+  multitool azure appinsights list
+  multitool azure appinsights get --id <appinsights-id>
+  multitool azure appinsights delete --id <appinsights-id>
+`,
 }
 
 var azureAppInsightsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an Application Insights instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Creating Application Insights instance (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		name, _ := cmd.Flags().GetString("name")
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		location, _ := cmd.Flags().GetString("location")
+		appType, _ := cmd.Flags().GetString("app-type")
+		retention, _ := cmd.Flags().GetInt("retention-days")
+		name = promptIfEmpty(name, "App Insights name")
+		resourceGroup = promptIfEmpty(resourceGroup, "Azure resource group name")
+		location = promptIfEmpty(location, "Azure region/location")
+		appType = promptIfEmpty(appType, "Application type (e.g. web)")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		appClient := client.NewAppInsightsClient(api)
+		app := &models.AppInsightsResource{
+			Name:          name,
+			ResourceGroup: resourceGroup,
+			Location:      location,
+			AppType:       appType,
+			RetentionDays: retention,
+		}
+		result, err := appClient.Create(app)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to create Application Insights: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Application Insights created: %s (ID: %s)", result.Name, result.ID))
 	},
 }
 
@@ -275,8 +510,20 @@ var azureAppInsightsGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get Application Insights instance details",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Getting Application Insights instance (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		appClient := client.NewAppInsightsClient(api)
+		result, err := appClient.Get(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to get Application Insights: %v", err))
+			os.Exit(1)
+		}
+		b, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(b))
 	},
 }
 
@@ -284,8 +531,27 @@ var azureAppInsightsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Application Insights instances",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Listing Application Insights instances (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		appClient := client.NewAppInsightsClient(api)
+		results, err := appClient.List()
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to list Application Insights: %v", err))
+			os.Exit(1)
+		}
+		if len(results) == 0 {
+			output.Warn("No Application Insights instances found.")
+			return
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tName\tResource Group\tLocation\tApp Type\tRetention Days")
+		for _, a := range results {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n", a.ID, a.Name, a.ResourceGroup, a.Location, a.AppType, a.RetentionDays)
+		}
+		w.Flush()
 	},
 }
 
@@ -293,8 +559,19 @@ var azureAppInsightsDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete an Application Insights instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Deleting Application Insights instance (not yet implemented)")
-		// TODO: Implement real API/proxy call
+		id, _ := cmd.Flags().GetString("id")
+		api := client.NewAPIClient(proxyServer)
+		if err := api.Authenticate(); err != nil {
+			output.Error(fmt.Sprintf("Authentication failed (mocked): %v", err))
+			os.Exit(1)
+		}
+		appClient := client.NewAppInsightsClient(api)
+		err := appClient.Delete(id)
+		if err != nil {
+			output.Error(fmt.Sprintf("Failed to delete Application Insights: %v", err))
+			os.Exit(1)
+		}
+		output.Success(fmt.Sprintf("Application Insights deleted: %s", id))
 	},
 }
 
@@ -325,4 +602,65 @@ func init() {
 
 	azureAppInsightsCmd.AddCommand(azureAppInsightsCreateCmd, azureAppInsightsGetCmd, azureAppInsightsListCmd, azureAppInsightsDeleteCmd)
 	azureCmd.AddCommand(azureAppInsightsCmd)
+
+	azureLogCreateCmd.Flags().String("name", "", "Log Analytics workspace Name")
+	azureLogCreateCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureLogCreateCmd.Flags().String("location", "", "Azure region/location")
+	azureLogCreateCmd.Flags().String("sku", "", "SKU (e.g. PerGB2018)")
+	azureLogCreateCmd.Flags().Int("retention-days", 30, "Retention in days")
+	azureLogCreateCmd.MarkFlagRequired("name")
+	azureLogCreateCmd.MarkFlagRequired("resource-group")
+	azureLogCreateCmd.MarkFlagRequired("location")
+	azureLogCreateCmd.MarkFlagRequired("sku")
+
+	azureLogGetCmd.Flags().String("id", "", "Log Analytics workspace ID")
+	azureLogGetCmd.MarkFlagRequired("id")
+
+	azureLogDeleteCmd.Flags().String("id", "", "Log Analytics workspace ID")
+	azureLogDeleteCmd.MarkFlagRequired("id")
+
+	azureBudgetCreateCmd.Flags().String("name", "", "Budget name")
+	azureBudgetCreateCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureBudgetCreateCmd.Flags().Float64("amount", 0, "Budget amount")
+	azureBudgetCreateCmd.Flags().String("time-grain", "", "Time grain (e.g. Monthly)")
+	azureBudgetCreateCmd.Flags().String("start-date", "", "Start date (YYYY-MM-DD)")
+	azureBudgetCreateCmd.Flags().String("end-date", "", "End date (YYYY-MM-DD)")
+	azureBudgetCreateCmd.MarkFlagRequired("name")
+	azureBudgetCreateCmd.MarkFlagRequired("resource-group")
+	azureBudgetCreateCmd.MarkFlagRequired("amount")
+	azureBudgetCreateCmd.MarkFlagRequired("time-grain")
+	azureBudgetCreateCmd.MarkFlagRequired("start-date")
+	azureBudgetCreateCmd.MarkFlagRequired("end-date")
+
+	azureBudgetGetCmd.Flags().String("id", "", "Budget ID")
+	azureBudgetGetCmd.MarkFlagRequired("id")
+
+	azureBudgetDeleteCmd.Flags().String("id", "", "Budget ID")
+	azureBudgetDeleteCmd.MarkFlagRequired("id")
+
+	azureAppInsightsCreateCmd.Flags().String("name", "", "App Insights name")
+	azureAppInsightsCreateCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureAppInsightsCreateCmd.Flags().String("location", "", "Azure region/location")
+	azureAppInsightsCreateCmd.Flags().String("app-type", "", "Application type (e.g. web)")
+	azureAppInsightsCreateCmd.Flags().Int("retention-days", 90, "Retention in days")
+	azureAppInsightsCreateCmd.MarkFlagRequired("name")
+	azureAppInsightsCreateCmd.MarkFlagRequired("resource-group")
+	azureAppInsightsCreateCmd.MarkFlagRequired("location")
+	azureAppInsightsCreateCmd.MarkFlagRequired("app-type")
+
+	azureAppInsightsGetCmd.Flags().String("id", "", "App Insights ID")
+	azureAppInsightsGetCmd.MarkFlagRequired("id")
+
+	azureAppInsightsDeleteCmd.Flags().String("id", "", "App Insights ID")
+	azureAppInsightsDeleteCmd.MarkFlagRequired("id")
+}
+
+func promptIfEmpty(val, prompt string) string {
+	if val != "" {
+		return val
+	}
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s: ", prompt)
+	input, _ := reader.ReadString('\n')
+	return strings.TrimSpace(input)
 }
