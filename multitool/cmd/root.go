@@ -254,6 +254,47 @@ var listPackagesCmd = &cobra.Command{
 	},
 }
 
+// Add a generate-terraform subcommand for multicloud codegen
+var generateTerraformCmd = &cobra.Command{
+	Use:   "generate-terraform --input <input.json> --output <output.tf> --provider <provider>",
+	Short: "Generate Terraform code for a resource (multicloud)",
+	Long: `Generate Terraform code for a resource using the multicloud generator.
+
+Examples:
+  multitool generate-terraform --input test_aks.json --output test_aks.tf --provider azure
+  multitool generate-terraform --input test_eks.json --output test_eks.tf --provider aws
+  multitool generate-terraform --input test_gke.json --output test_gke.tf --provider gcp`,
+	Run: func(cmd *cobra.Command, args []string) {
+		input, _ := cmd.Flags().GetString("input")
+		output, _ := cmd.Flags().GetString("output")
+		provider, _ := cmd.Flags().GetString("provider")
+		if input == "" || output == "" || provider == "" {
+			fmt.Println("--input, --output, and --provider are required")
+			os.Exit(1)
+		}
+		// Call the generator binary with correct args
+		cmdline := []string{"run", "generator/main.go", "--generate-terraform", "--input", input, "--output", output, "--provider", provider}
+		c := exec.Command("go", cmdline...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		if err := c.Run(); err != nil {
+			fmt.Printf("Terraform generation failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Terraform code written to %s\n", output)
+	},
+}
+
+func init() {
+	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
+	generateTerraformCmd.Flags().String("input", "", "Input JSON file")
+	generateTerraformCmd.Flags().String("output", "", "Output Terraform file")
+	generateTerraformCmd.Flags().String("provider", "", "Cloud provider: azure|aws|gcp")
+	rootCmd.AddCommand(generateTerraformCmd)
+}
+
 func formatOutput(data interface{}, format string) {
 	switch format {
 	case "json":
@@ -280,10 +321,4 @@ func formatOutput(data interface{}, format string) {
 	default:
 		fmt.Println("Unsupported format. Use 'json', 'yaml', or 'table'.")
 	}
-}
-
-func init() {
-	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
 }

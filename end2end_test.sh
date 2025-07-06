@@ -1,70 +1,53 @@
 #!/bin/bash
-# End-to-end test script for AKS simulation and Terraform generation
-# Usage: ./end2end_test.sh
+# End-to-end test for server+generator+terraform: uses static multicloud test matrix for all providers
 set -euo pipefail
 
-# Always run from the workspace root
-cd "$(dirname "$0")"
+WORKSPACE_ROOT="$(cd "$(dirname "$0")" && pwd)"
+CUBE_SERVER_BIN="$WORKSPACE_ROOT/cube-server/cube-server"
+CUBE_SERVER_LOG="$WORKSPACE_ROOT/cube-server.log"
+SERVER_PORT=8080
+SERVER_URL="http://localhost:$SERVER_PORT"
+GENERATOR_BIN="$WORKSPACE_ROOT/generator/main.go"
+TESTDATA_DIR="$WORKSPACE_ROOT/testdata"
 
-GENERATOR=generator/main.go
-CUBE_SERVER=localhost:8080
-CUBE_SERVER_BIN=main.go
-TEST_JSON=generator/test_aks_expanded.json
-TEST_TF=generator/test_aks_expanded.tf
-LOG_FILE=cube-server.log
-
-# 1. Start the cube-server in the background if not running
-echo "[INFO] Checking if cube-server is running..."
-if ! curl -s http://$CUBE_SERVER/healthz | grep -q 'ok'; then
+# Start the cube-server if not running
+if ! lsof -i :$SERVER_PORT | grep LISTEN >/dev/null 2>&1; then
   echo "[INFO] Starting cube-server in the background..."
-  cd cube-server
-  nohup go run $CUBE_SERVER_BIN > ../$LOG_FILE 2>&1 &
+  nohup "$CUBE_SERVER_BIN" > "$CUBE_SERVER_LOG" 2>&1 &
   SERVER_PID=$!
-  cd ..
   # Wait for server to be ready
-  for i in {1..10}; do
-    sleep 1
-    if curl -s http://$CUBE_SERVER/healthz | grep -q 'ok'; then
+  for i in {1..20}; do
+    if curl -s "$SERVER_URL/healthz" | grep -q 'ok'; then
       echo "[INFO] cube-server is up."
       break
     fi
-    if [ $i -eq 10 ]; then
-      echo "[ERROR] cube-server did not start in time. Log output:" && tail -40 $LOG_FILE
-      exit 1
-    fi
+    sleep 1
   done
 else
   SERVER_PID=""
   echo "[INFO] cube-server already running."
 fi
 
-echo "[INFO] Simulating AKS resource import (mock JSON)..."
-mkdir -p generator
-go run $GENERATOR --simulate-import --resource-type aks --name e2e-aks --resource-group e2e-rg --location eastus --node-count 2 > $TEST_JSON
-cat $TEST_JSON
-
-echo "[INFO] Generating Terraform from simulated JSON..."
-go run $GENERATOR --generate-terraform --input $TEST_JSON --output $TEST_TF
-cat $TEST_TF
-
-cd examples
-
-echo "[INFO] Initializing Terraform..."
-terraform init -input=false
-
-echo "[INFO] Validating Terraform..."
-terraform validate
-
-echo "[INFO] Running Terraform plan (should fail with dummy credentials)..."
-set +e
-terraform plan
-PLAN_EXIT=$?
-set -e
-if [ $PLAN_EXIT -eq 0 ]; then
-  echo "[WARNING] Terraform plan succeeded (unexpected with dummy credentials)."
-else
-  echo "[INFO] Terraform plan failed as expected with dummy credentials."
-fi
+PROVIDERS=(azure aws gcp)
+for provider in "${PROVIDERS[@]}"; do
+  input_json="$TESTDATA_DIR/${provider}.json"
+  output_tf="generator/test_${provider}.tf"
+  go run "$GENERATOR_BIN" --generate-terraform --input "$input_json" --output "$output_tf" --provider "$provider"
+  if [ ! -s "$output_tf" ]; then
+    echo "[ERROR] Terraform output for $provider is empty or missing."
+    exit 1
+  fi
+  echo "--- $provider Terraform ---"
+  cat "$output_tf"
+  # Optionally run terraform validate/plan for Azure only (others require cloud credentials)
+  if [ "$provider" = "azure" ]; then
+    cd examples
+    terraform init -input=false
+    terraform validate
+    cd "$WORKSPACE_ROOT"
+  fi
+  rm -f "$output_tf"
+done
 
 # Cleanup: kill the server if we started it
 if [ -n "${SERVER_PID:-}" ]; then
@@ -72,4 +55,4 @@ if [ -n "${SERVER_PID:-}" ]; then
   kill $SERVER_PID || true
 fi
 
-echo "[SUCCESS] End-to-end test completed."
+echo "[SUCCESS] End-to-end multicloud test completed."

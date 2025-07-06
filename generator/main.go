@@ -73,14 +73,32 @@ func generateEksTerraformBlock(props map[string]interface{}) string {
 	name := safeString(props, "name", "example-eks")
 	region := safeString(props, "region", "us-west-2")
 	nodeCount := safeInt(props, "nodeCount", 2)
-	// TODO: Map more EKS fields as needed
+	version := safeString(props, "eksVersion", "1.29")
+	instanceType := safeString(props, "instanceType", "t3.medium")
+	subnetIds := []string{}
+	if s, ok := props["subnetIds"].([]interface{}); ok {
+		for _, v := range s {
+			subnetIds = append(subnetIds, fmt.Sprintf("\"%s\"", v))
+		}
+	}
+	subnetLine := ""
+	if len(subnetIds) > 0 {
+		subnetLine = fmt.Sprintf("  subnet_ids = [%s]\n", strings.Join(subnetIds, ", "))
+	}
 	return fmt.Sprintf(`resource "aws_eks_cluster" "example" {
   name     = "%s"
   region   = "%s"
-  node_count = %d
-  // ...map more fields from JSON as needed
+  version  = "%s"
+  vpc_config {
+    subnet_ids = [%s]
+  }
+  node_group {
+    instance_types = ["%s"]
+    desired_capacity = %d
+  }
+  %s// ...map more fields from JSON as needed
 }`,
-		name, region, nodeCount)
+		name, region, version, strings.Join(subnetIds, ", "), instanceType, nodeCount, subnetLine)
 }
 
 // generateGkeTerraformBlock generates the Terraform block for a GCP GKE cluster (stub)
@@ -117,8 +135,10 @@ func GenerateTerraformFromJSONMulticloud(inputPath, outputPath, provider string)
 		tfHeader = `terraform {\n  required_version = ">= 1.0.0"\n  required_providers {\n    aws = {\n      source  = "hashicorp/aws"\n      version = ">= 4.0.0"\n    }\n  }\n}\n\nprovider "aws" {\n  region = "us-west-2"\n}\n`
 	case "gcp":
 		tfHeader = `terraform {\n  required_version = ">= 1.0.0"\n  required_providers {\n    google = {\n      source  = "hashicorp/google"\n      version = ">= 4.0.0"\n    }\n  }\n}\n\nprovider "google" {\n}\n`
-	default:
+	case "azure":
 		tfHeader = `terraform {\n  required_version = ">= 1.0.0"\n  required_providers {\n    azurerm = {\n      source  = "hashicorp/azurerm"\n      version = ">= 3.0.0"\n    }\n  }\n}\n\nprovider "azurerm" {\n  features {}\n}\n`
+	default:
+		return fmt.Errorf("unsupported or unrecognized provider: %s", provider)
 	}
 	// Detect resource type by keys and map fields
 	var tf string
@@ -136,7 +156,7 @@ func GenerateTerraformFromJSONMulticloud(inputPath, outputPath, provider string)
 			} else {
 				return fmt.Errorf("unsupported or unrecognized GCP resource type in %s", inputPath)
 			}
-		default: // Azure
+		case "azure":
 			if _, hasNodeCount := props["nodeCount"]; hasNodeCount && strings.Contains(strings.ToLower(safeString(props, "name", "")), "aks") {
 				tf = generateAksTerraformBlock(props)
 			} else if strings.Contains(inputPath, "monitor") {
@@ -468,6 +488,69 @@ func generateAppInsightsTerraformBlock(props map[string]interface{}, inputPath s
 		name, location, resourceGroup, appType, retention, workspaceIdLine, dailyCapLine, disableIpMaskingLine, tagsBlock, appIdLine, ingestionModeLine)
 }
 
+// generateCloudWatchTerraformBlock generates the Terraform block for AWS CloudWatch Metric Alarm
+func generateCloudWatchTerraformBlock(props map[string]interface{}) string {
+	name := safeString(props, "name", "example-alarm")
+	namespace := safeString(props, "namespace", "AWS/EC2")
+	metricName := safeString(props, "metricName", "CPUUtilization")
+	comparison := safeString(props, "comparisonOperator", "GreaterThanThreshold")
+	threshold := safeInt(props, "threshold", 80)
+	period := safeInt(props, "period", 300)
+	evaluationPeriods := safeInt(props, "evaluationPeriods", 1)
+	statistic := safeString(props, "statistic", "Average")
+	alarmActions := []string{}
+	if a, ok := props["alarmActions"].([]interface{}); ok {
+		for _, v := range a {
+			alarmActions = append(alarmActions, fmt.Sprintf("\"%s\"", v))
+		}
+	}
+	alarmActionsLine := ""
+	if len(alarmActions) > 0 {
+		alarmActionsLine = fmt.Sprintf("  alarm_actions = [%s]\n", strings.Join(alarmActions, ", "))
+	}
+	return fmt.Sprintf(`resource "aws_cloudwatch_metric_alarm" "example" {
+  alarm_name          = "%s"
+  namespace           = "%s"
+  metric_name         = "%s"
+  comparison_operator = "%s"
+  threshold           = %d
+  period              = %d
+  evaluation_periods  = %d
+  statistic           = "%s"
+%s  // ...map more fields from JSON as needed
+}`,
+		name, namespace, metricName, comparison, threshold, period, evaluationPeriods, statistic, alarmActionsLine)
+}
+
+// generateCloudWatchLogGroupTerraformBlock generates the Terraform block for AWS CloudWatch Log Group
+func generateCloudWatchLogGroupTerraformBlock(props map[string]interface{}) string {
+	name := safeString(props, "name", "example-log-group")
+	retention := safeInt(props, "retentionInDays", 14)
+	return fmt.Sprintf(`resource "aws_cloudwatch_log_group" "example" {
+  name              = "%s"
+  retention_in_days = %d
+  // ...map more fields from JSON as needed
+}`,
+		name, retention)
+}
+
+// generateAwsBudgetTerraformBlock generates the Terraform block for AWS Budgets
+func generateAwsBudgetTerraformBlock(props map[string]interface{}) string {
+	name := safeString(props, "name", "example-budget")
+	amount := safeInt(props, "amount", 1000)
+	period := safeString(props, "period", "MONTHLY")
+	return fmt.Sprintf(`resource "aws_budgets_budget" "example" {
+  name              = "%s"
+  budget_type       = "COST"
+  limit_amount      = "%d"
+  limit_unit        = "USD"
+  time_period_start = "2023-01-01_00:00"
+  time_unit         = "%s"
+  // ...map more fields from JSON as needed
+}`,
+		name, amount, period)
+}
+
 func main() {
 	generateTerraform := flag.Bool("generate-terraform", false, "Generate Terraform from JSON input")
 	input := flag.String("input", "", "Input JSON file (from multitool)")
@@ -477,9 +560,15 @@ func main() {
 	provider := flag.String("provider", "azure", "Cloud provider: azure|aws|gcp") // NEW
 	name := flag.String("name", "", "Resource name (mock)")
 	location := flag.String("location", "", "Resource location (mock)")
+	// region flag for AWS/GCP (alias for location)
+	region := flag.String("region", "", "AWS/GCP region (alias for --location for AWS/GCP)")
 	resourceGroup := flag.String("resource-group", "", "Resource group (mock)")
 	nodeCount := flag.Int("node-count", 3, "Node count (AKS/EKS/GKE, mock)")
 	flag.Parse()
+
+	if *location == "" && *region != "" {
+		*location = *region
+	}
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `werfty - Multicloud resource simulation and Terraform codegen
@@ -489,26 +578,45 @@ USAGE:
 
 FLAGS:
   --simulate-import         Simulate resource import (mock, outputs JSON)
-  --generate-terraform      Generate Terraform from JSON input
-  --input <file>            Input JSON file (from multitool)
+  --generate-terraform      Generate Terraform from JSON input (multicloud)
+  --input <file>            Input JSON file (from multitool or manual)
   --output <file>           Output Terraform file
-  --provider <provider>     Cloud provider: azure|aws|gcp
+  --provider <provider>     Cloud provider: azure|aws|gcp (required for multicloud)
   --resource-type <type>    Resource type: monitor|loganalytics|aks|eks|gke|budget (mock)
-  --name <name>             Resource name (mock)
-  --location <location>     Resource location (mock)
-  --resource-group <group>  Resource group (mock)
+  --name <name>             Resource name (mock/simulation)
+  --location <location>     Resource location (Azure/GCP) or region (AWS)
+  --region <region>         AWS/GCP region (alias for --location for AWS/GCP)
+  --resource-group <group>  Azure resource group (mock/simulation)
   --node-count <n>          Node count (AKS/EKS/GKE, mock)
   -h, --help                Show this help
 
 EXAMPLES:
-  Simulate AKS:
+  Simulate AKS (Azure):
     werfty --simulate-import --resource-type aks --name my-aks --resource-group my-rg --location eastus --node-count 3
 
-  Generate Terraform from JSON:
-    werfty --generate-terraform --input test_aks_expanded.json --output test_aks_expanded.tf
+  Simulate EKS (AWS):
+    werfty --simulate-import --resource-type eks --name my-eks --location us-west-2 --node-count 2
+
+  Simulate GKE (GCP):
+    werfty --simulate-import --resource-type gke --name my-gke --location us-central1 --node-count 1
+
+  Generate Terraform for Azure:
+    werfty --generate-terraform --input test_aks.json --output test_aks.tf --provider azure
+
+  Generate Terraform for AWS:
+    werfty --generate-terraform --input test_eks.json --output test_eks.tf --provider aws
+
+  Generate Terraform for GCP:
+    werfty --generate-terraform --input test_gke.json --output test_gke.tf --provider gcp
 
   Import existing AKS to Terraform state:
     terraform import azurerm_kubernetes_cluster.my_aks /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/my-rg/providers/Microsoft.ContainerService/managedClusters/my-aks
+
+NOTES:
+- --provider is required for multicloud workflows (azure, aws, gcp)
+- --location is used for Azure/GCP, --region for AWS/GCP (interchangeable for GCP)
+- --resource-type is only for simulation, not for real codegen
+- Use the multitool CLI for end-to-end automation and multicloud workflows
 `)
 	}
 

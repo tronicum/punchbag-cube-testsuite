@@ -24,6 +24,9 @@ var (
 	configFile    string
 )
 
+// Add --provider flag for explicit provider selection (in addition to positional arg)
+var providerFlag string
+
 // clusterCmd represents the cluster command group
 var clusterCmd = &cobra.Command{
 	Use:   "cluster",
@@ -36,17 +39,26 @@ var clusterCreateCmd = &cobra.Command{
 	Use:   "create [name] [provider]",
 	Short: "Create a new Kubernetes cluster",
 	Long: `Create a new Kubernetes cluster on the specified cloud provider.
-	
+
 Supported providers: azure, aws, gcp, hetzner, ionos, stackit
 
 Examples:
   multitool cluster create my-cluster azure --resource-group my-rg --location eastus
   multitool cluster create my-cluster aws --region us-west-2
-  multitool cluster create my-cluster gcp --project-id my-project --region us-central1`,
-	Args: cobra.ExactArgs(2),
+  multitool cluster create my-cluster gcp --project-id my-project --region us-central1
+  multitool cluster create my-cluster --provider aws --region us-west-2`,
+	Args: cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterName := args[0]
-		providerStr := args[1]
+		var providerStr string
+		if providerFlag != "" {
+			providerStr = providerFlag
+		} else if len(args) > 1 {
+			providerStr = args[1]
+		} else {
+			fmt.Println("Provider must be specified as positional arg or --provider flag")
+			os.Exit(1)
+		}
 
 		provider := models.CloudProvider(providerStr)
 		if !isValidProvider(provider) {
@@ -433,6 +445,7 @@ func init() {
 	clusterCreateCmd.Flags().StringVar(&region, "region", "", "AWS/GCP region")
 	clusterCreateCmd.Flags().StringVar(&projectID, "project-id", "", "GCP project ID")
 	clusterCreateCmd.Flags().StringVar(&configFile, "config", "", "Configuration file (JSON)")
+	clusterCreateCmd.Flags().StringVar(&providerFlag, "provider", "", "Cloud provider: azure|aws|gcp|hetzner|ionos|stackit (optional, overrides positional)")
 
 	// Cluster delete flags
 	clusterDeleteCmd.Flags().Bool("confirm", false, "Skip confirmation prompt")

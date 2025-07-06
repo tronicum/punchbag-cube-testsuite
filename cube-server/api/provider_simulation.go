@@ -308,3 +308,24 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, testResult)
 }
+
+// API DOCS: Multicloud Simulation
+//
+// All simulation endpoints accept a 'provider' parameter (e.g., 'azure', 'aws', 'gcp').
+// Example: POST /api/v1/providers/:provider/operations/:operation
+//
+// Request body for cluster creation:
+// {
+//   "provider": "aws",
+//   "operation": "create_cluster",
+//   "parameters": {
+//     "name": "my-eks",
+//     "region": "us-west-2",
+//     "node_count": 3,
+//     ...
+//   }
+// }
+//
+// The response will include provider-specific fields. See simulation/service.go for details.
+//
+// TODO: Document supported resource types and required fields for each provider.

@@ -77,6 +77,147 @@ func TestGenerateAppInsightsTerraformBlock(t *testing.T) {
 	}
 }
 
+func TestGenerateEksTerraformBlock(t *testing.T) {
+	props := map[string]interface{}{
+		"name":          "test-eks",
+		"region":        "us-west-2",
+		"nodeCount":     2,
+		"eksVersion":    "1.29",
+		"instanceType":  "t3.medium",
+		"subnetIds":     []interface{}{"subnet-123", "subnet-456"},
+	}
+	tf := generateEksTerraformBlock(props)
+	if len(tf) == 0 || !contains(tf, "aws_eks_cluster") {
+		t.Errorf("EKS Terraform block not generated correctly: %s", tf)
+	}
+	if !contains(tf, "subnet-123") || !contains(tf, "subnet-456") {
+		t.Errorf("EKS subnet IDs not mapped: %s", tf)
+	}
+}
+
+func TestGenerateCloudWatchTerraformBlock(t *testing.T) {
+	props := map[string]interface{}{
+		"name":                 "test-alarm",
+		"namespace":            "AWS/EC2",
+		"metricName":           "CPUUtilization",
+		"comparisonOperator":   "GreaterThanThreshold",
+		"threshold":            80,
+		"period":               300,
+		"evaluationPeriods":    2,
+		"statistic":            "Average",
+		"alarmActions":         []interface{}{"arn:aws:sns:us-west-2:123456789012:my-sns"},
+	}
+	tf := generateCloudWatchTerraformBlock(props)
+	if len(tf) == 0 || !contains(tf, "aws_cloudwatch_metric_alarm") {
+		t.Errorf("CloudWatch alarm block not generated correctly: %s", tf)
+	}
+	if !contains(tf, "my-sns") {
+		t.Errorf("CloudWatch alarm actions not mapped: %s", tf)
+	}
+}
+
+func TestGenerateCloudWatchLogGroupTerraformBlock(t *testing.T) {
+	props := map[string]interface{}{
+		"name":            "test-log-group",
+		"retentionInDays": 7,
+	}
+	tf := generateCloudWatchLogGroupTerraformBlock(props)
+	if len(tf) == 0 || !contains(tf, "aws_cloudwatch_log_group") {
+		t.Errorf("CloudWatch log group block not generated correctly: %s", tf)
+	}
+}
+
+func TestGenerateAwsBudgetTerraformBlock(t *testing.T) {
+	props := map[string]interface{}{
+		"name":    "test-budget",
+		"amount":  500,
+		"period":  "MONTHLY",
+	}
+	tf := generateAwsBudgetTerraformBlock(props)
+	if len(tf) == 0 || !contains(tf, "aws_budgets_budget") {
+		t.Errorf("AWS budget block not generated correctly: %s", tf)
+	}
+}
+
+func TestGenerateTerraformFromJSON_EdgeCases(t *testing.T) {
+	// Missing properties
+	input := `{}`
+	inputFile := "test_empty.json"
+	outputFile := "test_empty.tf"
+	os.WriteFile(inputFile, []byte(input), 0644)
+	defer os.Remove(inputFile)
+	defer os.Remove(outputFile)
+	err := GenerateTerraformFromJSON(inputFile, outputFile)
+	if err == nil {
+		t.Error("Expected error for missing properties, got nil")
+	}
+
+	// Unknown resource type
+	input = `{"properties": {"foo": "bar"}}`
+	inputFile = "test_unknown.json"
+	outputFile = "test_unknown.tf"
+	os.WriteFile(inputFile, []byte(input), 0644)
+	defer os.Remove(inputFile)
+	defer os.Remove(outputFile)
+	err = GenerateTerraformFromJSON(inputFile, outputFile)
+	if err == nil {
+		t.Error("Expected error for unknown resource type, got nil")
+	}
+}
+
+func TestGenerateTerraformFromJSONMulticloud_AWS(t *testing.T) {
+	input := `{"properties": {"name": "test-eks", "region": "us-west-2", "nodeCount": 2}}`
+	inputFile := "test_eks.json"
+	outputFile := "test_eks.tf"
+	os.WriteFile(inputFile, []byte(input), 0644)
+	defer os.Remove(inputFile)
+	defer os.Remove(outputFile)
+	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	content, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
+	if !contains(string(content), "aws_eks_cluster") {
+		t.Error("AWS EKS Terraform not generated")
+	}
+}
+
+func TestGenerateTerraformFromJSONMulticloud_GCP(t *testing.T) {
+	input := `{"properties": {"name": "test-gke", "location": "us-central1", "nodeCount": 1}}`
+	inputFile := "test_gke.json"
+	outputFile := "test_gke.tf"
+	os.WriteFile(inputFile, []byte(input), 0644)
+	defer os.Remove(inputFile)
+	defer os.Remove(outputFile)
+	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "gcp")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	content, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
+	if !contains(string(content), "google_container_cluster") {
+		t.Error("GCP GKE Terraform not generated")
+	}
+}
+
+func TestGenerateTerraformFromJSONMulticloud_UnknownProvider(t *testing.T) {
+	input := `{"properties": {"name": "test-aks", "nodeCount": 1}}`
+	inputFile := "test_aks.json"
+	outputFile := "test_aks.tf"
+	os.WriteFile(inputFile, []byte(input), 0644)
+	defer os.Remove(inputFile)
+	defer os.Remove(outputFile)
+	err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "unknown")
+	if err == nil {
+		t.Error("Expected error for unknown provider, got nil")
+	}
+}
+
 // contains is a helper for string containment
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || (len(s) > len(substr) && (s[0:len(substr)] == substr || contains(s[1:], substr))))

@@ -240,15 +240,22 @@ func (s *SimulationService) simulateCreateCluster(provider string, params map[st
 		result["location"] = s.getParamOrDefault(params, "location", "eastus")
 		result["vm_size"] = s.getParamOrDefault(params, "vm_size", "Standard_D2s_v3")
 	case "aws":
+		// AWS EKS-specific simulation fields
 		result["region"] = s.getParamOrDefault(params, "region", "us-west-2")
 		result["instance_type"] = s.getParamOrDefault(params, "instance_type", "t3.medium")
 		result["vpc_id"] = "vpc-" + s.generateRandomID()
+		result["eks_version"] = s.getParamOrDefault(params, "eks_version", "1.29")
+		result["subnet_ids"] = []string{"subnet-" + s.generateRandomID(), "subnet-" + s.generateRandomID()}
+		result["security_group_ids"] = []string{"sg-" + s.generateRandomID()}
+		result["endpoint"] = fmt.Sprintf("https://%s.eks.amazonaws.com", clusterID)
+		// TODO: Add more AWS/EKS fields as needed (IAM roles, logging, etc.)
 	case "gcp":
 		result["project_id"] = s.getParamOrDefault(params, "project_id", "project-"+s.generateRandomID())
 		result["region"] = s.getParamOrDefault(params, "region", "us-central1")
 		result["machine_type"] = s.getParamOrDefault(params, "machine_type", "e2-medium")
 	}
 
+	// TODO: Add support for more resource types (RDS, S3, etc.) for AWS
 	return result
 }
 

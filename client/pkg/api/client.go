@@ -270,6 +270,9 @@ func (c *Client) GetAKSCluster(id string) (*AKSCluster, error) {
 
 // CreateCluster creates a new cluster (multi-cloud)
 func (c *Client) CreateMultiCloudCluster(cluster *Cluster) (*Cluster, error) {
+	if cluster.CloudProvider == "" {
+		return nil, fmt.Errorf("CloudProvider must be set (e.g., 'azure', 'aws', 'gcp')")
+	}
 	resp, err := c.doRequest("POST", "/api/v1/clusters", cluster)
 	if err != nil {
 		return nil, err
@@ -674,3 +677,8 @@ func (c *Client) ExecuteProviderOperation(provider, operation, params string) (m
 	
 	return result, nil
 }
+
+// Example usage:
+//   cluster := &Cluster{Name: "my-eks", CloudProvider: "aws", Config: map[string]interface{}{...}}
+//   client.CreateMultiCloudCluster(cluster)
+// TODO: Add similar helpers for GCP, and ensure all cluster creation flows set CloudProvider.
