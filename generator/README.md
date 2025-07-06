@@ -6,7 +6,7 @@ Werfty is a modular code generator and test suite for Terraform resources, focus
 
 - **YAML/JSON config input** for resource definitions
 - **Cobra CLI** with subcommands: `generate`, `validate`, `simulate`
-- **Generate Terraform code** for AKS, EKS, GKE, S3, Monitor, Log Analytics, App Insights, and more
+- **Generate Terraform code** for AKS, EKS, GKE, S3, Monitor, Log Analytics, App Insights, Storage Account, and more
 - **Schema validation** for resource properties
 - **Terraform output validation** (`terraform validate`, `tflint`) in tests and CI
 - **Extensible**: add new providers/resources easily
@@ -34,12 +34,14 @@ Werfty is a modular code generator and test suite for Terraform resources, focus
 ## Example YAML Config
 
 ```yaml
-resourceType: aks
+resourceType: storageaccount
 properties:
-  name: my-aks
-  location: eastus
+  name: mystorageacct123
   resourceGroup: my-rg
-  nodeCount: 3
+  location: eastus2
+  sku: Standard_LRS
+  kind: StorageV2
+  accessTier: Hot
 ```
 
 ## Example JSON Config

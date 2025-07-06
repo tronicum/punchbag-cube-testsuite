@@ -23,15 +23,26 @@ This generator currently supports the following Azure resources and field mappin
 - `resourceGroup` (string)
 - `nodeCount` (int, for default node pool)
 
+### Azure Storage Account
+- `name` (string)
+- `resourceGroup` (string)
+- `location` (string)
+- `sku` (string)
+- `kind` (string)
+- `accessTier` (string)
+
 ## Example JSON Input
 
-```
+```json
 {
+  "resourceType": "storageaccount",
   "properties": {
-    "name": "my-aks",
-    "location": "eastus",
+    "name": "mystorageacct123",
     "resourceGroup": "my-rg",
-    "nodeCount": 3
+    "location": "eastus2",
+    "sku": "Standard_LRS",
+    "kind": "StorageV2",
+    "accessTier": "Hot"
   }
 }
 ```

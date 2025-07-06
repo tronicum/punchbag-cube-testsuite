@@ -229,6 +229,26 @@ multitool list-packages
 multitool install-package docker
 ```
 
+## 🚀 Terraform Deployment Automation
+
+Multitool now supports unified Terraform workflows for all clouds:
+
+```sh
+multitool deploy plan <tf-file>
+multitool deploy apply
+multitool deploy destroy <tf-file>
+```
+
+- Use Werfty or compatible generator to create Terraform files for Azure, AWS, or GCP.
+- Then use `multitool deploy` to plan, apply, or destroy resources.
+
+### Example
+```sh
+go run generator/main.go generate -i examples/example_azure_storage_account.yaml -o storage_account.tf -p azure
+multitool deploy plan storage_account.tf
+multitool deploy apply
+```
+
 ## Configuration File
 
 The configuration file is stored at `~/.multitool/config.yaml` and supports:
