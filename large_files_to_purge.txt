@@ -1,0 +1,1 @@
+./examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.35.0/darwin_arm64/terraform-provider-azurerm_v4.35.0_x5

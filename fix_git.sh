@@ -18,8 +18,9 @@ echo "Committing cleanup..."
 git commit -m "Remove large Terraform provider binaries and .terraform directory from git, update .gitignore" || true
 
 # Purge all files over 100MB from git history
-if ! command -v git-filter-repo &> /dev/null; then
-  echo "git-filter-repo is not installed. Please install it first: https://github.com/newren/git-filter-repo"
+GIT_FILTER_REPO_BIN="/opt/homebrew/bin/git-filter-repo"
+if ! [ -x "$GIT_FILTER_REPO_BIN" ]; then
+  echo "git-filter-repo is not installed at $GIT_FILTER_REPO_BIN. Please install it first: https://github.com/newren/git-filter-repo"
   exit 1
 fi
 
@@ -32,7 +33,7 @@ if [ -s large_files_to_purge.txt ]; then
     ARGS+=" --path '$file'"
   done < large_files_to_purge.txt
   # shellcheck disable=SC2086
-  eval git filter-repo $ARGS --invert-paths
+  eval "$GIT_FILTER_REPO_BIN $ARGS --invert-paths"
 else
   echo "No files over 100MB found."
 fi
