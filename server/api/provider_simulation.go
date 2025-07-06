@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tronicum/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 
@@ -251,7 +251,8 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 	cluster := h.simulator.GenerateClusterFromSimulation(string(req.Provider), req.Name, req.Config)
 
 	// Store the simulated cluster
-	if err := h.store.CreateCluster(cluster); err != nil {
+	created, err := h.store.CreateCluster(cluster)
+	if err != nil {
 		h.logger.Error("Failed to store simulated cluster", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create simulated cluster",
@@ -259,7 +260,7 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, cluster)
+	c.JSON(http.StatusCreated, created)
 }
 
 // RunSimulatedTest runs a simulated test using the shared simulation service
@@ -297,7 +298,8 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 	testResult := h.simulator.GenerateTestResultFromSimulation(req.ClusterID, req.TestType)
 
 	// Store the test result
-	if err := h.store.CreateTestResult(testResult); err != nil {
+	createdTest, err := h.store.CreateTestResult(testResult)
+	if err != nil {
 		h.logger.Error("Failed to store test result", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create test result",
@@ -305,5 +307,5 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, testResult)
+	c.JSON(http.StatusCreated, createdTest)
 }

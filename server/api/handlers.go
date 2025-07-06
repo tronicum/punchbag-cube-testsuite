@@ -53,7 +53,8 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	if err := h.store.CreateCluster(&cluster); err != nil {
+	created, err := h.store.CreateCluster(&cluster)
+	if err != nil {
 		if err == store.ErrAlreadyExists {
 			c.JSON(http.StatusConflict, gin.H{"error": "cluster already exists"})
 			return
@@ -63,8 +64,8 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster created", zap.String("id", cluster.ID), zap.String("provider", string(cluster.Provider)))
-	c.JSON(http.StatusCreated, cluster)
+	h.logger.Info("Cluster created", zap.String("id", created.ID), zap.String("provider", string(created.Provider)))
+	c.JSON(http.StatusCreated, created)
 }
 
 // GetCluster handles GET /clusters/:id
@@ -94,7 +95,7 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 	if provider != "" {
 		// Filter by provider
 		cloudProvider := sharedmodels.CloudProvider(provider)
-		clusters, err = h.store.ListClustersByProvider(cloudProvider)
+		clusters, err = h.store.ListClustersByProvider(string(cloudProvider))
 	} else {
 		// List all clusters
 		clusters, err = h.store.ListClusters()
@@ -126,7 +127,8 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	if err := h.store.UpdateCluster(id, &cluster); err != nil {
+	updated, err := h.store.UpdateCluster(id, &cluster)
+	if err != nil {
 		if err == store.ErrNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
@@ -136,8 +138,8 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", string(cluster.Provider)))
-	c.JSON(http.StatusOK, cluster)
+	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", string(updated.Provider)))
+	c.JSON(http.StatusOK, updated)
 }
 
 // DeleteCluster handles DELETE /clusters/:id
@@ -195,7 +197,8 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	testResult.Details["provider"] = string(cluster.Provider)
 	testResult.Details["cluster_name"] = cluster.Name
 
-	if err := h.store.CreateTestResult(testResult); err != nil {
+	createdTest, err := h.store.CreateTestResult(testResult)
+	if err != nil {
 		h.logger.Error("Failed to create test result", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
@@ -209,7 +212,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 		zap.String("test_id", testResult.ID),
 		zap.String("cluster_id", clusterID),
 		zap.String("provider", string(cluster.Provider)))
-	c.JSON(http.StatusAccepted, testResult)
+	c.JSON(http.StatusAccepted, createdTest)
 }
 
 // GetTestResult handles GET /tests/:id
@@ -351,7 +354,8 @@ func (h *Handlers) simulateTest(testResult *sharedmodels.TestResult) {
 	testResult.Details["p99_latency_ms"] = 156.3
 	testResult.Details["provider_specific"] = h.getProviderSpecificMetrics(provider)
 
-	if err := h.store.UpdateTestResult(testResult.ID, testResult); err != nil {
+	_, err := h.store.UpdateTestResult(testResult.ID, testResult)
+	if err != nil {
 		h.logger.Error("Failed to update test result", zap.Error(err))
 	} else {
 		h.logger.Info("Test completed", zap.String("test_id", testResult.ID))
