@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/username/punchbag-cube-testsuite/server/models"
+	sharedmodels "punchbag-cube-testsuite/shared/models"
 )
 
 var (
@@ -16,75 +16,75 @@ var (
 // Store defines the interface for data storage operations
 type Store interface {
 	// Cluster operations (multi-cloud)
-	CreateCluster(cluster *models.Cluster) error
-	GetCluster(id string) (*models.Cluster, error)
-	ListClusters() ([]*models.Cluster, error)
-	ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error)
-	UpdateCluster(id string, cluster *models.Cluster) error
+	CreateCluster(cluster *sharedmodels.Cluster) error
+	GetCluster(id string) (*sharedmodels.Cluster, error)
+	ListClusters() ([]*sharedmodels.Cluster, error)
+	ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error)
+	UpdateCluster(id string, cluster *sharedmodels.Cluster) error
 	DeleteCluster(id string) error
 
 	// Test Result operations
-	CreateTestResult(result *models.TestResult) error
-	GetTestResult(id string) (*models.TestResult, error)
-	ListTestResults(clusterID string) ([]*models.TestResult, error)
-	UpdateTestResult(id string, result *models.TestResult) error
+	CreateTestResult(result *sharedmodels.TestResult) error
+	GetTestResult(id string) (*sharedmodels.TestResult, error)
+	ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error)
+	UpdateTestResult(id string, result *sharedmodels.TestResult) error
 
 	// Node Pool operations
-	CreateNodePool(nodePool *models.NodePool) error
-	GetNodePool(id string) (*models.NodePool, error)
-	ListNodePools(clusterID string) ([]*models.NodePool, error)
-	UpdateNodePool(id string, nodePool *models.NodePool) error
+	CreateNodePool(nodePool *sharedmodels.NodePool) error
+	GetNodePool(id string) (*sharedmodels.NodePool, error)
+	ListNodePools(clusterID string) ([]*sharedmodels.NodePool, error)
+	UpdateNodePool(id string, nodePool *sharedmodels.NodePool) error
 	DeleteNodePool(id string) error
 
 	// Azure-specific operations
-	CreateAzureMonitoring(monitoring *models.AzureMonitoring) error
-	GetAzureMonitoring(id string) (*models.AzureMonitoring, error)
-	ListAzureMonitorings() ([]*models.AzureMonitoring, error)
-	UpdateAzureMonitoring(id string, monitoring *models.AzureMonitoring) error
+	CreateAzureMonitoring(monitoring *sharedmodels.AzureMonitoring) error
+	GetAzureMonitoring(id string) (*sharedmodels.AzureMonitoring, error)
+	ListAzureMonitorings() ([]*sharedmodels.AzureMonitoring, error)
+	UpdateAzureMonitoring(id string, monitoring *sharedmodels.AzureMonitoring) error
 	DeleteAzureMonitoring(id string) error
 
-	CreateAzureKubernetes(kubernetes *models.AzureKubernetes) error
-	GetAzureKubernetes(id string) (*models.AzureKubernetes, error)
-	ListAzureKubernetes() ([]*models.AzureKubernetes, error)
-	UpdateAzureKubernetes(id string, kubernetes *models.AzureKubernetes) error
+	CreateAzureKubernetes(kubernetes *sharedmodels.AzureKubernetes) error
+	GetAzureKubernetes(id string) (*sharedmodels.AzureKubernetes, error)
+	ListAzureKubernetes() ([]*sharedmodels.AzureKubernetes, error)
+	UpdateAzureKubernetes(id string, kubernetes *sharedmodels.AzureKubernetes) error
 	DeleteAzureKubernetes(id string) error
 
-	CreateAzureBudget(budget *models.AzureBudget) error
-	GetAzureBudget(id string) (*models.AzureBudget, error)
-	ListAzureBudgets() ([]*models.AzureBudget, error)
-	UpdateAzureBudget(id string, budget *models.AzureBudget) error
+	CreateAzureBudget(budget *sharedmodels.AzureBudget) error
+	GetAzureBudget(id string) (*sharedmodels.AzureBudget, error)
+	ListAzureBudgets() ([]*sharedmodels.AzureBudget, error)
+	UpdateAzureBudget(id string, budget *sharedmodels.AzureBudget) error
 	DeleteAzureBudget(id string) error
 }
 
 // MemoryStore implements the Store interface using in-memory storage
 type MemoryStore struct {
 	mu          sync.RWMutex
-	clusters    map[string]*models.Cluster
-	testResults map[string]*models.TestResult
-	nodePools   map[string]*models.NodePool
+	clusters    map[string]*sharedmodels.Cluster
+	testResults map[string]*sharedmodels.TestResult
+	nodePools   map[string]*sharedmodels.NodePool
 
 	// Azure-specific fields
-	azureMonitorings map[string]*models.AzureMonitoring
-	azureKubernetes  map[string]*models.AzureKubernetes
-	azureBudgets      map[string]*models.AzureBudget
+	azureMonitorings map[string]*sharedmodels.AzureMonitoring
+	azureKubernetes  map[string]*sharedmodels.AzureKubernetes
+	azureBudgets      map[string]*sharedmodels.AzureBudget
 }
 
 // NewMemoryStore creates a new in-memory store
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		clusters:    make(map[string]*models.Cluster),
-		testResults: make(map[string]*models.TestResult),
-		nodePools:   make(map[string]*models.NodePool),
+		clusters:    make(map[string]*sharedmodels.Cluster),
+		testResults: make(map[string]*sharedmodels.TestResult),
+		nodePools:   make(map[string]*sharedmodels.NodePool),
 
 		// Azure-specific initializations
-		azureMonitorings: make(map[string]*models.AzureMonitoring),
-		azureKubernetes:  make(map[string]*models.AzureKubernetes),
-		azureBudgets:      make(map[string]*models.AzureBudget),
+		azureMonitorings: make(map[string]*sharedmodels.AzureMonitoring),
+		azureKubernetes:  make(map[string]*sharedmodels.AzureKubernetes),
+		azureBudgets:      make(map[string]*sharedmodels.AzureBudget),
 	}
 }
 
 // Cluster operations
-func (s *MemoryStore) CreateCluster(cluster *models.Cluster) error {
+func (s *MemoryStore) CreateCluster(cluster *sharedmodels.Cluster) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -98,7 +98,7 @@ func (s *MemoryStore) CreateCluster(cluster *models.Cluster) error {
 	return nil
 }
 
-func (s *MemoryStore) GetCluster(id string) (*models.Cluster, error) {
+func (s *MemoryStore) GetCluster(id string) (*sharedmodels.Cluster, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -109,22 +109,22 @@ func (s *MemoryStore) GetCluster(id string) (*models.Cluster, error) {
 	return cluster, nil
 }
 
-func (s *MemoryStore) ListClusters() ([]*models.Cluster, error) {
+func (s *MemoryStore) ListClusters() ([]*sharedmodels.Cluster, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	clusters := make([]*models.Cluster, 0, len(s.clusters))
+	clusters := make([]*sharedmodels.Cluster, 0, len(s.clusters))
 	for _, cluster := range s.clusters {
 		clusters = append(clusters, cluster)
 	}
 	return clusters, nil
 }
 
-func (s *MemoryStore) ListClustersByProvider(provider models.CloudProvider) ([]*models.Cluster, error) {
+func (s *MemoryStore) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var clusters []*models.Cluster
+	var clusters []*sharedmodels.Cluster
 	for _, cluster := range s.clusters {
 		if cluster.Provider == provider {
 			clusters = append(clusters, cluster)
@@ -133,7 +133,7 @@ func (s *MemoryStore) ListClustersByProvider(provider models.CloudProvider) ([]*
 	return clusters, nil
 }
 
-func (s *MemoryStore) UpdateCluster(id string, cluster *models.Cluster) error {
+func (s *MemoryStore) UpdateCluster(id string, cluster *sharedmodels.Cluster) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -160,7 +160,7 @@ func (s *MemoryStore) DeleteCluster(id string) error {
 }
 
 // Test Result operations
-func (s *MemoryStore) CreateTestResult(result *models.TestResult) error {
+func (s *MemoryStore) CreateTestResult(result *sharedmodels.TestResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -173,7 +173,7 @@ func (s *MemoryStore) CreateTestResult(result *models.TestResult) error {
 	return nil
 }
 
-func (s *MemoryStore) GetTestResult(id string) (*models.TestResult, error) {
+func (s *MemoryStore) GetTestResult(id string) (*sharedmodels.TestResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -184,11 +184,11 @@ func (s *MemoryStore) GetTestResult(id string) (*models.TestResult, error) {
 	return result, nil
 }
 
-func (s *MemoryStore) ListTestResults(clusterID string) ([]*models.TestResult, error) {
+func (s *MemoryStore) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var results []*models.TestResult
+	var results []*sharedmodels.TestResult
 	for _, result := range s.testResults {
 		if clusterID == "" || result.ClusterID == clusterID {
 			results = append(results, result)
@@ -197,7 +197,7 @@ func (s *MemoryStore) ListTestResults(clusterID string) ([]*models.TestResult, e
 	return results, nil
 }
 
-func (s *MemoryStore) UpdateTestResult(id string, result *models.TestResult) error {
+func (s *MemoryStore) UpdateTestResult(id string, result *sharedmodels.TestResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -211,7 +211,7 @@ func (s *MemoryStore) UpdateTestResult(id string, result *models.TestResult) err
 }
 
 // Node Pool operations
-func (s *MemoryStore) CreateNodePool(nodePool *models.NodePool) error {
+func (s *MemoryStore) CreateNodePool(nodePool *sharedmodels.NodePool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -225,7 +225,7 @@ func (s *MemoryStore) CreateNodePool(nodePool *models.NodePool) error {
 	return nil
 }
 
-func (s *MemoryStore) GetNodePool(id string) (*models.NodePool, error) {
+func (s *MemoryStore) GetNodePool(id string) (*sharedmodels.NodePool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -236,11 +236,11 @@ func (s *MemoryStore) GetNodePool(id string) (*models.NodePool, error) {
 	return nodePool, nil
 }
 
-func (s *MemoryStore) ListNodePools(clusterID string) ([]*models.NodePool, error) {
+func (s *MemoryStore) ListNodePools(clusterID string) ([]*sharedmodels.NodePool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var nodePools []*models.NodePool
+	var nodePools []*sharedmodels.NodePool
 	for _, nodePool := range s.nodePools {
 		if clusterID == "" || nodePool.ClusterID == clusterID {
 			nodePools = append(nodePools, nodePool)
@@ -249,7 +249,7 @@ func (s *MemoryStore) ListNodePools(clusterID string) ([]*models.NodePool, error
 	return nodePools, nil
 }
 
-func (s *MemoryStore) UpdateNodePool(id string, nodePool *models.NodePool) error {
+func (s *MemoryStore) UpdateNodePool(id string, nodePool *sharedmodels.NodePool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -276,7 +276,7 @@ func (s *MemoryStore) DeleteNodePool(id string) error {
 }
 
 // Azure-specific operations
-func (s *MemoryStore) CreateAzureMonitoring(monitoring *models.AzureMonitoring) error {
+func (s *MemoryStore) CreateAzureMonitoring(monitoring *sharedmodels.AzureMonitoring) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -290,7 +290,7 @@ func (s *MemoryStore) CreateAzureMonitoring(monitoring *models.AzureMonitoring) 
 	return nil
 }
 
-func (s *MemoryStore) GetAzureMonitoring(id string) (*models.AzureMonitoring, error) {
+func (s *MemoryStore) GetAzureMonitoring(id string) (*sharedmodels.AzureMonitoring, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -301,18 +301,18 @@ func (s *MemoryStore) GetAzureMonitoring(id string) (*models.AzureMonitoring, er
 	return monitoring, nil
 }
 
-func (s *MemoryStore) ListAzureMonitorings() ([]*models.AzureMonitoring, error) {
+func (s *MemoryStore) ListAzureMonitorings() ([]*sharedmodels.AzureMonitoring, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	monitorings := make([]*models.AzureMonitoring, 0, len(s.azureMonitorings))
+	monitorings := make([]*sharedmodels.AzureMonitoring, 0, len(s.azureMonitorings))
 	for _, monitoring := range s.azureMonitorings {
 		monitorings = append(monitorings, monitoring)
 	}
 	return monitorings, nil
 }
 
-func (s *MemoryStore) UpdateAzureMonitoring(id string, monitoring *models.AzureMonitoring) error {
+func (s *MemoryStore) UpdateAzureMonitoring(id string, monitoring *sharedmodels.AzureMonitoring) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -338,7 +338,7 @@ func (s *MemoryStore) DeleteAzureMonitoring(id string) error {
 	return nil
 }
 
-func (s *MemoryStore) CreateAzureKubernetes(kubernetes *models.AzureKubernetes) error {
+func (s *MemoryStore) CreateAzureKubernetes(kubernetes *sharedmodels.AzureKubernetes) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -352,7 +352,7 @@ func (s *MemoryStore) CreateAzureKubernetes(kubernetes *models.AzureKubernetes) 
 	return nil
 }
 
-func (s *MemoryStore) GetAzureKubernetes(id string) (*models.AzureKubernetes, error) {
+func (s *MemoryStore) GetAzureKubernetes(id string) (*sharedmodels.AzureKubernetes, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -363,18 +363,18 @@ func (s *MemoryStore) GetAzureKubernetes(id string) (*models.AzureKubernetes, er
 	return kubernetes, nil
 }
 
-func (s *MemoryStore) ListAzureKubernetes() ([]*models.AzureKubernetes, error) {
+func (s *MemoryStore) ListAzureKubernetes() ([]*sharedmodels.AzureKubernetes, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	kubernetess := make([]*models.AzureKubernetes, 0, len(s.azureKubernetes))
+	kubernetess := make([]*sharedmodels.AzureKubernetes, 0, len(s.azureKubernetes))
 	for _, kubernetes := range s.azureKubernetes {
 		kubernetess = append(kubernetess, kubernetes)
 	}
 	return kubernetess, nil
 }
 
-func (s *MemoryStore) UpdateAzureKubernetes(id string, kubernetes *models.AzureKubernetes) error {
+func (s *MemoryStore) UpdateAzureKubernetes(id string, kubernetes *sharedmodels.AzureKubernetes) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -400,7 +400,7 @@ func (s *MemoryStore) DeleteAzureKubernetes(id string) error {
 	return nil
 }
 
-func (s *MemoryStore) CreateAzureBudget(budget *models.AzureBudget) error {
+func (s *MemoryStore) CreateAzureBudget(budget *sharedmodels.AzureBudget) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -414,7 +414,7 @@ func (s *MemoryStore) CreateAzureBudget(budget *models.AzureBudget) error {
 	return nil
 }
 
-func (s *MemoryStore) GetAzureBudget(id string) (*models.AzureBudget, error) {
+func (s *MemoryStore) GetAzureBudget(id string) (*sharedmodels.AzureBudget, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -425,18 +425,18 @@ func (s *MemoryStore) GetAzureBudget(id string) (*models.AzureBudget, error) {
 	return budget, nil
 }
 
-func (s *MemoryStore) ListAzureBudgets() ([]*models.AzureBudget, error) {
+func (s *MemoryStore) ListAzureBudgets() ([]*sharedmodels.AzureBudget, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	budgets := make([]*models.AzureBudget, 0, len(s.azureBudgets))
+	budgets := make([]*sharedmodels.AzureBudget, 0, len(s.azureBudgets))
 	for _, budget := range s.azureBudgets {
 		budgets = append(budgets, budget)
 	}
 	return budgets, nil
 }
 
-func (s *MemoryStore) UpdateAzureBudget(id string, budget *models.AzureBudget) error {
+func (s *MemoryStore) UpdateAzureBudget(id string, budget *sharedmodels.AzureBudget) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

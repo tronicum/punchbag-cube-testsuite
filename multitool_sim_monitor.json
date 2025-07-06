@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "id": "sim-azure-5809",
+    "name": "test-monitor",
+    "provider": "azure",
+    "status": "running",
+    "config": {
+      "auto_scaling": true,
+      "kubernetes_version": "1.28.0",
+      "node_count": 3
+    },
+    "provider_config": {
+      "enable_monitoring": true,
+      "enable_rbac": true,
+      "network_plugin": "azure",
+      "sku": "Standard_D2s_v3"
+    },
+    "resource_group": "test-rg",
+    "location": "eastus",
+    "created_at": "2025-07-06T05:40:03.919812+02:00",
+    "updated_at": "2025-07-06T08:40:03.919812+02:00"
+  }
+}

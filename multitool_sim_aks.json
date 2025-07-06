@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "name": "test-aks",
+    "location": "eastus",
+    "resourceGroup": "test-rg",
+    "nodeCount": null,
+    "networkPlugin": null,
+    "networkPolicy": null,
+    "identity": null,
+    "tags": null
+  }
+}

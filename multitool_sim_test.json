@@ -1,0 +1,24 @@
+Executing root command...
+ℹ Simulating cluster creation for 'test-aks' on azure...
+✓ Simulated cluster 'test-aks' created with ID: sim-azure-1752
+{
+  "id": "sim-azure-1752",
+  "name": "test-aks",
+  "provider": "azure",
+  "status": "running",
+  "config": {
+    "auto_scaling": true,
+    "kubernetes_version": "1.28.0",
+    "node_count": 3
+  },
+  "provider_config": {
+    "enable_monitoring": true,
+    "enable_rbac": true,
+    "network_plugin": "azure",
+    "sku": "Standard_D2s_v3"
+  },
+  "resource_group": "test-rg",
+  "location": "eastus",
+  "created_at": "2025-07-05T15:33:05.76847+02:00",
+  "updated_at": "2025-07-06T08:33:05.76847+02:00"
+}

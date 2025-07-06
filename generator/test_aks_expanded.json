@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "location": "eastus",
+    "name": "e2e-aks",
+    "nodeCount": 2,
+    "resourceGroup": "e2e-rg"
+  }
+}

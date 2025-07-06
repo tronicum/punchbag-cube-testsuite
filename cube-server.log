@@ -1,0 +1,39 @@
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /health                   --> main.main.func2 (4 handlers)
+[GIN-debug] GET    /healthz                  --> main.main.func3 (4 handlers)
+[GIN-debug] POST   /api/v1/clusters          --> punchbag-cube-testsuite/cube-server/api.(*Handlers).CreateCluster-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters          --> punchbag-cube-testsuite/cube-server/api.(*Handlers).ListClusters-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id      --> punchbag-cube-testsuite/cube-server/api.(*Handlers).GetCluster-fm (4 handlers)
+[GIN-debug] PUT    /api/v1/clusters/:id      --> punchbag-cube-testsuite/cube-server/api.(*Handlers).UpdateCluster-fm (4 handlers)
+[GIN-debug] DELETE /api/v1/clusters/:id      --> punchbag-cube-testsuite/cube-server/api.(*Handlers).DeleteCluster-fm (4 handlers)
+[GIN-debug] POST   /api/v1/clusters/:id/tests --> punchbag-cube-testsuite/cube-server/api.(*Handlers).RunTest-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id/tests --> punchbag-cube-testsuite/cube-server/api.(*Handlers).ListTestResults-fm (4 handlers)
+[GIN-debug] GET    /api/v1/tests/:id         --> punchbag-cube-testsuite/cube-server/api.(*Handlers).GetTestResult-fm (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/health    --> punchbag-cube-testsuite/cube-server/api.SetupRoutes.func1 (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/status    --> punchbag-cube-testsuite/cube-server/api.SetupRoutes.func2 (4 handlers)
+[GIN-debug] GET    /api/v1/validate/:provider --> punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).ValidateProvider-fm (4 handlers)
+[GIN-debug] POST   /api/v1/providers/:provider/operations/:operation --> punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).SimulateProviderOperation-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulator/azure/aks --> punchbag-cube-testsuite/cube-server/api.(*AzureHandlers).SimulateAKS-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulator/azure/budget --> punchbag-cube-testsuite/cube-server/api.(*AzureHandlers).SimulateAzureBudget-fm (4 handlers)
+[GIN-debug] POST   /api/v1/mocks/:key        --> punchbag-cube-testsuite/cube-server/api.SaveMockData (4 handlers)
+[GIN-debug] GET    /api/v1/mocks/:key        --> punchbag-cube-testsuite/cube-server/api.GetMockData (4 handlers)
+[GIN-debug] POST   /api/v1/mocks/:key/save   --> punchbag-cube-testsuite/cube-server/api.SaveMockDataToFile (4 handlers)
+[GIN-debug] GET    /docs                     --> punchbag-cube-testsuite/cube-server/api.SetupRoutes.func3 (4 handlers)
+{"level":"info","ts":1751783233.907978,"caller":"cube-server/main.go:71","msg":"Starting cube-server","port":"8080"}
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8080
+[GIN] 2025/07/06 - 08:27:14 | 200 |       4.791µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:28:46 | 200 |      52.292µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:41:43 | 200 |      42.708µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:41:52 | 200 |      38.625µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:42:24 | 200 |      25.625µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:42:47 | 200 |      35.208µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:43:34 | 200 |       69.25µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:43:43 | 200 |      14.208µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:46:14 | 200 |      27.833µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:46:33 | 200 |      85.875µs |             ::1 | GET      "/healthz"
+[GIN] 2025/07/06 - 08:47:15 | 200 |    2.221292ms |             ::1 | GET      "/healthz"
