@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"punchbag-cube-testsuite/shared/simulation"
+	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 )
 
 // SimulatorClient allows generator to call the cube-server simulation endpoints

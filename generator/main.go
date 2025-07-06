@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"flag"
 	"gopkg.in/yaml.v3"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"os"
 	"os/exec"
 	"strings"
@@ -100,7 +101,7 @@ resource "generic_object_storage_bucket" "example" {
 }
 
 // GenerateMultipassCloudLayerTemplate generates a Terraform template for multipass-cloud-layer provider using the generic Bucket abstraction
-func GenerateMultipassCloudLayerTemplate(bucket *models.Bucket) string {
+func GenerateMultipassCloudLayerTemplate(bucket *sharedmodels.ObjectStorageBucket) string {
 	return fmt.Sprintf(`# multipass-cloud-layer Bucket
 resource "multipass_cloud_layer_bucket" "%s" {
   name         = "%s"
@@ -114,8 +115,8 @@ resource "multipass_cloud_layer_bucket" "%s" {
 		bucket.Name,
 		bucket.Region,
 		bucket.Provider,
-		bucket.StorageClass,
-		bucket.Tier,
+		bucket.ProviderConfig["storage_class"],
+		bucket.ProviderConfig["tier"],
 	)
 }
 
