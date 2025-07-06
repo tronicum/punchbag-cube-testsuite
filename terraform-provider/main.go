@@ -11,7 +11,7 @@ import (
 )
 
 // Provider documentation generation.
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name punchbag
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name multipass-cloud-layer
 
 func main() {
 	var debug bool
@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/punchbag/punchbag",
+		Address: "registry.terraform.io/multipass/cloud-layer",
 		Debug:   debug,
 	}
 

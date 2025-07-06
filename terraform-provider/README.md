@@ -163,6 +163,36 @@ resource "multipass_cloud_layer_bucket" "gcs_bucket" {
 }
 ```
 
+#### Example: IONOS S3
+
+```hcl
+resource "multipass_cloud_layer_bucket" "ionos_bucket" {
+  name     = "my-ionos-bucket"
+  region   = "de-fra"
+  provider = "ionos"
+}
+```
+
+#### Example: StackIT S3
+
+```hcl
+resource "multipass_cloud_layer_bucket" "stackit_bucket" {
+  name     = "my-stackit-bucket"
+  region   = "eu01"
+  provider = "stackit"
+}
+```
+
+#### Example: Hetzner Cloud S3 (hcloud)
+
+```hcl
+resource "multipass_cloud_layer_bucket" "hcloud_bucket" {
+  name     = "my-hcloud-bucket"
+  region   = "fsn1"
+  provider = "hcloud"
+}
+```
+
 ## Data Sources
 
 ### `punchbag_clusters`
@@ -281,3 +311,40 @@ go test ./...
 - `PUNCHBAG_HOST` - Server URL
 - `PUNCHBAG_USERNAME` - Username for authentication
 - `PUNCHBAG_PASSWORD` - Password for authentication
+
+# multipass-cloud-layer Terraform Provider
+
+A cross-cloud object storage abstraction for AWS S3, Azure Blob, GCP GCS, IONOS S3, StackIT S3, and Hetzner Cloud S3.
+
+## Publishing to the Terraform Registry
+
+1. Ensure your provider code and documentation are up to date.
+2. The provider address is set to `registry.terraform.io/multipass/cloud-layer`.
+3. Tag a release in your VCS (e.g., GitHub) following [Terraform Registry requirements](https://developer.hashicorp.com/terraform/registry/providers/publishing).
+4. Push your code and tag to the public repository.
+5. The registry will automatically detect and index your provider.
+
+## Example Usage
+
+```hcl
+terraform {
+  required_providers {
+    multipass-cloud-layer = {
+      source  = "multipass/cloud-layer"
+      version = ">= 0.1.0"
+    }
+  }
+}
+
+provider "multipass-cloud-layer" {
+  host = "http://localhost:8080" # Your API/proxy endpoint
+}
+
+resource "multipass_cloud_layer_bucket" "example" {
+  name     = "my-bucket"
+  region   = "us-west-2"
+  provider = "aws" # or "azure", "gcp", "ionos", "stackit", "hcloud"
+}
+```
+
+See the main README for more details and examples.
