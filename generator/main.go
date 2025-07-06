@@ -653,19 +653,10 @@ func validateResourceProperties(provider, resourceType string, props map[string]
 			required = []string{"name", "location", "nodeCount"}
 		}
 	}
-	missing := []string{}
-	for _, k := range required {
-		if _, ok := props[k]; !ok {
-			missing = append(missing, k)
-		}
-	}
-	if len(missing) > 0 {
-		return fmt.Errorf("missing required fields for %s/%s: %v", provider, resourceType, missing)
-	}
 	if len(required) == 0 {
 		return fmt.Errorf("unknown provider or resource type: %s/%s", provider, resourceType)
 	}
-	missing = []string{}
+	missing := []string{}
 	for _, k := range required {
 		if _, ok := props[k]; !ok {
 			missing = append(missing, k)
