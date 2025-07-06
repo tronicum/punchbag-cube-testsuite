@@ -35,7 +35,7 @@ if [ -s large_files_to_purge.txt ]; then
     ARGS+=" --path '$clean_file'"
   done < large_files_to_purge.txt
   # shellcheck disable=SC2086
-  eval "$GIT_FILTER_REPO_BIN $ARGS --invert-paths"
+  eval "$GIT_FILTER_REPO_BIN $ARGS --invert-paths --force"
 else
   echo "No files over 100MB found."
 fi
