@@ -2,11 +2,12 @@ package main
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
 func TestGenerateTerraformFromJSON(t *testing.T) {
-	input := `{"properties": {"name": "test-monitor"}}`
+	input := `{"properties": {"name": "test-monitor", "resourceGroup": "test-rg", "severity": "2", "criteria": "CPU > 90%"}}`
 	inputFile := "test_monitor.json"
 	outputFile := "test_monitor.tf"
 	os.WriteFile(inputFile, []byte(input), 0644)
@@ -218,7 +219,42 @@ func TestGenerateTerraformFromJSONMulticloud_UnknownProvider(t *testing.T) {
 	}
 }
 
+func TestValidateResourceProperties_MissingFields(t *testing.T) {
+	cases := []struct {
+		provider     string
+		resourceType string
+		props        map[string]interface{}
+		shouldFail   bool
+	}{
+		{"azure", "aks", map[string]interface{}{"name": "n", "location": "l"}, true}, // missing resourceGroup, nodeCount
+		{"aws", "eks", map[string]interface{}{"name": "n"}, true}, // missing region, nodeCount
+		{"gcp", "gke", map[string]interface{}{"name": "n", "location": "l", "nodeCount": 1}, false}, // valid
+		{"aws", "s3", map[string]interface{}{}, true}, // missing name
+		{"azure", "monitor", map[string]interface{}{"name": "n", "resourceGroup": "g"}, true}, // missing severity, criteria
+	}
+	for _, c := range cases {
+		err := validateResourceProperties(c.provider, c.resourceType, c.props)
+		if c.shouldFail && err == nil {
+			t.Errorf("Expected failure for %s/%s, got nil", c.provider, c.resourceType)
+		}
+		if !c.shouldFail && err != nil {
+			t.Errorf("Expected success for %s/%s, got error: %v", c.provider, c.resourceType, err)
+		}
+	}
+}
+
+func TestValidateResourceProperties_InvalidProviderOrType(t *testing.T) {
+	err := validateResourceProperties("unknown", "aks", map[string]interface{}{"name": "n"})
+	if err == nil || !contains(err.Error(), "unknown provider or resource type") {
+		t.Errorf("Expected unknown provider/type error, got: %v", err)
+	}
+	err = validateResourceProperties("azure", "unknown", map[string]interface{}{"name": "n"})
+	if err == nil || !contains(err.Error(), "unknown provider or resource type") {
+		t.Errorf("Expected unknown provider/type error, got: %v", err)
+	}
+}
+
 // contains is a helper for string containment
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || (len(s) > len(substr) && (s[0:len(substr)] == substr || contains(s[1:], substr))))
+	return strings.Contains(s, substr)
 }

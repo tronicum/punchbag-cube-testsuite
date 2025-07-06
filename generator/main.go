@@ -16,12 +16,12 @@ import (
 func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 	content, err := os.ReadFile(inputPath)
 	if err != nil {
-		log.Printf("[ERROR] Failed to read input JSON file %s: %v", inputPath, err)
+		log.Printf("%s Failed to read input JSON file %s: %v", logPrefix("GenerateTerraformFromJSON"), inputPath, err)
 		return fmt.Errorf("failed to read input JSON: %w", err)
 	}
 	var data map[string]interface{}
 	if err := json.Unmarshal(content, &data); err != nil {
-		log.Printf("[ERROR] Invalid JSON in %s: %v", inputPath, err)
+		log.Printf("%s Invalid JSON in %s: %v", logPrefix("GenerateTerraformFromJSON"), inputPath, err)
 		return fmt.Errorf("invalid JSON: %w", err)
 	}
 	// Terraform required blocks
@@ -43,27 +43,42 @@ provider "azurerm" {
 	var tf string
 	if props, ok := data["properties"].(map[string]interface{}); ok {
 		// Robust resource type detection
+		var resourceType string
 		if _, hasNodeCount := props["nodeCount"]; hasNodeCount && strings.Contains(strings.ToLower(safeString(props, "name", "")), "aks") {
-			tf = generateAksTerraformBlock(props)
+			resourceType = "aks"
 		} else if strings.Contains(inputPath, "monitor") {
-			tf = generateMonitorTerraformBlock(props, inputPath)
+			resourceType = "monitor"
 		} else if strings.Contains(inputPath, "loganalytics") {
-			tf = generateLogAnalyticsTerraformBlock(props, inputPath)
+			resourceType = "loganalytics"
 		} else if strings.Contains(inputPath, "appinsights") {
-			tf = generateAppInsightsTerraformBlock(props, inputPath)
+			resourceType = "appinsights"
 		} else {
-			log.Printf("[ERROR] Unsupported or unrecognized resource type in %s", inputPath)
+			log.Printf("%s Unsupported or unrecognized resource type in %s", logPrefix("GenerateTerraformFromJSON"), inputPath)
 			return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
 		}
+		// Schema validation for Azure
+		if err := validateResourceProperties("azure", resourceType, props); err != nil {
+			log.Printf("%s Schema validation failed: %v", logPrefix("GenerateTerraformFromJSON"), err)
+			return fmt.Errorf("schema validation failed: %w", err)
+		}
+		if resourceType == "aks" {
+			tf = generateAksTerraformBlock(props)
+		} else if resourceType == "monitor" {
+			tf = generateMonitorTerraformBlock(props, inputPath)
+		} else if resourceType == "loganalytics" {
+			tf = generateLogAnalyticsTerraformBlock(props, inputPath)
+		} else if resourceType == "appinsights" {
+			tf = generateAppInsightsTerraformBlock(props, inputPath)
+		}
 	} else {
-		log.Printf("[ERROR] No 'properties' key found or not a map in %s", inputPath)
+		log.Printf("%s No 'properties' key found or not a map in %s", logPrefix("GenerateTerraformFromJSON"), inputPath)
 		return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
 	}
 	if err := os.WriteFile(outputPath, []byte(tfHeader+tf), 0644); err != nil {
-		log.Printf("[ERROR] Failed to write Terraform output to %s: %v", outputPath, err)
+		log.Printf("%s Failed to write Terraform output to %s: %v", logPrefix("GenerateTerraformFromJSON"), outputPath, err)
 		return err
 	}
-	log.Printf("[INFO] Terraform code written to %s", outputPath)
+	log.Printf("%s Terraform code written to %s", logPrefix("GenerateTerraformFromJSON"), outputPath)
 	return nil
 }
 
@@ -120,12 +135,12 @@ func generateGkeTerraformBlock(props map[string]interface{}) string {
 func GenerateTerraformFromJSONMulticloud(inputPath, outputPath, provider string) error {
 	content, err := os.ReadFile(inputPath)
 	if err != nil {
-		log.Printf("[ERROR] Failed to read input JSON file %s: %v", inputPath, err)
+		log.Printf("%s Failed to read input JSON file %s: %v", logPrefix("GenerateTerraformFromJSONMulticloud"), inputPath, err)
 		return fmt.Errorf("failed to read input JSON: %w", err)
 	}
 	var data map[string]interface{}
 	if err := json.Unmarshal(content, &data); err != nil {
-		log.Printf("[ERROR] Invalid JSON in %s: %v", inputPath, err)
+		log.Printf("%s Invalid JSON in %s: %v", logPrefix("GenerateTerraformFromJSONMulticloud"), inputPath, err)
 		return fmt.Errorf("invalid JSON: %w", err)
 	}
 	// Terraform required blocks (provider-specific)
@@ -143,27 +158,65 @@ func GenerateTerraformFromJSONMulticloud(inputPath, outputPath, provider string)
 	// Detect resource type by keys and map fields
 	var tf string
 	if props, ok := data["properties"].(map[string]interface{}); ok {
+		var resourceType string
 		switch provider {
 		case "aws":
 			if _, hasNodeCount := props["nodeCount"]; hasNodeCount {
+				resourceType = "eks"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateEksTerraformBlock(props)
+			} else if _, hasBucket := props["bucket"] ; hasBucket || safeString(props, "resourceType", "") == "s3" || strings.Contains(strings.ToLower(safeString(props, "name", "")), "s3") {
+				resourceType = "s3"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
+				tf = generateS3TerraformBlock(props)
 			} else {
 				return fmt.Errorf("unsupported or unrecognized AWS resource type in %s", inputPath)
 			}
 		case "gcp":
 			if _, hasNodeCount := props["nodeCount"]; hasNodeCount {
+				resourceType = "gke"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateGkeTerraformBlock(props)
 			} else {
 				return fmt.Errorf("unsupported or unrecognized GCP resource type in %s", inputPath)
 			}
 		case "azure":
 			if _, hasNodeCount := props["nodeCount"]; hasNodeCount && strings.Contains(strings.ToLower(safeString(props, "name", "")), "aks") {
+				resourceType = "aks"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateAksTerraformBlock(props)
 			} else if strings.Contains(inputPath, "monitor") {
+				resourceType = "monitor"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateMonitorTerraformBlock(props, inputPath)
 			} else if strings.Contains(inputPath, "loganalytics") {
+				resourceType = "loganalytics"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateLogAnalyticsTerraformBlock(props, inputPath)
 			} else if strings.Contains(inputPath, "appinsights") {
+				resourceType = "appinsights"
+				err := validateResourceProperties(provider, resourceType, props)
+				if err != nil {
+					return err
+				}
 				tf = generateAppInsightsTerraformBlock(props, inputPath)
 			} else {
 				return fmt.Errorf("unsupported or unrecognized Azure resource type in %s", inputPath)
@@ -173,10 +226,10 @@ func GenerateTerraformFromJSONMulticloud(inputPath, outputPath, provider string)
 		return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
 	}
 	if err := os.WriteFile(outputPath, []byte(tfHeader+tf), 0644); err != nil {
-		log.Printf("[ERROR] Failed to write Terraform output to %s: %v", outputPath, err)
+		log.Printf("%s Failed to write Terraform output to %s: %v", logPrefix("GenerateTerraformFromJSONMulticloud"), outputPath, err)
 		return err
 	}
-	log.Printf("[INFO] Terraform code written to %s", outputPath)
+	log.Printf("%s Terraform code written to %s", logPrefix("GenerateTerraformFromJSONMulticloud"), outputPath)
 	return nil
 }
 
@@ -551,6 +604,79 @@ func generateAwsBudgetTerraformBlock(props map[string]interface{}) string {
 		name, amount, period)
 }
 
+// generateS3TerraformBlock generates the Terraform block for an AWS S3 bucket
+func generateS3TerraformBlock(props map[string]interface{}) string {
+	name := safeString(props, "name", "example-s3-bucket")
+	acl := safeString(props, "acl", "private")
+	versioning := safeBool(props, "versioning", false)
+	versioningBlock := ""
+	if versioning {
+		versioningBlock = "  versioning {\n    enabled = true\n  }\n"
+	}
+	return fmt.Sprintf(`resource "aws_s3_bucket" "example" {
+  bucket = "%s"
+  acl    = "%s"
+%s  // ...map more fields from JSON as needed
+}`,
+		name, acl, versioningBlock)
+}
+
+// validateResourceProperties checks required fields for each resource/provider
+func validateResourceProperties(provider, resourceType string, props map[string]interface{}) error {
+	required := []string{}
+	switch provider {
+	case "azure":
+		switch resourceType {
+		case "aks":
+			required = []string{"name", "location", "resourceGroup", "nodeCount"}
+		case "monitor":
+			required = []string{"name", "resourceGroup", "severity", "criteria"}
+		case "loganalytics":
+			required = []string{"name", "location", "resourceGroup", "sku", "retentionInDays"}
+		case "appinsights":
+			required = []string{"name", "location", "resourceGroup", "applicationType"}
+		}
+	case "aws":
+		switch resourceType {
+		case "eks":
+			required = []string{"name", "region", "nodeCount"}
+		case "s3":
+			required = []string{"name"}
+		case "cloudwatch":
+			required = []string{"name", "namespace", "metricName", "comparisonOperator", "threshold", "period", "evaluationPeriods", "statistic"}
+		case "budget":
+			required = []string{"name", "amount", "period"}
+		}
+	case "gcp":
+		switch resourceType {
+		case "gke":
+			required = []string{"name", "location", "nodeCount"}
+		}
+	}
+	missing := []string{}
+	for _, k := range required {
+		if _, ok := props[k]; !ok {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required fields for %s/%s: %v", provider, resourceType, missing)
+	}
+	if len(required) == 0 {
+		return fmt.Errorf("unknown provider or resource type: %s/%s", provider, resourceType)
+	}
+	missing = []string{}
+	for _, k := range required {
+		if _, ok := props[k]; !ok {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required fields for %s/%s: %v", provider, resourceType, missing)
+	}
+	return nil
+}
+
 func main() {
 	generateTerraform := flag.Bool("generate-terraform", false, "Generate Terraform from JSON input")
 	input := flag.String("input", "", "Input JSON file (from multitool)")
@@ -661,7 +787,11 @@ NOTES:
 
 	if *generateTerraform {
 		if *input == "" || *output == "" {
-			fmt.Println("Usage: werfty --generate-terraform --input <input.json> --output <output.tf>")
+			fmt.Println("Usage: werfty --generate-terraform --input <input.json> --output <output.tf> --provider <provider>")
+			os.Exit(1)
+		}
+		if *provider != "azure" && *provider != "aws" && *provider != "gcp" {
+			fmt.Printf("Error: --provider must be one of: azure, aws, gcp (got '%s')\n", *provider)
 			os.Exit(1)
 		}
 		err := GenerateTerraformFromJSONMulticloud(*input, *output, *provider)
@@ -693,7 +823,6 @@ NOTES:
 		os.Exit(1)
 	}
 
-	// Parse the Terraform template and generate Go code as comments only
 	lines := strings.Split(string(content), "\n")
 	generatedCode := "package azure\n\n// This file is auto-generated for resource reference only.\n// The following resources were found in azure_services.tf:\n\n"
 
@@ -724,6 +853,11 @@ func execLookPath(file string) (string, error) {
 // execCommand is a wrapper for exec.Command
 func execCommand(name string, arg ...string) *exec.Cmd {
 	return exec.Command(name, arg...)
+}
+
+// logPrefix returns a formatted prefix for log messages
+func logPrefix(context string) string {
+	return fmt.Sprintf("[werfty][%s]", context)
 }
 
 // ---

@@ -3,6 +3,8 @@
 # End-to-end test for generator: uses static multicloud test matrix for all providers
 set -euo pipefail
 
+trap 'echo "[ERROR] Script failed at line $LINENO"; exit 1' ERR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GENERATOR_BIN="$SCRIPT_DIR/main.go"
@@ -14,6 +16,7 @@ PROVIDERS=(azure aws gcp)
 for provider in "${PROVIDERS[@]}"; do
   input_json="$TESTDATA_DIR/${provider}.json"
   output_tf="test_${provider}.tf"
+  echo "[INFO] Generating Terraform for $provider..."
   go run "$GENERATOR_BIN" --generate-terraform --input "$input_json" --output "$output_tf" --provider "$provider"
   if [ ! -s "$output_tf" ]; then
     echo "[ERROR] Terraform output for $provider is empty or missing."

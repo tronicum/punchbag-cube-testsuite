@@ -41,7 +41,11 @@ func TestMultiCloudResourceGeneration(t *testing.T) {
 			case "azure":
 				tfBlock = generateAksTerraformBlock(props)
 			case "aws":
-				tfBlock = generateEksTerraformBlock(props)
+				if tc.ResourceType == "eks" {
+					tfBlock = generateEksTerraformBlock(props)
+				} else if tc.ResourceType == "s3" {
+					tfBlock = generateS3TerraformBlock(props)
+				}
 			case "gcp":
 				tfBlock = generateGkeTerraformBlock(props)
 			default:
@@ -52,5 +56,58 @@ func TestMultiCloudResourceGeneration(t *testing.T) {
 			}
 			// Optionally: compare tfBlock to expected output if provided
 		})
+	}
+}
+
+func TestGenerateS3TerraformBlock(t *testing.T) {
+	props := map[string]interface{}{
+		"name":       "test-s3-bucket",
+		"acl":        "private",
+		"versioning": true,
+	}
+	tf := generateS3TerraformBlock(props)
+	if len(tf) == 0 || !contains(tf, "aws_s3_bucket") {
+		t.Errorf("S3 Terraform block not generated correctly: %s", tf)
+	}
+}
+
+func TestGenerateTerraformFromJSONMulticloud_S3(t *testing.T) {
+	inputFile := "../testdata/s3.json"
+	outputFile := "test_s3.tf"
+	defer os.Remove(outputFile)
+	if err := GenerateTerraformFromJSONMulticloud(inputFile, outputFile, "aws"); err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	content, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
+	if !contains(string(content), "aws_s3_bucket") {
+		t.Error("S3 Terraform not generated")
+	}
+}
+
+func TestMultiCloudResourceGeneration_NegativeCases(t *testing.T) {
+	cases := []struct {
+		provider     string
+		resourceType string
+		props        map[string]interface{}
+	}{
+		{"aws", "eks", map[string]interface{}{"name": "eks"}}, // missing region, nodeCount
+		{"gcp", "gke", map[string]interface{}{"location": "loc"}}, // missing name, nodeCount
+		{"azure", "aks", map[string]interface{}{"name": "aks", "location": "loc"}}, // missing resourceGroup, nodeCount
+	}
+	for _, c := range cases {
+		err := validateResourceProperties(c.provider, c.resourceType, c.props)
+		if err == nil {
+			t.Errorf("Expected error for %s/%s with props %v", c.provider, c.resourceType, c.props)
+		}
+	}
+}
+
+func TestMultiCloudResourceGeneration_UnknownProviderType(t *testing.T) {
+	err := validateResourceProperties("foo", "bar", map[string]interface{}{"name": "n"})
+	if err == nil {
+		t.Error("Expected error for unknown provider/type")
 	}
 }

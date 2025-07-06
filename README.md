@@ -242,6 +242,60 @@ resource "punchbag_cluster" "example_stackit" {
 }
 ```
 
+## CLI Flags (werfty/generator)
+
+- `--simulate-import`         Simulate resource import (mock, outputs JSON)
+- `--generate-terraform`      Generate Terraform from JSON input (multicloud)
+- `--input <file>`            Input JSON file (from multitool or manual)
+- `--output <file>`           Output Terraform file
+- `--provider <provider>`     Cloud provider: azure|aws|gcp (required for multicloud)
+- `--resource-type <type>`    Resource type: monitor|loganalytics|aks|eks|gke|budget (mock)
+- `--name <name>`             Resource name (mock/simulation)
+- `--location <location>`     Resource location (Azure/GCP) or region (AWS)
+- `--region <region>`         AWS/GCP region (alias for --location for AWS/GCP)
+- `--resource-group <group>`  Azure resource group (mock/simulation)
+- `--node-count <n>`          Node count (AKS/EKS/GKE, mock)
+- `-h, --help`                Show help
+
+## Test Data
+
+Test data for all supported providers/resources is in the `testdata/` directory:
+- `testdata/aks.json` (Azure AKS)
+- `testdata/eks.json` (AWS EKS)
+- `testdata/gke.json` (GCP GKE)
+- `testdata/s3.json`  (AWS S3)
+
+## Workflows & CI/CD
+
+- All Go unit and integration tests are run on every PR via GitHub Actions (`.github/workflows/ci.yml`).
+- End-to-end shell scripts (`generator/end2end_test.sh`, `end2end_multitool_test.sh`) are run in CI and locally.
+- Shell scripts are hardened with `set -euo pipefail` and error handling for robust CI/CD.
+- Negative and edge case tests are included for missing fields, invalid values, and unknown providers/types.
+
+## Example Usage
+
+### Simulate AKS (Azure):
+```
+werfty --simulate-import --resource-type aks --name my-aks --resource-group my-rg --location eastus --node-count 3
+```
+
+### Generate Terraform for AWS:
+```
+werfty --generate-terraform --input test_eks.json --output test_eks.tf --provider aws
+```
+
+### Run all tests and scripts (locally or in CI):
+```
+go test ./... -v
+./generator/end2end_test.sh
+./end2end_multitool_test.sh
+```
+
+## Adding New Resources/Providers
+- Add new test data in `testdata/`.
+- Update resource block generators and schema validation in `generator/main.go`.
+- Add/expand tests in `generator/main_test.go` and `generator/multicloud_test.go`.
+
 ## Contributing
 
 Each component has its own documentation and development guidelines. See the README.md files in each directory for specific instructions.

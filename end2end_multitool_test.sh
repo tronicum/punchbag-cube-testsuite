@@ -3,6 +3,8 @@
 # End-to-end test for multitool: uses static multicloud test matrix for all providers
 set -euo pipefail
 
+trap 'echo "[ERROR] Script failed at line $LINENO"; exit 1' ERR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CUBE_SERVER_BIN="$WORKSPACE_ROOT/cube-server/cube-server"
@@ -44,21 +46,26 @@ for provider in "${PROVIDERS[@]}"; do
     gcp)
       args="--resource-type gke --name test-gke --location us-central1 --node-count 1"
       ;;
+    *)
+      echo "[ERROR] Unknown provider: $provider"; exit 1
+      ;;
   esac
-  eval "$SIMULATOR_BIN simulate --server $SERVER_URL $args --output $SIM_TEST_JSON"
-  if [ ! -s "$SIM_TEST_JSON" ]; then
-    echo "[ERROR] Simulation output for $provider is empty or missing."
+  echo "[INFO] Running simulation for $provider..."
+  set +e
+  "$SIMULATOR_BIN" $args > "$SIM_TEST_JSON"
+  status=$?
+  set -e
+  if [ $status -ne 0 ] || [ ! -s "$SIM_TEST_JSON" ]; then
+    echo "[ERROR] Simulation failed for $provider or output missing."
     exit 1
   fi
-  echo "--- $provider Simulation Output ---"
+  echo "[SUCCESS] $provider simulation output:"
   cat "$SIM_TEST_JSON"
   rm -f "$SIM_TEST_JSON"
 done
 
-echo "[SUCCESS] Multitool end-to-end multicloud test completed."
-
-# Clean up server if started by this script
-if [ -n "$SERVER_PID" ]; then
-  echo "Stopping cube-server (PID $SERVER_PID)..."
-  kill "$SERVER_PID"
+if [ -n "${SERVER_PID:-}" ]; then
+  kill "$SERVER_PID" || true
 fi
+
+echo "[SUCCESS] Multitool end-to-end multicloud test completed."
