@@ -242,6 +242,37 @@ resource "punchbag_cluster" "example_stackit" {
 }
 ```
 
+## 🏃 Local Development & Testing
+
+### Start the API Server
+```bash
+# From project root
+cd cmd/cube-server
+# Or use Go workspace mode
+PORT=8081 go run main.go
+```
+
+### Run Automated API Tests
+```bash
+bash scripts/test_api.sh
+```
+
+### Run Linting
+```bash
+bash scripts/lint.sh
+```
+
+## 🧪 API Usage Examples
+
+- Health check: `curl http://localhost:8081/health`
+- List clusters: `curl http://localhost:8081/api/v1/clusters`
+- Create cluster:
+  ```bash
+  curl -X POST http://localhost:8081/api/v1/clusters \
+    -H 'Content-Type: application/json' \
+    -d '{"name":"test-cluster","provider":"azure","location":"eastus"}'
+  ```
+
 ## Contributing
 
 Each component has its own documentation and development guidelines. See the README.md files in each directory for specific instructions.
