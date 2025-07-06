@@ -7,8 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"punchbag-cube-testsuite/multitool/pkg/models"
-	sharedmodels "punchbag-cube-testsuite/shared/models"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // APIClient represents a client for interacting with the punchbag server API
@@ -38,7 +37,7 @@ func NewClusterClient(client *APIClient) *ClusterClient {
 }
 
 // CreateCluster creates a new cluster
-func (c *ClusterClient) CreateCluster(req *models.ClusterCreateRequest) (*models.Cluster, error) {
+func (c *ClusterClient) CreateCluster(req *sharedmodels.ClusterCreateRequest) (*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters", c.client.baseURL)
 	
 	data, err := json.Marshal(req)
@@ -56,7 +55,7 @@ func (c *ClusterClient) CreateCluster(req *models.ClusterCreateRequest) (*models
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -65,7 +64,7 @@ func (c *ClusterClient) CreateCluster(req *models.ClusterCreateRequest) (*models
 }
 
 // GetCluster retrieves a cluster by ID
-func (c *ClusterClient) GetCluster(id string) (*models.Cluster, error) {
+func (c *ClusterClient) GetCluster(id string) (*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters/%s", c.client.baseURL, id)
 	
 	resp, err := c.client.httpClient.Get(url)
@@ -81,7 +80,7 @@ func (c *ClusterClient) GetCluster(id string) (*models.Cluster, error) {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var cluster models.Cluster
+	var cluster sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -90,7 +89,7 @@ func (c *ClusterClient) GetCluster(id string) (*models.Cluster, error) {
 }
 
 // ListClusters retrieves all clusters
-func (c *ClusterClient) ListClusters() ([]*models.Cluster, error) {
+func (c *ClusterClient) ListClusters() ([]*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters", c.client.baseURL)
 	
 	resp, err := c.client.httpClient.Get(url)
@@ -103,7 +102,7 @@ func (c *ClusterClient) ListClusters() ([]*models.Cluster, error) {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var clusters []*models.Cluster
+	var clusters []*sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&clusters); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -112,7 +111,7 @@ func (c *ClusterClient) ListClusters() ([]*models.Cluster, error) {
 }
 
 // ListClustersByProvider retrieves clusters filtered by provider
-func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*models.Cluster, error) {
+func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters?provider=%s", c.client.baseURL, provider)
 	
 	resp, err := c.client.httpClient.Get(url)
@@ -125,7 +124,7 @@ func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvid
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var clusters []*models.Cluster
+	var clusters []*sharedmodels.Cluster
 	if err := json.NewDecoder(resp.Body).Decode(&clusters); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -169,7 +168,7 @@ func NewTestClient(client *APIClient) *TestClient {
 }
 
 // RunTest runs a test on a cluster
-func (t *TestClient) RunTest(req *models.TestRequest) (*models.TestResult, error) {
+func (t *TestClient) RunTest(req *sharedmodels.TestRequest) (*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/tests", t.client.baseURL)
 	
 	data, err := json.Marshal(req)
@@ -187,7 +186,7 @@ func (t *TestClient) RunTest(req *models.TestRequest) (*models.TestResult, error
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var result models.TestResult
+	var result sharedmodels.TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -196,7 +195,7 @@ func (t *TestClient) RunTest(req *models.TestRequest) (*models.TestResult, error
 }
 
 // GetTestResult retrieves a test result by ID
-func (t *TestClient) GetTestResult(id string) (*models.TestResult, error) {
+func (t *TestClient) GetTestResult(id string) (*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/tests/%s", t.client.baseURL, id)
 	
 	resp, err := t.client.httpClient.Get(url)
@@ -212,7 +211,7 @@ func (t *TestClient) GetTestResult(id string) (*models.TestResult, error) {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var result models.TestResult
+	var result sharedmodels.TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -221,7 +220,7 @@ func (t *TestClient) GetTestResult(id string) (*models.TestResult, error) {
 }
 
 // ListTestResults retrieves test results for a cluster
-func (t *TestClient) ListTestResults(clusterID string) ([]*models.TestResult, error) {
+func (t *TestClient) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/clusters/%s/tests", t.client.baseURL, clusterID)
 	
 	resp, err := t.client.httpClient.Get(url)
@@ -234,7 +233,7 @@ func (t *TestClient) ListTestResults(clusterID string) ([]*models.TestResult, er
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
-	var results []*models.TestResult
+	var results []*sharedmodels.TestResult
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

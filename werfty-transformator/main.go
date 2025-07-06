@@ -48,3 +48,5 @@ func ConvertTerraform(tf, src, dest string) string {
 	}
 	return "# Conversion logic not yet implemented for this provider pair"
 }
+
+// Ensure transform.ConvertAWSS3ToAzureBlob and transform.ConvertS3LikeToMultipassCloudLayer are implemented in transform package.

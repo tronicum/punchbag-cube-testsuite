@@ -43,7 +43,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 
 	// Validate provider
 	if cluster.Provider == "" {
-		cluster.Provider = sharedmodels.CloudProviderAzure // default to Azure for backward compatibility
+		cluster.Provider = sharedmodels.Provider("azure") // default to Azure for backward compatibility
 	}
 
 	// Validate required fields based on provider
@@ -55,7 +55,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 
 	created, err := h.store.CreateCluster(&cluster)
 	if err != nil {
-		if err == store.ErrAlreadyExists {
+		if err != nil && (err.Error() == "cluster already exists" || err.Error() == "already exists") {
 			c.JSON(http.StatusConflict, gin.H{"error": "cluster already exists"})
 			return
 		}
@@ -73,7 +73,7 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 	id := c.Param("id")
 	cluster, err := h.store.GetCluster(id)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -145,8 +145,9 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 // DeleteCluster handles DELETE /clusters/:id
 func (h *Handlers) DeleteCluster(c *gin.Context) {
 	id := c.Param("id")
-	if err := h.store.DeleteCluster(id); err != nil {
-		if err == store.ErrNotFound {
+	err := h.store.DeleteCluster(id)
+	if err != nil {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -172,7 +173,7 @@ func (h *Handlers) RunTest(c *gin.Context) {
 	// Verify cluster exists
 	cluster, err := h.store.GetCluster(clusterID)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 			return
 		}
@@ -220,7 +221,7 @@ func (h *Handlers) GetTestResult(c *gin.Context) {
 	id := c.Param("id")
 	result, err := h.store.GetTestResult(id)
 	if err != nil {
-		if err == store.ErrNotFound {
+		if err != nil && (err.Error() == "test result not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "test result not found"})
 			return
 		}

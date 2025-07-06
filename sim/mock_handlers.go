@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"punchbag-cube-testsuite/multitool/pkg/mock"
-	"punchbag-cube-testsuite/multitool/pkg/models"
+	mock "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // AKS Handlers
 func HandleAks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var c models.Cluster
+		var c sharedmodels.Cluster
 		if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode AKS payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -48,7 +48,7 @@ func HandleAks(w http.ResponseWriter, r *http.Request) {
 func HandleLogAnalytics(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var ws models.LogAnalyticsWorkspace
+		var ws sharedmodels.LogAnalyticsWorkspace
 		if err := json.NewDecoder(r.Body).Decode(&ws); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode Log Analytics payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -84,7 +84,7 @@ func HandleLogAnalytics(w http.ResponseWriter, r *http.Request) {
 func HandleBudget(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var b models.AzureBudget
+		var b sharedmodels.AzureBudget
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode Budget payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -120,7 +120,7 @@ func HandleBudget(w http.ResponseWriter, r *http.Request) {
 func HandleAppInsights(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var a models.AppInsightsResource
+		var a sharedmodels.AppInsightsResource
 		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode App Insights payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -156,7 +156,7 @@ func HandleAppInsights(w http.ResponseWriter, r *http.Request) {
 func HandleS3(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var b models.S3Bucket
+		var b sharedmodels.ObjectStorageBucket
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode S3 payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -192,7 +192,7 @@ func HandleS3(w http.ResponseWriter, r *http.Request) {
 func HandleBlobStorage(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var b models.BlobStorage
+		var b sharedmodels.ObjectStorageBucket
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode Blob payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -224,11 +224,14 @@ func HandleBlobStorage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GCP GCS Handler
+// Re-export unified handlers for sim-server
+var HandleBlob = HandleBlobStorage
+
+// GCS Handler
 func HandleGCS(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		var b models.GCSBucket
+		var b sharedmodels.ObjectStorageBucket
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			log.Printf("[ERROR] %s %s: failed to decode GCS payload: %v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)

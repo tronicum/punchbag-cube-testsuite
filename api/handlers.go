@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,26 +35,24 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	// Validate cloud provider
-	validProviders := []string{
-		sharedmodels.CloudProviderAzure,
-		sharedmodels.CloudProviderAWS,
-		sharedmodels.CloudProviderGCP,
-		sharedmodels.CloudProviderStackit,
-		sharedmodels.CloudProviderHetzner,
-		sharedmodels.CloudProviderIONOS,
+	// Use unified provider type for validation
+	validProviders := []sharedmodels.CloudProvider{
+		sharedmodels.Azure,
+		sharedmodels.AWS,
+		sharedmodels.GCP,
+		sharedmodels.StackIT,
+		sharedmodels.Hetzner,
+		sharedmodels.IONOS,
 	}
-	
 	valid := false
 	for _, provider := range validProviders {
-		if cluster.CloudProvider == provider {
+		if cluster.Provider == provider {
 			valid = true
 			break
 		}
 	}
-	
 	if !valid {
-		h.logger.Error("Invalid cloud provider", zap.String("provider", cluster.CloudProvider))
+		h.logger.Error("Invalid cloud provider", zap.String("provider", string(cluster.Provider)))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid cloud provider"})
 		return
 	}
@@ -73,7 +70,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster created", zap.String("id", created.ID), zap.String("provider", created.CloudProvider))
+	h.logger.Info("Cluster created", zap.String("id", created.ID), zap.String("provider", string(created.Provider)))
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -100,13 +97,13 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 	
 	var clusters []*sharedmodels.Cluster
 	var err error
-	
+
 	if provider != "" {
-		clusters, err = h.store.ListClustersByProvider(provider)
+		clusters, err = h.store.ListClustersByProvider(sharedmodels.CloudProvider(provider))
 	} else {
 		clusters, err = h.store.ListClusters()
 	}
-	
+
 	if err != nil {
 		h.logger.Error("Failed to list clusters", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -133,7 +130,7 @@ func (h *Handlers) UpdateCluster(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", updated.CloudProvider))
+	h.logger.Info("Cluster updated", zap.String("id", id), zap.String("provider", string(updated.Provider)))
 	c.JSON(http.StatusOK, updated)
 }
 
@@ -233,7 +230,7 @@ func (h *Handlers) ListTestResults(c *gin.Context) {
 // ProxyS3 handles /api/proxy/aws/s3
 func (h *Handlers) ProxyS3(c *gin.Context) {
 	if c.Request.Method == http.MethodPost {
-		var bucket sharedmodels.S3Bucket
+		var bucket sharedmodels.ObjectStorageBucket
 		if err := c.ShouldBindJSON(&bucket); err != nil {
 			h.logger.Error("Failed to bind S3 bucket payload", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -252,9 +249,6 @@ func (h *Handlers) ProxyS3(c *gin.Context) {
 				return
 			}
 		}
-		if bucket.Versioning != nil {
-			// No further validation needed for now
-		}
 		if bucket.Lifecycle != nil {
 			for _, rule := range bucket.Lifecycle {
 				if rule.ID == "" || rule.Status == "" {
@@ -265,8 +259,8 @@ func (h *Handlers) ProxyS3(c *gin.Context) {
 		}
 
 		// --- Simulate creation/response ---
-		bucket.ID = bucket.Name + "-" + bucket.Provider
-		bucket.CreatedAt = time.Now().Format(time.RFC3339)
+		bucket.ID = bucket.Name + "-" + string(bucket.Provider)
+		bucket.CreatedAt = time.Now()
 
 		// TODO: Integrate with real provider APIs here
 

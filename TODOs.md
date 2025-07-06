@@ -1,13 +1,11 @@
 # TODOs for punchbag-cube-testsuite
 
-## High Priority (Done)
-- [x] Unify all provider/status/test models in `shared/` and update all components to use them
-- [x] Remove duplicate/legacy types and fix all import paths
-- [x] Clean up workspace: remove `cube-server` and `terraform-provider` directories
-- [x] Ensure all proxy endpoints are in `server` and build/test cleanly
-- [x] Integrate shared models into `werfty-generator`
-- [x] Expand `werfty-generator` to support more Terraform resources/providers
-- [x] Refactor and modernize `werfty-transformator` (modular, extensible, clean CLI)
+## Milestones
+- [ ] Finalize example coverage and documentation for all scenarios
+- [ ] Set up automated integration testing (CI, example validation)
+- [ ] Expand documentation and developer onboarding materials
+- [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
+- [ ] Prepare release process and distribution (versioning, changelog, binaries)
 
 ## Next Steps
 - [ ] Move all Terraform provider (HCL/DSL) generation logic to `werfty-generator`
