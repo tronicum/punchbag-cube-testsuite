@@ -10,3 +10,4 @@ examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
 *.tfstate*
 terraform.tfvars
 .terraform/
+.terraform/
