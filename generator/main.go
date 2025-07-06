@@ -113,7 +113,6 @@ provider "azurerm" {
 	if props, ok := data["properties"].(map[string]interface{}); ok {
 		// Robust resource type detection
 		if _, hasNodeCount := props["nodeCount"]; hasNodeCount && strings.Contains(strings.ToLower(safeString(props, "name", "")), "aks") {
-			// Use the new helper for AKS
 			tf = generateAksTerraformBlock(props)
 		} else if strings.Contains(inputPath, "monitor") {
 			// Map common Azure Monitor fields

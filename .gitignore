@@ -11,3 +11,4 @@ examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
 terraform.tfvars
 .terraform/
 .terraform/
+.terraform/
