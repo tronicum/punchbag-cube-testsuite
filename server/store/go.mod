@@ -1,4 +1,4 @@
-module github.com/tronicum/punchbag-cube-testsuite/server/store
+module github.com/tronicum/punchbag-cube-testsuite/store
 
 go 1.21
 

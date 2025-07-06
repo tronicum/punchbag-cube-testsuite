@@ -35,7 +35,7 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 		return
 	}
 
-	// Validate cloud provider
+	// Use unified provider type for validation
 	validProviders := []sharedmodels.CloudProvider{
 		sharedmodels.Azure,
 		sharedmodels.AWS,
@@ -94,7 +94,7 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 // ListClusters handles GET /clusters
 func (h *Handlers) ListClusters(c *gin.Context) {
 	provider := c.Query("provider")
-
+	
 	var clusters []*sharedmodels.Cluster
 	var err error
 

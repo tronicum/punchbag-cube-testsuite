@@ -9,6 +9,11 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	ErrNotFound      = fmt.Errorf("resource not found")
+	ErrAlreadyExists = fmt.Errorf("resource already exists")
+)
+
 // Store defines the interface for cluster and test result storage
 type Store interface {
 	// Cluster operations
@@ -46,10 +51,12 @@ func (s *MemoryStore) CreateCluster(cluster *sharedmodels.Cluster) (*sharedmodel
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	cluster.ID = uuid.New().String()
+	if _, exists := s.clusters[cluster.ID]; exists {
+		return nil, ErrAlreadyExists
+	}
+
 	cluster.CreatedAt = time.Now()
 	cluster.UpdatedAt = time.Now()
-
 	s.clusters[cluster.ID] = cluster
 	return cluster, nil
 }
@@ -60,7 +67,7 @@ func (s *MemoryStore) GetCluster(id string) (*sharedmodels.Cluster, error) {
 
 	cluster, exists := s.clusters[id]
 	if !exists {
-		return nil, fmt.Errorf("cluster not found")
+		return nil, ErrNotFound
 	}
 
 	return cluster, nil
@@ -72,7 +79,7 @@ func (s *MemoryStore) UpdateCluster(id string, cluster *sharedmodels.Cluster) (*
 
 	existing, exists := s.clusters[id]
 	if !exists {
-		return nil, fmt.Errorf("cluster not found")
+		return nil, ErrNotFound
 	}
 
 	cluster.ID = existing.ID
@@ -88,7 +95,7 @@ func (s *MemoryStore) DeleteCluster(id string) error {
 	defer s.mu.Unlock()
 
 	if _, exists := s.clusters[id]; !exists {
-		return fmt.Errorf("cluster not found")
+		return ErrNotFound
 	}
 
 	delete(s.clusters, id)
@@ -139,7 +146,7 @@ func (s *MemoryStore) GetTestResult(id string) (*sharedmodels.TestResult, error)
 
 	result, exists := s.testResults[id]
 	if !exists {
-		return nil, fmt.Errorf("test result not found")
+		return nil, ErrNotFound
 	}
 
 	return result, nil
@@ -151,11 +158,12 @@ func (s *MemoryStore) UpdateTestResult(id string, result *sharedmodels.TestResul
 
 	existing, exists := s.testResults[id]
 	if !exists {
-		return nil, fmt.Errorf("test result not found")
+		return nil, ErrNotFound
 	}
 
 	result.ID = existing.ID
 	result.StartedAt = existing.StartedAt
+	result.CompletedAt = result.CompletedAt
 
 	s.testResults[id] = result
 	return result, nil
@@ -171,6 +179,5 @@ func (s *MemoryStore) ListTestResults(clusterID string) ([]*sharedmodels.TestRes
 			results = append(results, result)
 		}
 	}
-
 	return results, nil
 }

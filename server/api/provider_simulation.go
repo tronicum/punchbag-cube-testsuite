@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tronicum/punchbag-cube-testsuite/server/store"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 
@@ -251,7 +251,7 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 	cluster := h.simulator.GenerateClusterFromSimulation(string(req.Provider), req.Name, req.Config)
 
 	// Store the simulated cluster
-	_, err := h.store.CreateCluster(cluster)
+	created, err := h.store.CreateCluster(cluster)
 	if err != nil {
 		h.logger.Error("Failed to store simulated cluster", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -260,7 +260,7 @@ func (h *ProviderSimulationHandlers) CreateSimulatedCluster(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, cluster)
+	c.JSON(http.StatusCreated, created)
 }
 
 // RunSimulatedTest runs a simulated test using the shared simulation service
@@ -283,14 +283,11 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 	if err != nil {
 		if err != nil && (err.Error() == "cluster not found" || err.Error() == "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Cluster not found",
-			})
+				"error": "Cluster not found"})
 			return
 		}
 		h.logger.Error("Failed to get cluster", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get cluster",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get cluster"})
 		return
 	}
 
@@ -298,14 +295,12 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 	testResult := h.simulator.GenerateTestResultFromSimulation(req.ClusterID, req.TestType)
 
 	// Store the test result
-	_, err = h.store.CreateTestResult(testResult)
+	createdTest, err := h.store.CreateTestResult(testResult)
 	if err != nil {
 		h.logger.Error("Failed to store test result", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create test result",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create test result"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, testResult)
+	c.JSON(http.StatusCreated, createdTest)
 }

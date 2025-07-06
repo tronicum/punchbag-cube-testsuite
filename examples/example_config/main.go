@@ -1,3 +1,0 @@
-package main
-
-// ...existing code from example_config.go...
