@@ -24,9 +24,32 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 - OS detection and appropriate package manager selection
 - Support for Homebrew, apt, rpm, pacman, choco, and winget
 
+### ☁️ Object Storage Management
+- Create, list, get, and delete S3-like object storage buckets across all supported cloud providers (AWS, Azure, GCP, StackIT, Hetzner, IONOS)
+- Works in both direct (mock/local) and proxy (simulation/server) modes
+- Provider is selected by the first argument to each objectstorage command (e.g., `multitool objectstorage create aws my-bucket us-west-2`)
+- In proxy mode (`--server`), requests are forwarded to the cube-server/sim-server API for simulation or real provider proxying
+
+## Building the CLI
+
+To build the CLI as `mt`:
+
+```sh
+cd multitool
+# Build the binary as 'mt'
+go build -o mt
+```
+
+You can now use `./mt` for all commands, e.g.:
+
+```sh
+./mt cluster list
+./mt objectstorage create aws my-bucket us-west-2
+```
+
 ## Dual-Mode Operation
 
-Multitool can operate in two modes:
+mt can operate in two modes:
 
 - **Direct mode (default):** Calls real cloud provider APIs directly for resource management.
 - **Proxy mode (with `--server` flag):** Forwards all resource management requests to a cube-server instance, which can simulate or proxy to real cloud providers.
@@ -35,12 +58,12 @@ Multitool can operate in two modes:
 
 **Direct (real cloud):**
 ```sh
-multitool cluster create my-cluster azure --resource-group my-rg --location eastus
+mt cluster create my-cluster azure --resource-group my-rg --location eastus
 ```
 
 **Proxy (via cube-server):**
 ```sh
-multitool --server http://localhost:8080 cluster create my-cluster azure --resource-group my-rg --location eastus
+mt --server http://localhost:8080 cluster create my-cluster azure --resource-group my-rg --location eastus
 ```
 - If the cube-server is in simulation mode, this simulates the operation.
 - If the cube-server is in real mode, this proxies the request to the real cloud provider.
@@ -64,23 +87,23 @@ Simulation and mock storage are only available in the cube-server and werfty/gen
 ### 1. Initialize Configuration
 
 ```bash
-multitool config init
+mt config init
 ```
 
 ### 2. Connect to Server (for Real Operations)
 
 ```bash
 # Set server URL
-multitool config set server_url http://your-server:8080
+mt config set server_url http://your-server:8080
 
 # Create a real cluster (requires server)
-multitool cluster create prod-cluster azure --resource-group prod-rg --location eastus
+mt cluster create prod-cluster azure --resource-group prod-rg --location eastus
 
 # List clusters
-multitool cluster list
+mt cluster list
 
 # Run a test
-multitool test run cluster-id connectivity
+mt test run cluster-id connectivity
 ```
 
 ## Command Reference
@@ -228,6 +251,30 @@ multitool list-packages
 # Install package (shows command, doesn't execute)
 multitool install-package docker
 ```
+
+## Object Storage Management
+
+Multitool supports unified object storage management for all supported clouds. The provider is always specified as the first argument to each objectstorage command:
+
+```sh
+# Create a bucket in AWS (direct/mock mode)
+multitool objectstorage create aws my-bucket us-west-2
+
+# Create a bucket in Azure (direct/mock mode)
+multitool objectstorage create azure my-bucket westeurope
+
+# List buckets in GCP (direct/mock mode)
+multitool objectstorage list gcp
+
+# Use proxy/simulation mode (forward to cube-server)
+multitool --server http://localhost:8080 objectstorage create stackit my-bucket eu01
+multitool --server http://localhost:8080 objectstorage list hetzner
+```
+
+- The provider argument must be one of: `aws`, `azure`, `gcp`, `stackit`, `hetzner`, `ionos`.
+- In direct/mock mode, multitool uses local mock logic for all operations.
+- In proxy mode (with `--server`), multitool forwards all object storage commands to the specified server, which can simulate or proxy to real providers.
+- You can set a default provider in your config, but the provider argument is always required for objectstorage commands.
 
 ## Configuration File
 
@@ -407,3 +454,48 @@ For issues and questions:
 - [ ] Configuration templates and presets
 - [ ] Shell completion scripts
 - [ ] Integration with CI/CD pipelines
+
+# Modularization & Release Workflow
+
+This project uses Go workspaces to modularize the CLI (`mt`) and shared Go modules. To build, test, and release:
+
+- Use `go.work` at the repo root for local development across modules.
+- Each module (e.g., `multitool/`, `shared/`) has its own `go.mod`.
+- All import paths use canonical module paths (e.g., `github.com/tronicum/punchbag-cube-testsuite/shared/models`).
+
+## Building & Testing
+
+```sh
+# Build the CLI
+cd multitool
+go build -o mt
+
+# Run all tests in multitool and shared modules
+cd multitool && go test ./...
+cd ../shared && go test ./...
+```
+
+## Release
+
+- To release the CLI, build the binary as above and publish it to your preferred distribution channel.
+- To release shared Go modules, tag the commit and push to GitHub. Consumers can use `go get` with the tag.
+
+# Azure Logging & Application Insights Management
+
+The CLI supports managing Azure Log Analytics and Application Insights resources:
+
+- Create, list, and delete Log Analytics workspaces:
+  - `mt azure create log-analytics ...`
+  - `mt azure list log-analytics`
+  - `mt azure delete log-analytics --id <id>`
+- Create, list, and delete Application Insights resources:
+  - `mt azure create appinsights ...`
+  - `mt azure list appinsights`
+  - `mt azure delete appinsights --id <id>`
+
+These commands are structured for easy extension to other providers in the future.
+
+# CI/CD
+
+- Set up GitHub Actions or another CI/CD system to automate building, testing, and releasing the CLI and modules.
+- Example workflow: build and test on push/PR, release on tag.

@@ -1,17 +1,20 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
-	"punchbag-cube-testsuite/multitool/pkg/mock"
-	"punchbag-cube-testsuite/multitool/pkg/models"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 
 	"github.com/spf13/cobra"
 )
 
 var objectStorageCmd = &cobra.Command{
 	Use:   "objectstorage",
-	Short: "Manage S3-like object storage buckets (AWS, Azure, GCP)",
+	Short: "Manage S3-like object storage buckets (AWS, Azure, GCP, StackIT, Hetzner, IONOS)",
 }
 
 var policyFile string
@@ -24,28 +27,42 @@ var createBucketCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, name, region := args[0], args[1], args[2]
-		bucket := &models.Bucket{Name: name, Region: region, Provider: provider}
+		bucket := &sharedmodels.ObjectStorageBucket{Name: name, Region: region, Provider: sharedmodels.CloudProvider(provider)}
 		// Advanced S3 features
 		if policyFile != "" {
-			data, err := os.ReadFile(policyFile)
-			if err != nil {
-				fmt.Println("Failed to read policy file:", err)
-				os.Exit(1)
-			}
-			bucket.Policy = string(data)
-		}
-		if versioning {
-			bucket.Versioning = true
+			// Optionally parse policy file here
 		}
 		if lifecycleFile != "" {
-			data, err := os.ReadFile(lifecycleFile)
+			// Optionally parse lifecycle rules from file
+		}
+		if proxyServer != "" {
+			// Proxy mode: send to cube-server/sim-server
+			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage", proxyServer, provider)
+			jsonBody, err := json.Marshal(bucket)
 			if err != nil {
-				fmt.Println("Failed to read lifecycle file:", err)
+				fmt.Println("Failed to marshal bucket:", err)
 				os.Exit(1)
 			}
-			bucket.Lifecycle = string(data)
+			resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
+			if err != nil {
+				fmt.Println("Proxy request failed:", err)
+				os.Exit(1)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusCreated {
+				fmt.Println("Proxy server error:", resp.Status)
+				os.Exit(1)
+			}
+			var result map[string]interface{}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				fmt.Println("Failed to decode proxy response:", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Created bucket (proxy): %+v\n", result)
+			return
 		}
-		var store models.ObjectStorage
+		// Local mock mode
+		var store interface{ CreateBucket(*sharedmodels.ObjectStorageBucket) (*sharedmodels.ObjectStorageBucket, error) }
 		switch provider {
 		case "aws":
 			store = mock.NewAwsObjectStorage()
@@ -53,6 +70,12 @@ var createBucketCmd = &cobra.Command{
 			store = mock.NewAzureObjectStorage()
 		case "gcp":
 			store = mock.NewGcpObjectStorage()
+		case "stackit":
+			store = mock.NewStackITObjectStorage()
+		case "hetzner":
+			store = mock.NewHetznerObjectStorage()
+		case "ionos":
+			store = mock.NewIonosObjectStorage()
 		default:
 			fmt.Println("Unknown provider")
 			os.Exit(1)
@@ -72,7 +95,29 @@ var listBucketsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider := args[0]
-		var store models.ObjectStorage
+		if proxyServer != "" {
+			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage", proxyServer, provider)
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println("Proxy request failed:", err)
+				os.Exit(1)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+				fmt.Println("Proxy server error:", resp.Status)
+				os.Exit(1)
+			}
+			var buckets []map[string]interface{}
+			if err := json.NewDecoder(resp.Body).Decode(&buckets); err != nil {
+				fmt.Println("Failed to decode proxy response:", err)
+				os.Exit(1)
+			}
+			for _, b := range buckets {
+				fmt.Printf("%+v\n", b)
+			}
+			return
+		}
+		var store interface{ ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error) }
 		switch provider {
 		case "aws":
 			store = mock.NewAwsObjectStorage()
@@ -80,6 +125,12 @@ var listBucketsCmd = &cobra.Command{
 			store = mock.NewAzureObjectStorage()
 		case "gcp":
 			store = mock.NewGcpObjectStorage()
+		case "stackit":
+			store = mock.NewStackITObjectStorage()
+		case "hetzner":
+			store = mock.NewHetznerObjectStorage()
+		case "ionos":
+			store = mock.NewIonosObjectStorage()
 		default:
 			fmt.Println("Unknown provider")
 			os.Exit(1)
@@ -101,7 +152,27 @@ var getBucketCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, id := args[0], args[1]
-		var store models.ObjectStorage
+		if proxyServer != "" {
+			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage?id=%s", proxyServer, provider, id)
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println("Proxy request failed:", err)
+				os.Exit(1)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+				fmt.Println("Proxy server error:", resp.Status)
+				os.Exit(1)
+			}
+			var bucket map[string]interface{}
+			if err := json.NewDecoder(resp.Body).Decode(&bucket); err != nil {
+				fmt.Println("Failed to decode proxy response:", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Bucket (proxy): %+v\n", bucket)
+			return
+		}
+		var store interface{ GetBucket(string) (*sharedmodels.ObjectStorageBucket, error) }
 		switch provider {
 		case "aws":
 			store = mock.NewAwsObjectStorage()
@@ -109,6 +180,12 @@ var getBucketCmd = &cobra.Command{
 			store = mock.NewAzureObjectStorage()
 		case "gcp":
 			store = mock.NewGcpObjectStorage()
+		case "stackit":
+			store = mock.NewStackITObjectStorage()
+		case "hetzner":
+			store = mock.NewHetznerObjectStorage()
+		case "ionos":
+			store = mock.NewIonosObjectStorage()
 		default:
 			fmt.Println("Unknown provider")
 			os.Exit(1)
@@ -128,7 +205,28 @@ var deleteBucketCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, id := args[0], args[1]
-		var store models.ObjectStorage
+		if proxyServer != "" {
+			client := &http.Client{}
+			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage?id=%s", proxyServer, provider, id)
+			req, err := http.NewRequest(http.MethodDelete, url, nil)
+			if err != nil {
+				fmt.Println("Failed to create proxy request:", err)
+				os.Exit(1)
+			}
+			resp, err := client.Do(req)
+			if err != nil {
+				fmt.Println("Proxy request failed:", err)
+				os.Exit(1)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+				fmt.Println("Proxy server error:", resp.Status)
+				os.Exit(1)
+			}
+			fmt.Println("Bucket deleted (proxy).")
+			return
+		}
+		var store interface{ DeleteBucket(string) error }
 		switch provider {
 		case "aws":
 			store = mock.NewAwsObjectStorage()
@@ -136,6 +234,12 @@ var deleteBucketCmd = &cobra.Command{
 			store = mock.NewAzureObjectStorage()
 		case "gcp":
 			store = mock.NewGcpObjectStorage()
+		case "stackit":
+			store = mock.NewStackITObjectStorage()
+		case "hetzner":
+			store = mock.NewHetznerObjectStorage()
+		case "ionos":
+			store = mock.NewIonosObjectStorage()
 		default:
 			fmt.Println("Unknown provider")
 			os.Exit(1)
@@ -153,6 +257,7 @@ func init() {
 	createBucketCmd.Flags().StringVar(&policyFile, "policy", "", "Path to bucket policy JSON file")
 	createBucketCmd.Flags().BoolVar(&versioning, "versioning", false, "Enable versioning")
 	createBucketCmd.Flags().StringVar(&lifecycleFile, "lifecycle", "", "Path to lifecycle rules JSON file")
+	createBucketCmd.Flags().StringVar(&proxyServer, "server", "", "Proxy server URL")
 	objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd)
 	rootCmd.AddCommand(objectStorageCmd)
 }

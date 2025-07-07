@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
 	"gopkg.in/yaml.v2"
-	"punchbag-cube-testsuite/multitool/pkg/output"
 )
 
 // Config represents the multitool configuration

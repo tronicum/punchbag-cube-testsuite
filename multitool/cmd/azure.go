@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/models"
 )
 
 // azureCmd is the parent for Azure-specific commands
@@ -91,6 +93,128 @@ var azureGetLogAnalyticsCmd = &cobra.Command{
 	},
 }
 
+// --- Log Analytics Management Commands ---
+var azureCreateLogAnalyticsCmd = &cobra.Command{
+	Use:   "create log-analytics",
+	Short: "Create an Azure Log Analytics workspace",
+	Run: func(cmd *cobra.Command, args []string) {
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		name, _ := cmd.Flags().GetString("name")
+		location, _ := cmd.Flags().GetString("location")
+		sku, _ := cmd.Flags().GetString("sku")
+		retention, _ := cmd.Flags().GetInt("retention-days")
+		apiClient := client.NewAPIClient(proxyServer)
+		logClient := client.NewLogAnalyticsClient(apiClient)
+		workspace := &models.LogAnalyticsWorkspace{
+			Name:          name,
+			ResourceGroup: resourceGroup,
+			Location:      location,
+			Sku:           sku,
+			RetentionDays: retention,
+		}
+		result, err := logClient.Create(workspace)
+		if err != nil {
+			fmt.Printf("Failed to create Log Analytics workspace: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Created Log Analytics workspace: %s (ID: %s)\n", result.Name, result.ID)
+	},
+}
+
+var azureListLogAnalyticsCmd = &cobra.Command{
+	Use:   "list log-analytics",
+	Short: "List Azure Log Analytics workspaces",
+	Run: func(cmd *cobra.Command, args []string) {
+		apiClient := client.NewAPIClient(proxyServer)
+		logClient := client.NewLogAnalyticsClient(apiClient)
+		workspaces, err := logClient.List()
+		if err != nil {
+			fmt.Printf("Failed to list Log Analytics workspaces: %v\n", err)
+			os.Exit(1)
+		}
+		for _, ws := range workspaces {
+			fmt.Printf("- %s (ID: %s, Group: %s, Location: %s)\n", ws.Name, ws.ID, ws.ResourceGroup, ws.Location)
+		}
+	},
+}
+
+var azureDeleteLogAnalyticsCmd = &cobra.Command{
+	Use:   "delete log-analytics",
+	Short: "Delete an Azure Log Analytics workspace",
+	Run: func(cmd *cobra.Command, args []string) {
+		id, _ := cmd.Flags().GetString("id")
+		apiClient := client.NewAPIClient(proxyServer)
+		logClient := client.NewLogAnalyticsClient(apiClient)
+		err := logClient.Delete(id)
+		if err != nil {
+			fmt.Printf("Failed to delete Log Analytics workspace: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Deleted Log Analytics workspace: %s\n", id)
+	},
+}
+
+// --- Application Insights Management Commands ---
+var azureCreateAppInsightsCmd = &cobra.Command{
+	Use:   "create appinsights",
+	Short: "Create an Azure Application Insights resource",
+	Run: func(cmd *cobra.Command, args []string) {
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		name, _ := cmd.Flags().GetString("name")
+		location, _ := cmd.Flags().GetString("location")
+		appType, _ := cmd.Flags().GetString("app-type")
+		retention, _ := cmd.Flags().GetInt("retention-days")
+		apiClient := client.NewAPIClient(proxyServer)
+		appClient := client.NewAppInsightsClient(apiClient)
+		app := &models.AppInsightsResource{
+			Name:          name,
+			ResourceGroup: resourceGroup,
+			Location:      location,
+			AppType:       appType,
+			RetentionDays: retention,
+		}
+		result, err := appClient.Create(app)
+		if err != nil {
+			fmt.Printf("Failed to create App Insights resource: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Created App Insights resource: %s (ID: %s)\n", result.Name, result.ID)
+	},
+}
+
+var azureListAppInsightsCmd = &cobra.Command{
+	Use:   "list appinsights",
+	Short: "List Azure Application Insights resources",
+	Run: func(cmd *cobra.Command, args []string) {
+		apiClient := client.NewAPIClient(proxyServer)
+		appClient := client.NewAppInsightsClient(apiClient)
+		apps, err := appClient.List()
+		if err != nil {
+			fmt.Printf("Failed to list App Insights resources: %v\n", err)
+			os.Exit(1)
+		}
+		for _, app := range apps {
+			fmt.Printf("- %s (ID: %s, Group: %s, Location: %s)\n", app.Name, app.ID, app.ResourceGroup, app.Location)
+		}
+	},
+}
+
+var azureDeleteAppInsightsCmd = &cobra.Command{
+	Use:   "delete appinsights",
+	Short: "Delete an Azure Application Insights resource",
+	Run: func(cmd *cobra.Command, args []string) {
+		id, _ := cmd.Flags().GetString("id")
+		apiClient := client.NewAPIClient(proxyServer)
+		appClient := client.NewAppInsightsClient(apiClient)
+		err := appClient.Delete(id)
+		if err != nil {
+			fmt.Printf("Failed to delete App Insights resource: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Deleted App Insights resource: %s\n", id)
+	},
+}
+
 func init() {
 	azureGetMonitorCmd.Flags().String("resource-group", "", "Azure resource group name")
 	azureGetMonitorCmd.Flags().String("name", "", "Azure Monitor resource name")
@@ -104,6 +228,32 @@ func init() {
 	azureGetLogAnalyticsCmd.MarkFlagRequired("resource-group")
 	azureGetLogAnalyticsCmd.MarkFlagRequired("name")
 
+	azureCreateLogAnalyticsCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureCreateLogAnalyticsCmd.Flags().String("name", "", "Log Analytics workspace name")
+	azureCreateLogAnalyticsCmd.Flags().String("location", "", "Azure location")
+	azureCreateLogAnalyticsCmd.Flags().String("sku", "PerGB2018", "SKU (default: PerGB2018)")
+	azureCreateLogAnalyticsCmd.Flags().Int("retention-days", 30, "Retention days (default: 30)")
+	azureCreateLogAnalyticsCmd.MarkFlagRequired("resource-group")
+	azureCreateLogAnalyticsCmd.MarkFlagRequired("name")
+	azureCreateLogAnalyticsCmd.MarkFlagRequired("location")
+
+	azureDeleteLogAnalyticsCmd.Flags().String("id", "", "Log Analytics workspace ID")
+	azureDeleteLogAnalyticsCmd.MarkFlagRequired("id")
+
+	azureCreateAppInsightsCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureCreateAppInsightsCmd.Flags().String("name", "", "App Insights resource name")
+	azureCreateAppInsightsCmd.Flags().String("location", "", "Azure location")
+	azureCreateAppInsightsCmd.Flags().String("app-type", "web", "App type (default: web)")
+	azureCreateAppInsightsCmd.Flags().Int("retention-days", 90, "Retention days (default: 90)")
+	azureCreateAppInsightsCmd.MarkFlagRequired("resource-group")
+	azureCreateAppInsightsCmd.MarkFlagRequired("name")
+	azureCreateAppInsightsCmd.MarkFlagRequired("location")
+
+	azureDeleteAppInsightsCmd.Flags().String("id", "", "App Insights resource ID")
+	azureDeleteAppInsightsCmd.MarkFlagRequired("id")
+
 	azureCmd.AddCommand(azureGetMonitorCmd)
 	azureCmd.AddCommand(azureGetLogAnalyticsCmd)
+	azureCmd.AddCommand(azureCreateLogAnalyticsCmd, azureListLogAnalyticsCmd, azureDeleteLogAnalyticsCmd)
+	azureCmd.AddCommand(azureCreateAppInsightsCmd, azureListAppInsightsCmd, azureDeleteAppInsightsCmd)
 }
