@@ -107,6 +107,9 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 	// Generic object storage proxy endpoint for all providers
 	v1.POST("/proxy/:provider/objectstorage", handlers.ProxyObjectStorage)
 
+	// CloudFormation simulation endpoint
+	v1.GET("/cloudformation/stack", handlers.GetCloudFormationStack)
+
 	// Documentation endpoint
 	router.GET("/docs", func(c *gin.Context) {
 		c.JSON(200, gin.H{

@@ -133,15 +133,11 @@ type AzureKubernetes struct {
 	UpdatedAt   time.Time              `json:"updated_at"`
 }
 
-type AzureBudget struct {
-	ID            string                 `json:"id"`
-	Name          string                 `json:"name"`
-	Amount        float64                `json:"amount"`
-	Config        map[string]interface{} `json:"config"`
-	ResourceGroup string                 `json:"resource_group"`
-	CreatedAt     time.Time              `json:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at"`
-}
+// LogAnalyticsWorkspace, AppInsightsResource, and AzureBudget are defined in azure.go
+// Remove their duplicate definitions here and use the types from azure.go
+// import (
+//     . "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+// )
 
 type LoadTestMetrics struct {
 	TotalRequests     int64         `json:"total_requests"`
@@ -203,37 +199,3 @@ type ObjectStorageRule struct {
 	Status string `json:"status"`
 	// Add more fields as needed for expiration, transitions, etc.
 }
-
-// LogAnalyticsWorkspace represents an Azure Log Analytics Workspace
-// Used for simulation, testing, and API endpoints
-// See: https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview
-
-type LogAnalyticsWorkspace struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	ResourceGroup   string    `json:"resource_group"`
-	Location        string    `json:"location"`
-	RetentionInDays int       `json:"retention_in_days"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-}
-
-// AppInsightsResource represents an Azure Application Insights resource
-// Used for simulation, testing, and API endpoints
-// See: https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview
-
-type AppInsightsResource struct {
-	ID                 string    `json:"id"`
-	Name               string    `json:"name"`
-	ResourceGroup      string    `json:"resource_group"`
-	Location           string    `json:"location"`
-	InstrumentationKey string    `json:"instrumentation_key"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
-}
-
-// S3Bucket and BlobStorage are unified as ObjectStorageBucket in sharedmodels.
-// Update all usages in handlers and mocks to use ObjectStorageBucket.
-// This includes updating the type definitions, request/response models,
-// and any related logic to ensure consistency and correctness.
-// Additionally, remove any deprecated or unused types related to S3 or BlobStorage.

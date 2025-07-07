@@ -279,16 +279,18 @@ func (c *Werfty) CreateHetznerCluster(name, location string, config map[string]i
 			},
 		},
 	}
-	
 	// Merge additional config
 	if config != nil {
 		if hetznerConfig, ok := cluster.Config["hetzner_config"].(map[string]interface{}); ok {
 			for k, v := range config {
 				hetznerConfig[k] = v
 			}
+			// Ensure kubernetes_version is set (default to 1.28.0 if missing or empty)
+			if _, ok := hetznerConfig["kubernetes_version"]; !ok || hetznerConfig["kubernetes_version"] == "" {
+				hetznerConfig["kubernetes_version"] = "1.28.0"
+			}
 		}
 	}
-	
 	return c.CreateMultiCloudCluster(cluster)
 }
 

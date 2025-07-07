@@ -43,6 +43,7 @@
 - [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
 - [ ] Expand documentation and developer onboarding materials
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
+- [ ] Fix and re-enable failing provider simulation API tests in `server/api/provider_simulation_test.go` (currently failing with 400/Invalid request body and nil interface conversion). Ignore for now, revisit after break.
 
 ## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
@@ -60,3 +61,23 @@
 **Note:**
 - All new features and refactors should use the unified model layer in `shared/`.
 - Keep Terraform provider code and backend logic strictly separated.
+- Ensure all documentation, scripts, and instructions clearly distinguish between:
+    - `multitool/` (the source directory)
+    - `mt` (the CLI binary built from multitool)
+- Always run the CLI as `./mt ...` from within the `multitool` directory, not as `./multitool/mt` or similar.
+- Update all README, help, and onboarding docs to avoid confusion between the directory and the binary.
+- Always check and set the correct working directory before running tests or commands. Use an environment variable (e.g., PUNCHBAG_BASE_DIR) as the base directory for all scripts and automation.
+
+- Action plan for object storage provider integration:
+  1. Ensure each provider uses the best/official SDK or API:
+     - AWS: AWS SDK for S3
+     - Azure: Azure SDK for Go (Blob Storage)
+     - GCP: Google Cloud Storage SDK for Go
+     - Hetzner: S3-compatible API (AWS SDK)
+     - StackIT/IONOS: S3-compatible or official SDK
+  2. Integrate and test each provider in the CLI, starting with Hetzner S3.
+  3. Add full debug/error output for all create/list/delete operations.
+  4. Only fall back to mock implementations if no credentials/config are found.
+  5. Document and validate all endpoints, credentials, and region handling.
+
+- Start with Hetzner S3: ensure real bucket creation, listing, and error handling work end-to-end.

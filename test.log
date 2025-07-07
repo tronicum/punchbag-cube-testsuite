@@ -1,0 +1,252 @@
+FAIL	./punchbag/... [setup failed]
+FAIL	./cube-client/... [setup failed]
+FAIL	./cube-server/... [setup failed]
+FAIL	./store/... [setup failed]
+FAIL	./werfty/... [setup failed]
+FAIL	./werfty-generator/... [setup failed]
+FAIL	./sim/... [setup failed]
+?   	github.com/tronicum/punchbag-cube-testsuite/multitool	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/multitool/cmd	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client	[no test files]
+=== RUN   TestStackITObjectStorage
+--- PASS: TestStackITObjectStorage (0.00s)
+=== RUN   TestHetznerObjectStorage
+--- PASS: TestHetznerObjectStorage (0.00s)
+=== RUN   TestIonosObjectStorage
+--- PASS: TestIonosObjectStorage (0.00s)
+PASS
+ok  	github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock	0.184s
+?   	github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/models	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/shared/models	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/shared/simulation	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/server	[no test files]
+=== RUN   TestProxyObjectStorage
+--- PASS: TestProxyObjectStorage (0.00s)
+=== RUN   TestValidateProvider
+[GIN] 2025/07/07 - 21:23:08 | 400 |       3.459µs |                 | GET      "/validate/azure"
+    provider_simulation_test.go:35: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:35
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateProvider
+    provider_simulation_test.go:36: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:36
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "azure"
+        	Test:       	TestValidateProvider
+[GIN] 2025/07/07 - 21:23:08 | 400 |       1.375µs |                 | GET      "/validate/unknown"
+    provider_simulation_test.go:44: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:44
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "unsupported provider"
+        	Test:       	TestValidateProvider
+--- FAIL: TestValidateProvider (0.00s)
+=== RUN   TestSimulateProviderOperation
+[GIN] 2025/07/07 - 21:23:08 | 400 |       1.375µs |                 | POST     "/providers/azure/operations/create-cluster"
+    provider_simulation_test.go:61: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:61
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestSimulateProviderOperation
+    provider_simulation_test.go:62: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:62
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "create-cluster"
+        	Test:       	TestSimulateProviderOperation
+[GIN] 2025/07/07 - 21:23:08 | 400 |       1.083µs |                 | POST     "/providers/unknown/operations/invalid"
+    provider_simulation_test.go:69: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:69
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestSimulateProviderOperation
+    provider_simulation_test.go:70: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:70
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "unknown"
+        	Test:       	TestSimulateProviderOperation
+--- FAIL: TestSimulateProviderOperation (0.00s)
+=== RUN   TestValidateAllProviders
+=== RUN   TestValidateAllProviders/azure
+[GIN] 2025/07/07 - 21:23:08 | 400 |       1.167µs |                 | GET      "/validate/azure"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/azure
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "azure"
+        	Test:       	TestValidateAllProviders/azure
+=== RUN   TestValidateAllProviders/hetzner-hcloud
+[GIN] 2025/07/07 - 21:23:08 | 400 |       1.125µs |                 | GET      "/validate/hetzner-hcloud"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/hetzner-hcloud
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "hetzner-hcloud"
+        	Test:       	TestValidateAllProviders/hetzner-hcloud
+=== RUN   TestValidateAllProviders/united-ionos
+[GIN] 2025/07/07 - 21:23:08 | 400 |       3.042µs |                 | GET      "/validate/united-ionos"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/united-ionos
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "united-ionos"
+        	Test:       	TestValidateAllProviders/united-ionos
+=== RUN   TestValidateAllProviders/schwarz-stackit
+[GIN] 2025/07/07 - 21:23:08 | 400 |      47.583µs |                 | GET      "/validate/schwarz-stackit"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/schwarz-stackit
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "schwarz-stackit"
+        	Test:       	TestValidateAllProviders/schwarz-stackit
+=== RUN   TestValidateAllProviders/aws
+[GIN] 2025/07/07 - 21:23:08 | 400 |         112µs |                 | GET      "/validate/aws"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/aws
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "aws"
+        	Test:       	TestValidateAllProviders/aws
+=== RUN   TestValidateAllProviders/gcp
+[GIN] 2025/07/07 - 21:23:08 | 400 |       2.042µs |                 | GET      "/validate/gcp"
+    provider_simulation_test.go:88: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:88
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestValidateAllProviders/gcp
+    provider_simulation_test.go:89: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:89
+        	Error:      	"{\"error\":\"Invalid request body\"}" does not contain "gcp"
+        	Test:       	TestValidateAllProviders/gcp
+--- FAIL: TestValidateAllProviders (0.00s)
+    --- FAIL: TestValidateAllProviders/azure (0.00s)
+    --- FAIL: TestValidateAllProviders/hetzner-hcloud (0.00s)
+    --- FAIL: TestValidateAllProviders/united-ionos (0.00s)
+    --- FAIL: TestValidateAllProviders/schwarz-stackit (0.00s)
+    --- FAIL: TestValidateAllProviders/aws (0.00s)
+    --- FAIL: TestValidateAllProviders/gcp (0.00s)
+=== RUN   TestGetProviderInfo
+=== RUN   TestGetProviderInfo/azure
+[GIN] 2025/07/07 - 21:23:08 | 200 |      10.209µs |                 | GET      "/providers/azure/info"
+=== RUN   TestGetProviderInfo/hetzner-hcloud
+[GIN] 2025/07/07 - 21:23:08 | 200 |      19.542µs |                 | GET      "/providers/hetzner-hcloud/info"
+=== RUN   TestGetProviderInfo/united-ionos
+[GIN] 2025/07/07 - 21:23:08 | 200 |       6.125µs |                 | GET      "/providers/united-ionos/info"
+=== RUN   TestGetProviderInfo/schwarz-stackit
+[GIN] 2025/07/07 - 21:23:08 | 200 |           8µs |                 | GET      "/providers/schwarz-stackit/info"
+=== RUN   TestGetProviderInfo/aws
+[GIN] 2025/07/07 - 21:23:08 | 200 |       5.416µs |                 | GET      "/providers/aws/info"
+=== RUN   TestGetProviderInfo/gcp
+[GIN] 2025/07/07 - 21:23:08 | 200 |       5.375µs |                 | GET      "/providers/gcp/info"
+[GIN] 2025/07/07 - 21:23:08 | 404 |       1.375µs |                 | GET      "/providers/invalid/info"
+--- PASS: TestGetProviderInfo (0.00s)
+    --- PASS: TestGetProviderInfo/azure (0.00s)
+    --- PASS: TestGetProviderInfo/hetzner-hcloud (0.00s)
+    --- PASS: TestGetProviderInfo/united-ionos (0.00s)
+    --- PASS: TestGetProviderInfo/schwarz-stackit (0.00s)
+    --- PASS: TestGetProviderInfo/aws (0.00s)
+    --- PASS: TestGetProviderInfo/gcp (0.00s)
+=== RUN   TestSimulateProviderOperationWithBody
+2025-07-07T21:23:08.868+0200	INFO	api/provider_simulation.go:222	Simulating provider operation	{"provider": "", "operation": ""}
+[GIN] 2025/07/07 - 21:23:12 | 400 |  3.274254125s |                 | POST     "/providers/azure/operations/create-cluster"
+    provider_simulation_test.go:148: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:148
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestSimulateProviderOperationWithBody
+    provider_simulation_test.go:153: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:153
+        	Error:      	Not equal: 
+        	            	expected: "azure"
+        	            	actual  : ""
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-azure
+        	            	+
+        	Test:       	TestSimulateProviderOperationWithBody
+    provider_simulation_test.go:154: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:154
+        	Error:      	Not equal: 
+        	            	expected: "create-cluster"
+        	            	actual  : ""
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-create-cluster
+        	            	+
+        	Test:       	TestSimulateProviderOperationWithBody
+    provider_simulation_test.go:155: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:155
+        	Error:      	Not equal: 
+        	            	expected: string("success")
+        	            	actual  : <nil>(<nil>)
+        	Test:       	TestSimulateProviderOperationWithBody
+    provider_simulation_test.go:156: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:156
+        	Error:      	map[string]interface {}{"duration":3.274092417e+09, "error":"unsupported operation: ", "operation":"", "provider":"", "success":false, "timestamp":"2025-07-07T21:23:08+02:00"} does not contain "operation_id"
+        	Test:       	TestSimulateProviderOperationWithBody
+    provider_simulation_test.go:157: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:157
+        	Error:      	map[string]interface {}{"duration":3.274092417e+09, "error":"unsupported operation: ", "operation":"", "provider":"", "success":false, "timestamp":"2025-07-07T21:23:08+02:00"} does not contain "azure_details"
+        	Test:       	TestSimulateProviderOperationWithBody
+--- FAIL: TestSimulateProviderOperationWithBody (3.27s)
+=== RUN   TestSimulateHetznerOperation
+[GIN] 2025/07/07 - 21:23:12 | 400 |       4.041µs |                 | POST     "/providers/hetzner-hcloud/operations/create-cluster"
+    provider_simulation_test.go:171: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:171
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestSimulateHetznerOperation
+    provider_simulation_test.go:176: 
+        	Error Trace:	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:176
+        	Error:      	map[string]interface {}{"error":"Invalid request body"} does not contain "hetzner_details"
+        	Test:       	TestSimulateHetznerOperation
+--- FAIL: TestSimulateHetznerOperation (0.00s)
+panic: interface conversion: interface {} is nil, not map[string]interface {} [recovered]
+	panic: interface conversion: interface {} is nil, not map[string]interface {}
+
+goroutine 31 [running]:
+testing.tRunner.func1.2({0x103216220, 0x1400044c840})
+	/opt/homebrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1734 +0x1ac
+testing.tRunner.func1()
+	/opt/homebrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1737 +0x334
+panic({0x103216220?, 0x1400044c840?})
+	/opt/homebrew/Cellar/go/1.24.4/libexec/src/runtime/panic.go:792 +0x124
+github.com/tronicum/punchbag-cube-testsuite/server/api.TestSimulateHetznerOperation(0x140000836c0)
+	/Users/ssels/workspace:vs-code:base/punchbag-cube-testsuite/server/api/provider_simulation_test.go:177 +0x394
+testing.tRunner(0x140000836c0, 0x103288500)
+	/opt/homebrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1792 +0xe4
+created by testing.(*T).Run in goroutine 1
+	/opt/homebrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1851 +0x374
+FAIL	github.com/tronicum/punchbag-cube-testsuite/server/api	3.495s
+?   	github.com/tronicum/punchbag-cube-testsuite/server/config	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/store	[no test files]
+?   	github.com/tronicum/punchbag-cube-testsuite/werfty-transformator	[no test files]
+FAIL

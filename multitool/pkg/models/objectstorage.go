@@ -1,15 +1,9 @@
 package models
 
-// Bucket is a generic abstraction for S3-like storage buckets across providers.
-type Bucket struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Region       string `json:"region"`
-	Provider     string `json:"provider"`
-	CreatedAt    string `json:"created_at"`
-	StorageClass string `json:"storage_class,omitempty"`
-	Tier         string `json:"tier,omitempty"`
-}
+import sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+
+// Bucket is now an alias for the canonical ObjectStorageBucket in shared models.
+type Bucket = sharedmodels.ObjectStorageBucket
 
 // ObjectStorage defines generic CRUD operations for object storage buckets.
 type ObjectStorage interface {

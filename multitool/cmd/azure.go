@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/models"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // azureCmd is the parent for Azure-specific commands
@@ -101,16 +101,14 @@ var azureCreateLogAnalyticsCmd = &cobra.Command{
 		resourceGroup, _ := cmd.Flags().GetString("resource-group")
 		name, _ := cmd.Flags().GetString("name")
 		location, _ := cmd.Flags().GetString("location")
-		sku, _ := cmd.Flags().GetString("sku")
 		retention, _ := cmd.Flags().GetInt("retention-days")
 		apiClient := client.NewAPIClient(proxyServer)
 		logClient := client.NewLogAnalyticsClient(apiClient)
-		workspace := &models.LogAnalyticsWorkspace{
+		workspace := &sharedmodels.LogAnalyticsWorkspace{
 			Name:          name,
 			ResourceGroup: resourceGroup,
 			Location:      location,
-			Sku:           sku,
-			RetentionDays: retention,
+			RetentionDays: retention, // Fixed field name
 		}
 		result, err := logClient.Create(workspace)
 		if err != nil {
@@ -166,12 +164,13 @@ var azureCreateAppInsightsCmd = &cobra.Command{
 		retention, _ := cmd.Flags().GetInt("retention-days")
 		apiClient := client.NewAPIClient(proxyServer)
 		appClient := client.NewAppInsightsClient(apiClient)
-		app := &models.AppInsightsResource{
+		app := &sharedmodels.AppInsightsResource{
 			Name:          name,
 			ResourceGroup: resourceGroup,
 			Location:      location,
-			AppType:       appType,
-			RetentionDays: retention,
+			AppType:       appType, // Use appType field
+			RetentionDays: retention, // Use retention field
+			// InstrumentationKey and other fields can be set if needed
 		}
 		result, err := appClient.Create(app)
 		if err != nil {
@@ -231,7 +230,6 @@ func init() {
 	azureCreateLogAnalyticsCmd.Flags().String("resource-group", "", "Azure resource group name")
 	azureCreateLogAnalyticsCmd.Flags().String("name", "", "Log Analytics workspace name")
 	azureCreateLogAnalyticsCmd.Flags().String("location", "", "Azure location")
-	azureCreateLogAnalyticsCmd.Flags().String("sku", "PerGB2018", "SKU (default: PerGB2018)")
 	azureCreateLogAnalyticsCmd.Flags().Int("retention-days", 30, "Retention days (default: 30)")
 	azureCreateLogAnalyticsCmd.MarkFlagRequired("resource-group")
 	azureCreateLogAnalyticsCmd.MarkFlagRequired("name")
