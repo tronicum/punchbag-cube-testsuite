@@ -50,6 +50,7 @@
 - [ ] Add support for StackIT Object Storage in generator
 - [ ] Further automate the Terraform generation workflow (e.g., config-driven, batch generation, etc.)
 - [ ] Add more provider pairs and conversion logic to `werfty-transformator`
+- [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only, and add a notice with the commit hash and author info.
 
 ## Notes
 - There should be only one `multitool` directory in the workspace. Remove or merge any duplicates to avoid confusion and Go module issues.
