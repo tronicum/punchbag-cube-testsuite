@@ -19,17 +19,14 @@ jobs:
         run: |
           go work sync || true
       - name: Build multitool CLI
-        run: |
-          cd multitool
-          go build -o mt
+        run: go build -o mt
+        working-directory: multitool
       - name: Test multitool module
-        run: |
-          cd multitool
-          go test ./...
+        run: go test ./...
+        working-directory: multitool
       - name: Test shared module
-        run: |
-          cd shared
-          go test ./...
+        run: go test ./...
+        working-directory: shared
       - name: Check for uncommitted changes
         run: |
           git status --porcelain
