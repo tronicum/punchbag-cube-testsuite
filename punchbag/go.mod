@@ -1,4 +1,4 @@
-module github.com/tronicum/punchbag-cube-testsuite/generator
+module github.com/tronicum/punchbag-cube-testsuite/punchbag
 
 go 1.23.0
 

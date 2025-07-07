@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"flag"
-	"gopkg.in/yaml.v3"
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"gopkg.in/yaml.v3"
 )
 
 // LoadConfig loads the YAML configuration file
@@ -355,14 +356,14 @@ func execCommand(name string, arg ...string) *exec.Cmd {
 //
 // 2. Simulate AKS cluster import (no real cloud call):
 //
-//    go run generator/main.go --simulate-import --name my-aks --resource-group my-rg --location eastus --node-count 3
+//    go run punchbag/main.go --simulate-import --name my-aks --resource-group my-rg --location eastus --node-count 3
 //
 //    # This will call the cube-server simulation endpoint and print a simulated AKS cluster result.
 //    # Use this to generate a Terraform template.
 //
 // 3. To generate a real Terraform template for deployment:
 //
-//    go run generator/main.go --generate-terraform --name my-aks --resource-group my-rg --location eastus --node-count 3
+//    go run punchbag/main.go --generate-terraform --name my-aks --resource-group my-rg --location eastus --node-count 3
 //
 //    # Then apply with Terraform:
 //    terraform init
@@ -405,10 +406,10 @@ func execCommand(name string, arg ...string) *exec.Cmd {
 // # Example CLI Usage
 //
 // Simulate AKS:
-//   go run generator/main.go --simulate-import --name my-aks --resource-group my-rg --location eastus --node-count 3
+//   go run punchbag/main.go --simulate-import --name my-aks --resource-group my-rg --location eastus --node-count 3
 //
 // Generate Terraform:
-//   go run generator/main.go --generate-terraform --name my-aks --resource-group my-rg --location eastus --node-count 3
+//   go run punchbag/main.go --generate-terraform --name my-aks --resource-group my-rg --location eastus --node-count 3
 //
 // Import existing AKS:
 //   terraform import azurerm_kubernetes_cluster.my_aks /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/my-rg/providers/Microsoft.ContainerService/managedClusters/my-aks

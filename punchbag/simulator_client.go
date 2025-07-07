@@ -1,4 +1,4 @@
-package generator
+package punchbag
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 )
 
-// SimulatorClient allows generator to call the cube-server simulation endpoints
+// SimulatorClient allows punchbag to call the cube-server simulation endpoints
 //
 type SimulatorClient struct {
 	BaseURL string
@@ -66,15 +66,15 @@ func (c *SimulatorClient) SimulateAzureBudget(params map[string]interface{}) (*s
 }
 
 // NOTE: All files in this directory should use the same package name for Go compatibility.
-// For generator integration, use 'package generator' in all files (main.go, simulator_client.go, etc.).
+// For punchbag integration, use 'package punchbag' in all files (main.go, simulator_client.go, etc.).
 //
 // Example usage in main.go:
 //
 // import (
-//   "punchbag-cube-testsuite/generator"
+//   "punchbag-cube-testsuite/punchbag"
 // )
 //
-// client := generator.SimulatorClient{BaseURL: "http://localhost:8080"}
+// client := punchbag.SimulatorClient{BaseURL: "http://localhost:8080"}
 // result, err := client.SimulateAKSCluster(params)
 // if err == nil {
 //     // Use result to generate Terraform template
