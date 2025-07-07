@@ -1,0 +1,36 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main, master, rename-punchbag ]
+  pull_request:
+    branches: [ main, master, rename-punchbag ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Set up Go workspace
+        run: |
+          go work sync || true
+      - name: Build multitool CLI
+        run: |
+          cd multitool
+          go build -o mt
+      - name: Test multitool module
+        run: |
+          cd multitool
+          go test ./...
+      - name: Test shared module
+        run: |
+          cd shared
+          go test ./...
+      - name: Check for uncommitted changes
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)" || (echo 'Uncommitted changes after build/test!' && exit 1)
