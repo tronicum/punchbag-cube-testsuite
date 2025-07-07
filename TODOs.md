@@ -6,11 +6,43 @@
 - [ ] Expand documentation and developer onboarding materials
 - [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
+- [ ] Add StackIT, Hetzner, and IONOS object storage support (abstraction + mock logic) [medium priority]
+- [ ] Enhance terraform-provider via punchbag generator (high priority):
+    - Act as a multi-layer-cloud provider to run simulations against cube-server
+    - Expose an interface for werfty-transformator to migrate Terraform code between cloud providers
+    - Step-by-step suggestions:
+        1. Refactor punchbag generator to expose a Go API and CLI for provider simulation and migration.
+        2. Implement a Terraform provider plugin that proxies resource CRUD to punchbag/cube-server for simulation.
+        3. Add a migration interface for werfty-transformator to convert Terraform HCL between providers using punchbag logic.
+        4. Document provider mapping, simulation, and migration workflows.
+        5. Add integration tests for simulation and migration via the Terraform provider.
+- [ ] Add CLI support to multitool for managing object storage across all clouds (high priority):
+    - Support direct management (create, list, delete, etc.) for AWS, Azure, GCP, StackIT, Hetzner, IONOS
+    - Support management via simulation/proxy through sim-server or cube-server
+    - Step-by-step suggestions:
+        1. Extend multitool CLI to add unified object storage commands (create, list, delete, etc.)
+        2. Implement provider selection and config (direct vs. proxy/simulation)
+        3. Integrate with sim-server/cube-server APIs for simulation mode
+        4. Add tests and documentation for all supported providers and modes
+- [ ] Modularize monorepo for standalone multitool/mt releases and shared Go modules (medium priority):
+    - Add go.mod to multitool/ and shared/ directories
+    - Use go.work at repo root for local development
+    - Ensure all imports use canonical module paths
+    - Document and automate release process for mt binary and shared Go modules
+    - Document the new modular/release workflow for multitool/mt and shared modules (medium priority)
+    - Automate the release process for mt and shared modules (medium priority)
+    - Set up GitHub Actions or CI for building and releasing mt and shared modules (medium priority)
+    - Test the CLI and shared modules in both local development and release scenarios (medium priority)
+    - Add CLI support to multitool/mt for Azure logging and Application Insights management (medium priority):
+        - Implement logging and App Insights resource management for Azure first
+        - Plan enhancements for other providers (AWS, GCP, etc.) in future steps
 
 ## Next Steps
-- [ ] Move all Terraform provider (HCL/DSL) generation logic to `werfty-generator`
-- [ ] Keep all backend/proxy/simulation logic in `server`
-- [ ] Use only unified types from `shared/` everywhere
+- [ ] Finalize example coverage and documentation for all scenarios
+- [ ] Set up automated integration testing (CI, example validation)
+- [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
+- [ ] Expand documentation and developer onboarding materials
+- [ ] Prepare release process and distribution (versioning, changelog, binaries)
 
 ## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
@@ -18,6 +50,9 @@
 - [ ] Add support for StackIT Object Storage in generator
 - [ ] Further automate the Terraform generation workflow (e.g., config-driven, batch generation, etc.)
 - [ ] Add more provider pairs and conversion logic to `werfty-transformator`
+
+## Notes
+- There should be only one `multitool` directory in the workspace. Remove or merge any duplicates to avoid confusion and Go module issues.
 
 ---
 

@@ -15,9 +15,9 @@ import (
 
 // Rename CLI tool to multitool
 var rootCmd = &cobra.Command{
-	Use:   "multitool",
+	Use:   "mt",
 	Short: "A CLI tool for cloud management and system operations",
-	Long:  "Multitool is a CLI tool designed for managing cloud resources, installing packages, and handling Docker registries.",
+	Long:  "mt is a CLI tool designed for managing cloud resources, installing packages, and handling Docker registries.",
 }
 
 // Execute the root command

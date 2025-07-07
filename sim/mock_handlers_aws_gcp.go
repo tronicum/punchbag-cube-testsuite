@@ -3,7 +3,7 @@ package sim
 import (
 	"encoding/json"
 	"net/http"
-	mock "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock"
+	mock "punchbag-cube-testsuite/multitool/pkg/mock"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 

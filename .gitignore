@@ -9,3 +9,6 @@ examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
 .terraform/
 *.tfstate*
 terraform.tfvars
+server/.DS_Store
+client/.DS_Store
+werfty/.DS_Store

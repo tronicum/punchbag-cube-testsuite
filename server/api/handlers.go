@@ -328,6 +328,14 @@ func (h *Handlers) ProxyObjectStorage(c *gin.Context) {
 		bucket.CreatedAt = time.Now()
 		bucket.UpdatedAt = time.Now()
 		// Provider-specific logic can be added here if needed
+		switch bucket.Provider {
+		case "stackit":
+			bucket.ProviderConfig["note"] = "StackIT object storage bucket created (mock)"
+		case "hetzner":
+			bucket.ProviderConfig["note"] = "Hetzner object storage bucket created (mock)"
+		case "ionos":
+			bucket.ProviderConfig["note"] = "IONOS object storage bucket created (mock)"
+		}
 		c.JSON(http.StatusCreated, bucket)
 		return
 	}

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"punchbag-cube-testsuite/multitool/pkg/client"
-	"punchbag-cube-testsuite/multitool/pkg/output"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
@@ -61,7 +61,7 @@ Examples:
 		config := make(map[string]interface{})
 
 		switch provider {
-		case models.Azure:
+		case sharedmodels.Azure:
 			if resourceGroup == "" {
 				output.FormatError(fmt.Errorf("resource-group is required for Azure"))
 				os.Exit(1)
@@ -72,13 +72,13 @@ Examples:
 			}
 			providerConfig["resource_group"] = resourceGroup
 			providerConfig["location"] = location
-		case models.AWS:
+		case sharedmodels.AWS:
 			if region == "" {
 				output.FormatError(fmt.Errorf("region is required for AWS"))
 				os.Exit(1)
 			}
 			providerConfig["region"] = region
-		case models.GCP:
+		case sharedmodels.GCP:
 			if projectID == "" {
 				output.FormatError(fmt.Errorf("project-id is required for GCP"))
 				os.Exit(1)
@@ -103,7 +103,7 @@ Examples:
 			}
 		}
 
-		req := &models.ClusterCreateRequest{
+		req := &sharedmodels.ClusterCreateRequest{
 			Name:           clusterName,
 			Provider:       provider,
 			Config:         config,
@@ -146,7 +146,7 @@ Examples:
 		apiClient := client.NewAPIClient(serverURL)
 		clusterClient := client.NewClusterClient(apiClient)
 
-		var clusters []*models.Cluster
+		var clusters []*sharedmodels.Cluster
 		var err error
 
 		if len(args) > 0 {
@@ -282,7 +282,7 @@ Examples:
 			testConfig = fileConfig
 		}
 
-		req := &models.TestRequest{
+		req := &sharedmodels.TestRequest{
 			ClusterID: clusterID,
 			TestType:  testType,
 			Config:    testConfig,

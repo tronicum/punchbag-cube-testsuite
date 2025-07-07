@@ -1,9 +1,11 @@
 package main
 
 import (
-	"punchbag-cube-testsuite/multitool/cmd"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/cmd"
 )
 
 func main() {
 	cmd.Execute()
 }
+
+// The binary will be built as 'mt' (see README and build instructions)
