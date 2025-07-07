@@ -43,7 +43,8 @@ func (h *Handlers) CreateCluster(c *gin.Context) {
 
 	// Validate provider
 	if cluster.Provider == "" {
-		cluster.Provider = sharedmodels.Provider("azure") // default to Azure for backward compatibility
+		// Fix: use sharedmodels.CloudProvider instead of sharedmodels.Provider
+		cluster.Provider = sharedmodels.CloudProvider("azure") // default to Azure for backward compatibility
 	}
 
 	// Validate required fields based on provider
@@ -94,8 +95,8 @@ func (h *Handlers) ListClusters(c *gin.Context) {
 
 	if provider != "" {
 		// Filter by provider
-		cloudProvider := sharedmodels.CloudProvider(provider)
-		clusters, err = h.store.ListClustersByProvider(string(cloudProvider))
+		clustProv := sharedmodels.CloudProvider(provider)
+		clusters, err = h.store.ListClustersByProvider(clustProv)
 	} else {
 		// List all clusters
 		clusters, err = h.store.ListClusters()
@@ -340,6 +341,23 @@ func (h *Handlers) ProxyObjectStorage(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusNotImplemented, gin.H{"message": "Object storage proxy only supports POST for now"})
+}
+
+// GetCloudFormationStack handles GET /api/v1/cloudformation/stack?name=<name>
+func (h *Handlers) GetCloudFormationStack(c *gin.Context) {
+	stackName := c.Query("name")
+	if stackName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "stack name is required"})
+		return
+	}
+	// Simulate: return a minimal template (in real use, fetch from AWS or mock DB)
+	template := `AWSTemplateFormatVersion: '2010-09-09'
+Description: Simulated CloudFormation template
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties: {}`
+	c.Data(http.StatusOK, "application/x-yaml", []byte(template))
 }
 
 // simulateTest simulates a test execution and updates the result

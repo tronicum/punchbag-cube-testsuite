@@ -38,17 +38,16 @@ func init() {
 	rootCmd.AddCommand(packageInstallCmd)
 	rootCmd.AddCommand(dockerRegistryCmd)
 	rootCmd.AddCommand(listPackagesCmd)
-	
-	// Add enhanced cluster and test commands
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.AddCommand(testCmd)
 	rootCmd.AddCommand(configCmd)
-	
-	// Legacy k8s commands (deprecated)
-	k8sCmd.AddCommand(k8sGetCmd)
-	k8sCmd.AddCommand(k8sCreateCmd)
-	k8sCmd.AddCommand(k8sDeleteCmd)
 	rootCmd.AddCommand(k8sCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
+	packageInstallCmd.Flags().Bool("relink", false, "Symlink the mt binary to /usr/local/bin/mt after install")
+	rootCmd.AddCommand(scaffoldCmd)
+	rootCmd.AddCommand(cloudformationCmd)
 }
 
 // Add basic cloud management functionality
@@ -57,54 +56,6 @@ var manageCloudCmd = &cobra.Command{
 	Short: "Manage cloud resources",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Managing cloud resources...")
-	},
-}
-
-// Add Kubernetes cluster management commands
-var k8sCmd = &cobra.Command{
-	Use:   "k8s",
-	Short: "Manage Kubernetes clusters",
-}
-
-var k8sGetCmd = &cobra.Command{
-	Use:   "get",
-	Short: "Get Kubernetes cluster information",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			fmt.Println("Please specify the cloud provider: aws or azure")
-			return
-		}
-		provider := args[0]
-		fmt.Printf("Fetching Kubernetes cluster information for provider: %s\n", provider)
-		// Add logic to fetch cluster information
-	},
-}
-
-var k8sCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a Kubernetes cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			fmt.Println("Please specify the cloud provider: aws or azure")
-			return
-		}
-		provider := args[0]
-		fmt.Printf("Creating Kubernetes cluster for provider: %s\n", provider)
-		// Add logic to create cluster
-	},
-}
-
-var k8sDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete a Kubernetes cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			fmt.Println("Please specify the cloud provider: aws or azure")
-			return
-		}
-		provider := args[0]
-		fmt.Printf("Deleting Kubernetes cluster for provider: %s\n", provider)
-		// Add logic to delete cluster
 	},
 }
 
@@ -135,18 +86,38 @@ var packageInstallCmd = &cobra.Command{
 			return
 		}
 		packageName := args[0]
-		os := runtime.GOOS
+		osys := runtime.GOOS
 		data := map[string]string{
 			"Package": packageName,
-			"OS":      os,
+			"OS":      osys,
 			"Command": "Unsupported",
 		}
-		if os == "darwin" {
-			data["Command"] = fmt.Sprintf("brew install %s", packageName)
-		} else if os == "linux" {
-			data["Command"] = fmt.Sprintf("apt install %s or rpm install %s", packageName, packageName)
+		var installCmd string
+		if osys == "darwin" {
+			installCmd = fmt.Sprintf("brew install %s", packageName)
+			data["Command"] = installCmd
+		} else if osys == "linux" {
+			installCmd = fmt.Sprintf("apt install %s or rpm install %s", packageName, packageName)
+			data["Command"] = installCmd
 		}
 		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
+
+		relink, _ := cmd.Flags().GetBool("relink")
+		if relink {
+			mtPath, err := os.Executable()
+			if err != nil {
+				fmt.Println("Could not determine mt binary path:", err)
+				return
+			}
+			symlinkPath := "/usr/local/bin/mt"
+			_ = os.Remove(symlinkPath) // Remove if exists
+			err = os.Symlink(mtPath, symlinkPath)
+			if err != nil {
+				fmt.Printf("Failed to create symlink at %s: %v\n", symlinkPath, err)
+			} else {
+				fmt.Printf("Symlinked mt binary to %s\n", symlinkPath)
+			}
+		}
 	},
 }
 
@@ -280,10 +251,4 @@ func formatOutput(data interface{}, format string) {
 	default:
 		fmt.Println("Unsupported format. Use 'json', 'yaml', or 'table'.")
 	}
-}
-
-func init() {
-	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
 }

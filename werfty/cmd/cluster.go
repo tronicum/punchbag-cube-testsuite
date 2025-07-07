@@ -24,17 +24,17 @@ var clusterListCmd = &cobra.Command{
 	Short: "List all clusters",
 	Run: func(cmd *cobra.Command, args []string) {
 		client := api.NewClient(viper.GetString("server"))
-		
+
 		provider, _ := cmd.Flags().GetString("provider")
 		var clusters []*api.Cluster
 		var err error
-		
+
 		if provider != "" {
 			clusters, err = client.ListClustersByProvider(provider)
 		} else {
 			clusters, err = client.ListClusters()
 		}
-		
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error listing clusters: %v\n", err)
 			os.Exit(1)
@@ -66,7 +66,7 @@ var clusterCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		name, _ := cmd.Flags().GetString("name")
 		provider, _ := cmd.Flags().GetString("provider")
-		
+
 		if name == "" || provider == "" {
 			fmt.Fprintf(os.Stderr, "Error: name and provider are required\n")
 			os.Exit(1)
@@ -75,17 +75,17 @@ var clusterCreateCmd = &cobra.Command{
 		client := api.NewClient(viper.GetString("server"))
 		var created *api.Cluster
 		var err error
-		
+
 		switch provider {
 		case "azure":
 			resourceGroup, _ := cmd.Flags().GetString("resource-group")
 			location, _ := cmd.Flags().GetString("location")
-			
+
 			if resourceGroup == "" || location == "" {
 				fmt.Fprintf(os.Stderr, "Error: resource-group and location are required for Azure clusters\n")
 				os.Exit(1)
 			}
-			
+
 			config := make(map[string]interface{})
 			if kubernetesVersion, _ := cmd.Flags().GetString("kubernetes-version"); kubernetesVersion != "" {
 				config["kubernetes_version"] = kubernetesVersion
@@ -93,18 +93,18 @@ var clusterCreateCmd = &cobra.Command{
 			if nodeCount, _ := cmd.Flags().GetInt("node-count"); nodeCount > 0 {
 				config["node_count"] = nodeCount
 			}
-			
+
 			created, err = client.CreateAzureCluster(name, resourceGroup, location, config)
-			
+
 		case "schwarz-stackit":
 			projectID, _ := cmd.Flags().GetString("project-id")
 			region, _ := cmd.Flags().GetString("region")
-			
+
 			if projectID == "" || region == "" {
 				fmt.Fprintf(os.Stderr, "Error: project-id and region are required for StackIT clusters\n")
 				os.Exit(1)
 			}
-			
+
 			config := make(map[string]interface{})
 			if kubernetesVersion, _ := cmd.Flags().GetString("kubernetes-version"); kubernetesVersion != "" {
 				config["kubernetes_version"] = kubernetesVersion
@@ -112,21 +112,18 @@ var clusterCreateCmd = &cobra.Command{
 			if nodeCount, _ := cmd.Flags().GetInt("node-count"); nodeCount > 0 {
 				config["node_count"] = nodeCount
 			}
-			
+
 			created, err = client.CreateStackITCluster(name, projectID, region, config)
-			
+
 		case "hetzner-hcloud":
 			location, _ := cmd.Flags().GetString("location")
-			
 			if location == "" {
 				fmt.Fprintf(os.Stderr, "Error: location is required for Hetzner Cloud clusters\n")
 				os.Exit(1)
 			}
-			
 			config := make(map[string]interface{})
-			if kubernetesVersion, _ := cmd.Flags().GetString("kubernetes-version"); kubernetesVersion != "" {
-				config["kubernetes_version"] = kubernetesVersion
-			}
+			kubernetesVersion, _ := cmd.Flags().GetString("kubernetes-version")
+			config["kubernetes_version"] = kubernetesVersion
 			if nodeCount, _ := cmd.Flags().GetInt("node-count"); nodeCount > 0 {
 				config["node_count"] = nodeCount
 			}
@@ -136,17 +133,16 @@ var clusterCreateCmd = &cobra.Command{
 			if networkZone, _ := cmd.Flags().GetString("network-zone"); networkZone != "" {
 				config["network_zone"] = networkZone
 			}
-			
 			created, err = client.CreateHetznerCluster(name, location, config)
-			
+
 		case "united-ionos":
 			datacenterID, _ := cmd.Flags().GetString("datacenter-id")
-			
+
 			if datacenterID == "" {
 				fmt.Fprintf(os.Stderr, "Error: datacenter-id is required for IONOS Cloud clusters\n")
 				os.Exit(1)
 			}
-			
+
 			config := make(map[string]interface{})
 			if kubernetesVersion, _ := cmd.Flags().GetString("kubernetes-version"); kubernetesVersion != "" {
 				config["kubernetes_version"] = kubernetesVersion
@@ -160,14 +156,14 @@ var clusterCreateCmd = &cobra.Command{
 			if publicAccess, _ := cmd.Flags().GetBool("public"); publicAccess {
 				config["public"] = publicAccess
 			}
-			
+
 			created, err = client.CreateIONOSCluster(name, datacenterID, config)
-			
+
 		default:
 			fmt.Fprintf(os.Stderr, "Error: unsupported provider '%s'. Supported providers: azure, schwarz-stackit, hetzner-hcloud, united-ionos\n", provider)
 			os.Exit(1)
 		}
-		
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating cluster: %v\n", err)
 			os.Exit(1)
@@ -263,26 +259,26 @@ func init() {
 	// Create cluster flags
 	clusterCreateCmd.Flags().String("name", "", "Cluster name (required)")
 	clusterCreateCmd.Flags().String("provider", "", "Cloud provider (required: azure, schwarz-stackit, hetzner-hcloud, united-ionos)")
-	
+
 	// Azure-specific flags
 	clusterCreateCmd.Flags().String("resource-group", "", "Azure resource group (required for Azure)")
 	clusterCreateCmd.Flags().String("location", "", "Azure/Hetzner location (required for Azure/Hetzner)")
-	
+
 	// StackIT-specific flags
 	clusterCreateCmd.Flags().String("project-id", "", "StackIT project ID (required for StackIT)")
 	clusterCreateCmd.Flags().String("region", "", "StackIT region (required for StackIT)")
-	
+
 	// Hetzner Cloud-specific flags
 	clusterCreateCmd.Flags().String("server-type", "", "Hetzner server type (for Hetzner Cloud)")
 	clusterCreateCmd.Flags().String("network-zone", "", "Hetzner network zone (for Hetzner Cloud)")
-	
+
 	// IONOS Cloud-specific flags
 	clusterCreateCmd.Flags().String("datacenter-id", "", "IONOS datacenter ID (required for IONOS)")
 	clusterCreateCmd.Flags().String("k8s-cluster-name", "", "IONOS Kubernetes cluster name (for IONOS)")
 	clusterCreateCmd.Flags().Bool("public", false, "Enable public access (for IONOS)")
-	
+
 	// Common flags
-	clusterCreateCmd.Flags().String("kubernetes-version", "", "Kubernetes version")
+	clusterCreateCmd.Flags().String("kubernetes-version", "1.28.0", "Kubernetes version (default: latest supported)")
 	clusterCreateCmd.Flags().Int("node-count", 0, "Number of nodes")
 
 	// Delete cluster flags

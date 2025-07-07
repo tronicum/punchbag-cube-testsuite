@@ -27,16 +27,16 @@ func (m *MockStore) GetObjectStorageBucket(provider, name string) (*sharedmodels
 }
 
 // Implement all methods required by the store.Store interface as no-ops for testing
-func (m *MockStore) CreateCluster(cluster *sharedmodels.Cluster) error { return nil }
+func (m *MockStore) CreateCluster(cluster *sharedmodels.Cluster) (*sharedmodels.Cluster, error) { return cluster, nil }
 func (m *MockStore) GetCluster(id string) (*sharedmodels.Cluster, error) { return nil, nil }
 func (m *MockStore) ListClusters() ([]*sharedmodels.Cluster, error) { return nil, nil }
 func (m *MockStore) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) { return nil, nil }
-func (m *MockStore) UpdateCluster(id string, cluster *sharedmodels.Cluster) error { return nil }
+func (m *MockStore) UpdateCluster(id string, cluster *sharedmodels.Cluster) (*sharedmodels.Cluster, error) { return cluster, nil }
 func (m *MockStore) DeleteCluster(id string) error { return nil }
-func (m *MockStore) CreateTestResult(result *sharedmodels.TestResult) error { return nil }
+func (m *MockStore) CreateTestResult(result *sharedmodels.TestResult) (*sharedmodels.TestResult, error) { return result, nil }
 func (m *MockStore) GetTestResult(id string) (*sharedmodels.TestResult, error) { return nil, nil }
 func (m *MockStore) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) { return nil, nil }
-func (m *MockStore) UpdateTestResult(id string, result *sharedmodels.TestResult) error { return nil }
+func (m *MockStore) UpdateTestResult(id string, result *sharedmodels.TestResult) (*sharedmodels.TestResult, error) { return result, nil }
 func (m *MockStore) CreateNodePool(nodePool *sharedmodels.NodePool) error { return nil }
 func (m *MockStore) GetNodePool(id string) (*sharedmodels.NodePool, error) { return nil, nil }
 func (m *MockStore) ListNodePools(clusterID string) ([]*sharedmodels.NodePool, error) { return nil, nil }
