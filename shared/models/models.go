@@ -50,18 +50,18 @@ const (
 
 // Cluster represents a Kubernetes cluster across different cloud providers
 type Cluster struct {
-	ID             string        `json:"id"`
-	Name           string        `json:"name"`
-	Provider       CloudProvider `json:"provider"`
-	Status         ClusterStatus `json:"status"`
+	ID             string                 `json:"id"`
+	Name           string                 `json:"name"`
+	Provider       CloudProvider          `json:"provider"`
+	Status         ClusterStatus          `json:"status"`
 	Config         map[string]interface{} `json:"config,omitempty"`
 	ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
-	ProjectID      string        `json:"project_id,omitempty"`
-	ResourceGroup  string        `json:"resource_group,omitempty"`
-	Location       string        `json:"location,omitempty"`
-	Region         string        `json:"region,omitempty"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
+	ProjectID      string                 `json:"project_id,omitempty"`
+	ResourceGroup  string                 `json:"resource_group,omitempty"`
+	Location       string                 `json:"location,omitempty"`
+	Region         string                 `json:"region,omitempty"`
+	CreatedAt      time.Time              `json:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at"`
 }
 
 // TestResult represents the result of a cluster test
@@ -86,17 +86,17 @@ type TestRequest struct {
 
 // NodePool represents a node pool within a cluster
 type NodePool struct {
-	ID              string    `json:"id"`
-	ClusterID       string    `json:"cluster_id"`
-	Name            string    `json:"name"`
-	NodeCount       int       `json:"node_count"`
-	MinNodes        int       `json:"min_nodes"`
-	MaxNodes        int       `json:"max_nodes"`
-	AutoScaling     bool      `json:"auto_scaling"`
-	InstanceType    string    `json:"instance_type"`
-	OSType          string    `json:"os_type"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID           string    `json:"id"`
+	ClusterID    string    `json:"cluster_id"`
+	Name         string    `json:"name"`
+	NodeCount    int       `json:"node_count"`
+	MinNodes     int       `json:"min_nodes"`
+	MaxNodes     int       `json:"max_nodes"`
+	AutoScaling  bool      `json:"auto_scaling"`
+	InstanceType string    `json:"instance_type"`
+	OSType       string    `json:"os_type"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // AKSCluster represents an Azure Kubernetes Service cluster (for backward compatibility)
@@ -140,16 +140,16 @@ type AzureKubernetes struct {
 // )
 
 type LoadTestMetrics struct {
-	TotalRequests     int64         `json:"total_requests"`
-	SuccessfulRequests int64        `json:"successful_requests"`
-	FailedRequests    int64         `json:"failed_requests"`
-	AverageLatency    time.Duration `json:"average_latency"`
-	P95Latency        time.Duration `json:"p95_latency"`
-	P99Latency        time.Duration `json:"p99_latency"`
-	MinLatency        time.Duration `json:"min_latency"`
-	MaxLatency        time.Duration `json:"max_latency"`
-	RequestsPerSecond float64       `json:"requests_per_second"`
-	ErrorRate         float64       `json:"error_rate"`
+	TotalRequests      int64         `json:"total_requests"`
+	SuccessfulRequests int64         `json:"successful_requests"`
+	FailedRequests     int64         `json:"failed_requests"`
+	AverageLatency     time.Duration `json:"average_latency"`
+	P95Latency         time.Duration `json:"p95_latency"`
+	P99Latency         time.Duration `json:"p99_latency"`
+	MinLatency         time.Duration `json:"min_latency"`
+	MaxLatency         time.Duration `json:"max_latency"`
+	RequestsPerSecond  float64       `json:"requests_per_second"`
+	ErrorRate          float64       `json:"error_rate"`
 }
 
 type ClusterCreateRequest struct {
@@ -166,15 +166,15 @@ type ClusterCreateRequest struct {
 // ObjectStorageBucket represents a generic object storage bucket for any provider
 // Provider-specific fields can be added via the ProviderConfig map.
 type ObjectStorageBucket struct {
-	ID            string                 `json:"id,omitempty"`
-	Name          string                 `json:"name" binding:"required"`
-	Provider      CloudProvider          `json:"provider" binding:"required"`
-	Region        string                 `json:"region,omitempty"`
-	Location      string                 `json:"location,omitempty"`
-	CreatedAt     time.Time              `json:"created_at,omitempty"`
-	UpdatedAt     time.Time              `json:"updated_at,omitempty"`
-	Policy        *ObjectStoragePolicy   `json:"policy,omitempty"`
-	Lifecycle     []ObjectStorageRule    `json:"lifecycle,omitempty"`
+	ID             string                 `json:"id,omitempty"`
+	Name           string                 `json:"name" binding:"required"`
+	Provider       CloudProvider          `json:"provider" binding:"required"`
+	Region         string                 `json:"region,omitempty"`
+	Location       string                 `json:"location,omitempty"`
+	CreatedAt      time.Time              `json:"created_at,omitempty"`
+	UpdatedAt      time.Time              `json:"updated_at,omitempty"`
+	Policy         *ObjectStoragePolicy   `json:"policy,omitempty"`
+	Lifecycle      []ObjectStorageRule    `json:"lifecycle,omitempty"`
 	ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
 }
 

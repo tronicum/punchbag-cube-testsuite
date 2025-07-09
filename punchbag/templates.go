@@ -1,7 +1,5 @@
 package punchbag
 
-import "fmt"
-
 func GenerateAzureMonitoringTemplate(config map[string]interface{}) string {
 	return "# Azure Monitoring Template\nresource \"azurerm_monitoring\" \"example\" {}"
 }

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tronicum/punchbag-cube-testsuite/store"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -29,7 +29,7 @@ func NewProviderSimulationHandlers(store store.Store, logger *zap.Logger) *Provi
 // ValidateProvider handles GET /validate/{provider-name}/
 func (h *ProviderSimulationHandlers) ValidateProvider(c *gin.Context) {
 	provider := c.Param("provider")
-	
+
 	// Simulate provider validation
 	switch provider {
 	case "azure":
@@ -63,7 +63,7 @@ func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) {
 			"aks": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"vm_sizes":           []string{"Standard_B2s", "Standard_D2s_v3", "Standard_D4s_v3"},
+				"vm_sizes":            []string{"Standard_B2s", "Standard_D2s_v3", "Standard_D4s_v3"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -74,14 +74,14 @@ func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) {
 func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) {
 	h.logger.Info("Simulating Hetzner Cloud validation")
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "hetzner-hcloud",
-		"status":   "valid",
+		"provider":  "hetzner-hcloud",
+		"status":    "valid",
 		"locations": []string{"ash", "fsn1", "hel1", "nbg1", "hil"},
 		"services": map[string]interface{}{
 			"kubernetes": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"server_types":       []string{"cx11", "cx21", "cx31", "cx41", "cx51"},
+				"server_types":        []string{"cx11", "cx21", "cx31", "cx41", "cx51"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -92,14 +92,14 @@ func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) {
 func (h *ProviderSimulationHandlers) validateIONOS(c *gin.Context) {
 	h.logger.Info("Simulating IONOS Cloud validation")
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "united-ionos",
-		"status":   "valid",
+		"provider":  "united-ionos",
+		"status":    "valid",
 		"locations": []string{"de/fra", "de/txl", "us/las", "us/ewr"},
 		"services": map[string]interface{}{
 			"kubernetes": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"cpu_families":       []string{"AMD_OPTERON", "INTEL_XEON", "INTEL_SKYLAKE"},
+				"cpu_families":        []string{"AMD_OPTERON", "INTEL_XEON", "INTEL_SKYLAKE"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -117,7 +117,7 @@ func (h *ProviderSimulationHandlers) validateStackIT(c *gin.Context) {
 			"ske": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.0", "1.27.3", "1.26.6"},
-				"machine_types":      []string{"c1.2", "c1.3", "c1.4", "c1.5"},
+				"machine_types":       []string{"c1.2", "c1.3", "c1.4", "c1.5"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -135,7 +135,7 @@ func (h *ProviderSimulationHandlers) validateAWS(c *gin.Context) {
 			"eks": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28", "1.27", "1.26"},
-				"instance_types":     []string{"t3.medium", "t3.large", "m5.large", "m5.xlarge"},
+				"instance_types":      []string{"t3.medium", "t3.large", "m5.large", "m5.xlarge"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -153,7 +153,7 @@ func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) {
 			"gke": map[string]interface{}{
 				"available":           true,
 				"kubernetes_versions": []string{"1.28.3-gke.1286000", "1.27.7-gke.1293000"},
-				"machine_types":      []string{"e2-medium", "e2-standard-2", "n1-standard-1", "n1-standard-2"},
+				"machine_types":       []string{"e2-medium", "e2-standard-2", "n1-standard-1", "n1-standard-2"},
 			},
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -163,7 +163,7 @@ func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) {
 // GetProviderInfo handles GET /providers/{provider-name}/info
 func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
 	provider := c.Param("provider")
-	
+
 	switch provider {
 	case "azure":
 		h.getAzureInfo(c)
@@ -186,14 +186,14 @@ func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getAzureInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "azure",
-		"name":     "Microsoft Azure",
-		"description": "Microsoft's cloud computing platform",
+		"provider":      "azure",
+		"name":          "Microsoft Azure",
+		"description":   "Microsoft's cloud computing platform",
 		"documentation": "https://docs.microsoft.com/en-us/azure/aks/",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
 			"auto-scaling",
-			"load-balancing", 
+			"load-balancing",
 			"monitoring",
 			"rbac",
 			"network-policies",
@@ -203,9 +203,9 @@ func (h *ProviderSimulationHandlers) getAzureInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getHetznerInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "hetzner-hcloud",
-		"name":     "Hetzner Cloud",
-		"description": "German cloud hosting provider with competitive pricing",
+		"provider":      "hetzner-hcloud",
+		"name":          "Hetzner Cloud",
+		"description":   "German cloud hosting provider with competitive pricing",
 		"documentation": "https://docs.hetzner.com/cloud/",
 		"pricing_model": "hourly-billing",
 		"supported_features": []string{
@@ -220,9 +220,9 @@ func (h *ProviderSimulationHandlers) getHetznerInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getIONOSInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "united-ionos",
-		"name":     "IONOS Cloud",
-		"description": "European cloud provider with data sovereignty focus",
+		"provider":      "united-ionos",
+		"name":          "IONOS Cloud",
+		"description":   "European cloud provider with data sovereignty focus",
 		"documentation": "https://docs.ionos.com/cloud/",
 		"pricing_model": "hourly-billing",
 		"supported_features": []string{
@@ -237,9 +237,9 @@ func (h *ProviderSimulationHandlers) getIONOSInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getStackITInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "schwarz-stackit",
-		"name":     "StackIT",
-		"description": "Schwarz Group's cloud platform for enterprise customers",
+		"provider":      "schwarz-stackit",
+		"name":          "StackIT",
+		"description":   "Schwarz Group's cloud platform for enterprise customers",
 		"documentation": "https://docs.stackit.cloud/",
 		"pricing_model": "enterprise-contracts",
 		"supported_features": []string{
@@ -254,9 +254,9 @@ func (h *ProviderSimulationHandlers) getStackITInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getAWSInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "aws",
-		"name":     "Amazon Web Services",
-		"description": "Amazon's comprehensive cloud computing platform",
+		"provider":      "aws",
+		"name":          "Amazon Web Services",
+		"description":   "Amazon's comprehensive cloud computing platform",
 		"documentation": "https://docs.aws.amazon.com/eks/",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
@@ -271,9 +271,9 @@ func (h *ProviderSimulationHandlers) getAWSInfo(c *gin.Context) {
 
 func (h *ProviderSimulationHandlers) getGCPInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"provider": "gcp",
-		"name":     "Google Cloud Platform",
-		"description": "Google's cloud computing services",
+		"provider":      "gcp",
+		"name":          "Google Cloud Platform",
+		"description":   "Google's cloud computing services",
 		"documentation": "https://cloud.google.com/kubernetes-engine/docs",
 		"pricing_model": "pay-as-you-go",
 		"supported_features": []string{
@@ -290,17 +290,17 @@ func (h *ProviderSimulationHandlers) getGCPInfo(c *gin.Context) {
 func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
 	provider := c.Param("provider")
 	operation := c.Param("operation")
-	
-	h.logger.Info("Simulating provider operation", 
-		zap.String("provider", provider), 
+
+	h.logger.Info("Simulating provider operation",
+		zap.String("provider", provider),
 		zap.String("operation", operation))
-	
+
 	// Parse request body for operation parameters
 	var operationParams map[string]interface{}
 	if err := c.ShouldBindJSON(&operationParams); err != nil {
 		operationParams = make(map[string]interface{})
 	}
-	
+
 	// Simulate the operation result
 	result := gin.H{
 		"provider":     provider,
@@ -313,7 +313,7 @@ func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
 			"timestamp": time.Now().Format(time.RFC3339),
 		},
 	}
-	
+
 	// Add provider-specific result details
 	switch provider {
 	case "azure":
@@ -323,23 +323,23 @@ func (h *ProviderSimulationHandlers) SimulateProviderOperation(c *gin.Context) {
 		}
 	case "hetzner-hcloud":
 		result["hetzner_details"] = gin.H{
-			"server_id": fmt.Sprintf("%d", time.Now().Unix()),
+			"server_id":  fmt.Sprintf("%d", time.Now().Unix()),
 			"datacenter": "fsn1-dc14",
 		}
 	case "united-ionos":
 		result["ionos_details"] = gin.H{
-			"datacenter_id": "8feda53f-15f0-447f-badf-ebe32dad2fc0",
+			"datacenter_id":   "8feda53f-15f0-447f-badf-ebe32dad2fc0",
 			"contract_number": fmt.Sprintf("%d", time.Now().Unix()),
 		}
 	}
-	
+
 	c.JSON(http.StatusOK, result)
 }
 
 // ListProviderClusters handles GET /providers/{provider-name}/clusters
 func (h *ProviderSimulationHandlers) ListProviderClusters(c *gin.Context) {
 	provider := c.Param("provider")
-	
+
 	// Get clusters for the specific provider
 	clusters, err := h.store.ListClustersByProvider(sharedmodels.CloudProvider(provider))
 	if err != nil {
@@ -347,11 +347,11 @@ func (h *ProviderSimulationHandlers) ListProviderClusters(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list clusters"})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"provider": provider,
-		"clusters": clusters,
-		"count":    len(clusters),
+		"provider":  provider,
+		"clusters":  clusters,
+		"count":     len(clusters),
 		"timestamp": time.Now().Format(time.RFC3339),
 	})
 }

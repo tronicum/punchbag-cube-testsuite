@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
 	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -24,7 +24,7 @@ var objectStorageCmd = &cobra.Command{
 var policyFile string
 var versioning bool
 var lifecycleFile string
-var hetznerToken string // CLI flag for Hetzner API token
+var hetznerToken string              // CLI flag for Hetzner API token
 var objectStorageOutputFormat string // "json" or "table"
 
 var createBucketCmd = &cobra.Command{
@@ -68,7 +68,10 @@ var createBucketCmd = &cobra.Command{
 			return
 		}
 		// Local/mock or real provider mode
-		var store interface{ CreateBucket(*sharedmodels.ObjectStorageBucket) (*sharedmodels.ObjectStorageBucket, error); ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error) }
+		var store interface {
+			CreateBucket(*sharedmodels.ObjectStorageBucket) (*sharedmodels.ObjectStorageBucket, error)
+			ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error)
+		}
 		switch provider {
 		case "aws":
 			// TODO: Use AWS SDK (already implemented)
@@ -119,7 +122,9 @@ var listBucketsCmd = &cobra.Command{
 		fmt.Printf("[CLI] listBucketsCmd called with provider: %s\n", args[0])
 		provider := args[0]
 		fmt.Println("[CLI] Before provider switch")
-		var store interface{ ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error) }
+		var store interface {
+			ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error)
+		}
 		switch provider {
 		case "aws":
 			fmt.Println("[CLI] Using AWS mock")
@@ -217,7 +222,9 @@ var getBucketCmd = &cobra.Command{
 			fmt.Printf("Bucket (proxy): %+v\n", bucket)
 			return
 		}
-		var store interface{ GetBucket(string) (*sharedmodels.ObjectStorageBucket, error) }
+		var store interface {
+			GetBucket(string) (*sharedmodels.ObjectStorageBucket, error)
+		}
 		switch provider {
 		case "aws":
 			store = mock.NewAwsObjectStorage()

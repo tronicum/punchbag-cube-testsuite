@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"time"
 
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // Hetzner Object Storage S3-compatible API usage:
@@ -74,7 +74,10 @@ func (c *HetznerObjectStorageClient) CreateBucket(bucket *sharedmodels.ObjectSto
 		if resp != nil {
 			fmt.Printf("[Hetzner] CreateBucket response: %+v\n", resp)
 		}
-		if ae, ok := err.(interface{ ErrorCode() string; ErrorMessage() string }); ok {
+		if ae, ok := err.(interface {
+			ErrorCode() string
+			ErrorMessage() string
+		}); ok {
 			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
 		}
 		return nil, err
@@ -125,7 +128,10 @@ func (c *HetznerObjectStorageClient) ListBuckets() ([]*sharedmodels.ObjectStorag
 		if resp != nil {
 			fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
 		}
-		if ae, ok := err.(interface{ ErrorCode() string; ErrorMessage() string }); ok {
+		if ae, ok := err.(interface {
+			ErrorCode() string
+			ErrorMessage() string
+		}); ok {
 			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
 		}
 		return nil, err
@@ -144,9 +150,9 @@ func (c *HetznerObjectStorageClient) ListBuckets() ([]*sharedmodels.ObjectStorag
 			fmt.Printf("[Hetzner] WARNING: Bucket %s has suspiciously old timestamp: %v\n", *b.Name, created)
 		}
 		out = append(out, &sharedmodels.ObjectStorageBucket{
-			Name:   *b.Name,
-			Region: region,
-			Provider: sharedmodels.CloudProvider("hetzner"),
+			Name:      *b.Name,
+			Region:    region,
+			Provider:  sharedmodels.CloudProvider("hetzner"),
 			CreatedAt: created,
 		})
 	}

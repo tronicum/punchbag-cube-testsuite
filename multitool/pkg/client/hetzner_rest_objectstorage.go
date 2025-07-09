@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
@@ -21,7 +22,7 @@ func (c *HetznerRESTObjectStorageClient) CreateBucket(bucket *sharedmodels.Objec
 	fmt.Println("[Hetzner REST] CreateBucket called")
 	url := "https://api.hetzner.cloud/v1/object_storage" // Adjust if endpoint differs
 	body := map[string]interface{}{
-		"name": bucket.Name,
+		"name":     bucket.Name,
 		"location": bucket.Region,
 	}
 	jsonBody, err := json.Marshal(body)

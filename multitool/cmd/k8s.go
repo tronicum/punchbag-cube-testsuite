@@ -29,13 +29,13 @@ func getOrCreateHetznerNetwork(token, location string) (int, error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	var result struct {
 		Networks []struct {
-			ID       int    `json:"id"`
-			Name     string `json:"name"`
-			IPRange  string `json:"ip_range"`
-			Subnets  []struct {
-				Type     string `json:"type"`
+			ID      int    `json:"id"`
+			Name    string `json:"name"`
+			IPRange string `json:"ip_range"`
+			Subnets []struct {
+				Type        string `json:"type"`
 				NetworkZone string `json:"network_zone"`
-				IPRange  string `json:"ip_range"`
+				IPRange     string `json:"ip_range"`
 			} `json:"subnets"`
 		} `json:"networks"`
 	}
@@ -47,12 +47,12 @@ func getOrCreateHetznerNetwork(token, location string) (int, error) {
 	}
 	// No networks found, create one
 	netReq := map[string]interface{}{
-		"name": "mt-demo-network",
+		"name":     "mt-demo-network",
 		"ip_range": "10.0.0.0/16",
 		"subnets": []map[string]interface{}{
 			{
-				"type": "cloud",
-				"ip_range": "10.0.1.0/24",
+				"type":         "cloud",
+				"ip_range":     "10.0.1.0/24",
 				"network_zone": "eu-central",
 			},
 		},
@@ -93,8 +93,8 @@ func getLatestHetznerK8sVersion(token string) (string, error) {
 	}
 	var result struct {
 		KubernetesVersions []struct {
-			Version string `json:"version"`
-			Supported bool `json:"supported"`
+			Version   string `json:"version"`
+			Supported bool   `json:"supported"`
 		} `json:"kubernetes_versions"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -121,17 +121,17 @@ func createHetznerK8sCluster(token, name, location, version string) {
 		version = defaultHetznerK8sVersion
 	}
 	clusterReq := map[string]interface{}{
-		"name": name,
-		"location": location,
-		"network": networkID,
-		"version": version,
+		"name":          name,
+		"location":      location,
+		"network":       networkID,
+		"version":       version,
 		"network_zones": []string{"eu-central"},
 		"node_pools": []map[string]interface{}{
 			{
-				"name": "np-cx22",
-				"node_count": 1,
+				"name":        "np-cx22",
+				"node_count":  1,
 				"server_type": "cx22",
-				"labels": map[string]string{"test": "ipv6-only"},
+				"labels":      map[string]string{"test": "ipv6-only"},
 				"public_ipv4": false,
 				"public_ipv6": true,
 			},
@@ -436,8 +436,8 @@ func init() {
 
 // Object storage types for Hetzner API
 type hcloudObjectStorage struct {
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
 	Location string `json:"location"`
 }
 type hcloudObjectStorageListResp struct {

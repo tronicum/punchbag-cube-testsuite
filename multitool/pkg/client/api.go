@@ -39,7 +39,7 @@ func NewClusterClient(client *APIClient) *ClusterClient {
 // CreateCluster creates a new cluster
 func (c *ClusterClient) CreateCluster(req *sharedmodels.ClusterCreateRequest) (*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters", c.client.baseURL)
-	
+
 	data, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -66,7 +66,7 @@ func (c *ClusterClient) CreateCluster(req *sharedmodels.ClusterCreateRequest) (*
 // GetCluster retrieves a cluster by ID
 func (c *ClusterClient) GetCluster(id string) (*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters/%s", c.client.baseURL, id)
-	
+
 	resp, err := c.client.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cluster: %w", err)
@@ -91,7 +91,7 @@ func (c *ClusterClient) GetCluster(id string) (*sharedmodels.Cluster, error) {
 // ListClusters retrieves all clusters
 func (c *ClusterClient) ListClusters() ([]*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters", c.client.baseURL)
-	
+
 	resp, err := c.client.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list clusters: %w", err)
@@ -113,7 +113,7 @@ func (c *ClusterClient) ListClusters() ([]*sharedmodels.Cluster, error) {
 // ListClustersByProvider retrieves clusters filtered by provider
 func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters?provider=%s", c.client.baseURL, provider)
-	
+
 	resp, err := c.client.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list clusters: %w", err)
@@ -135,7 +135,7 @@ func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvid
 // DeleteCluster deletes a cluster by ID
 func (c *ClusterClient) DeleteCluster(id string) error {
 	url := fmt.Sprintf("%s/api/clusters/%s", c.client.baseURL, id)
-	
+
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
@@ -170,7 +170,7 @@ func NewTestClient(client *APIClient) *TestClient {
 // RunTest runs a test on a cluster
 func (t *TestClient) RunTest(req *sharedmodels.TestRequest) (*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/tests", t.client.baseURL)
-	
+
 	data, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -197,7 +197,7 @@ func (t *TestClient) RunTest(req *sharedmodels.TestRequest) (*sharedmodels.TestR
 // GetTestResult retrieves a test result by ID
 func (t *TestClient) GetTestResult(id string) (*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/tests/%s", t.client.baseURL, id)
-	
+
 	resp, err := t.client.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get test result: %w", err)
@@ -222,7 +222,7 @@ func (t *TestClient) GetTestResult(id string) (*sharedmodels.TestResult, error) 
 // ListTestResults retrieves test results for a cluster
 func (t *TestClient) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
 	url := fmt.Sprintf("%s/api/clusters/%s/tests", t.client.baseURL, clusterID)
-	
+
 	resp, err := t.client.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list test results: %w", err)

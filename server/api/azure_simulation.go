@@ -9,7 +9,6 @@ import (
 )
 
 // AzureHandlers provides endpoints for Azure resource simulation
-//
 type AzureHandlers struct {
 	simulator *simulation.SimulationService
 	logger    *zap.Logger

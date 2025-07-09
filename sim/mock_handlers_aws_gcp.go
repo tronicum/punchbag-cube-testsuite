@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	mock "punchbag-cube-testsuite/multitool/pkg/mock"
+
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
@@ -22,14 +23,20 @@ func HandleEks(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 		if id != "" {
 			result := mock.MockGetEks(id)
-			if result == nil { w.WriteHeader(http.StatusNotFound); return }
+			if result == nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
 			json.NewEncoder(w).Encode(result)
 			return
 		}
 		json.NewEncoder(w).Encode(mock.MockListEks())
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
-		if id == "" || !mock.MockDeleteEks(id) { w.WriteHeader(http.StatusNotFound); return }
+		if id == "" || !mock.MockDeleteEks(id) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

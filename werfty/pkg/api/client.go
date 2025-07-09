@@ -30,7 +30,7 @@ func NewWerfty(baseURL string) *Werfty {
 // doRequest performs an HTTP request
 func (c *Werfty) doRequest(method, path string, body interface{}) (*http.Response, error) {
 	url := c.BaseURL + path
-	
+
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -228,7 +228,7 @@ func (c *Werfty) CreateStackITCluster(name, projectID, region string, config map
 			},
 		},
 	}
-	
+
 	// Merge additional config
 	if config != nil {
 		if stackitConfig, ok := cluster.Config["stackit_config"].(map[string]interface{}); ok {
@@ -237,7 +237,7 @@ func (c *Werfty) CreateStackITCluster(name, projectID, region string, config map
 			}
 		}
 	}
-	
+
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -254,7 +254,7 @@ func (c *Werfty) CreateAzureCluster(name, resourceGroup, location string, config
 			},
 		},
 	}
-	
+
 	// Merge additional config
 	if config != nil {
 		if azureConfig, ok := cluster.Config["azure_config"].(map[string]interface{}); ok {
@@ -263,7 +263,7 @@ func (c *Werfty) CreateAzureCluster(name, resourceGroup, location string, config
 			}
 		}
 	}
-	
+
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -306,7 +306,7 @@ func (c *Werfty) CreateIONOSCluster(name, datacenterID string, config map[string
 			},
 		},
 	}
-	
+
 	// Merge additional config
 	if config != nil {
 		if ionosConfig, ok := cluster.Config["ionos_config"].(map[string]interface{}); ok {
@@ -315,7 +315,7 @@ func (c *Werfty) CreateIONOSCluster(name, datacenterID string, config map[string
 			}
 		}
 	}
-	
+
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -390,12 +390,12 @@ func (c *Werfty) RunAKSTest(clusterID string, testReq *sharedmodels.AKSTestReque
 		TestType:  testReq.TestType,
 		Config:    testReq.Config,
 	}
-	
+
 	result, err := c.RunTest(clusterID, multiTestReq)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to AKSTestResult for backward compatibility
 	aksResult := &sharedmodels.AKSTestResult{
 		ID:          result.ID,
@@ -408,7 +408,7 @@ func (c *Werfty) RunAKSTest(clusterID string, testReq *sharedmodels.AKSTestReque
 		StartedAt:   result.StartedAt,
 		CompletedAt: result.CompletedAt,
 	}
-	
+
 	return aksResult, nil
 }
 
@@ -441,7 +441,7 @@ func (c *Werfty) GetAKSTestResult(id string) (*sharedmodels.AKSTestResult, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to AKSTestResult for backward compatibility
 	aksResult := &sharedmodels.AKSTestResult{
 		ID:          result.ID,
@@ -454,7 +454,7 @@ func (c *Werfty) GetAKSTestResult(id string) (*sharedmodels.AKSTestResult, error
 		StartedAt:   result.StartedAt,
 		CompletedAt: result.CompletedAt,
 	}
-	
+
 	return aksResult, nil
 }
 
@@ -484,7 +484,7 @@ func (c *Werfty) ListAKSTestResults(clusterID string) ([]*sharedmodels.AKSTestRe
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to AKSTestResult for backward compatibility
 	aksResults := make([]*sharedmodels.AKSTestResult, len(results))
 	for i, result := range results {
@@ -500,106 +500,106 @@ func (c *Werfty) ListAKSTestResults(clusterID string) ([]*sharedmodels.AKSTestRe
 			CompletedAt: result.CompletedAt,
 		}
 	}
-	
+
 	return aksResults, nil
 }
 
 // ValidateProvider validates a cloud provider configuration
 func (c *Werfty) ValidateProvider(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/validate/%s", c.BaseURL, provider)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("validation failed with status: %s", resp.Status)
 	}
-	
+
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	return result, nil
 }
 
 // GetProviderInfo gets information about a cloud provider
 func (c *Werfty) GetProviderInfo(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/info", c.BaseURL, provider)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
 	}
-	
+
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	return result, nil
 }
 
 // ListProviderClusters lists clusters for a specific provider
 func (c *Werfty) ListProviderClusters(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/clusters", c.BaseURL, provider)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
 	}
-	
+
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	return result, nil
 }
 
 // ExecuteProviderOperation executes a provider-specific operation
 func (c *Werfty) ExecuteProviderOperation(provider, operation, params string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/operations/%s", c.BaseURL, provider, operation)
-	
+
 	// Parse params as JSON
 	var paramData map[string]interface{}
 	if err := json.Unmarshal([]byte(params), &paramData); err != nil {
 		return nil, fmt.Errorf("failed to parse params JSON: %w", err)
 	}
-	
+
 	// Create request body
 	body, err := json.Marshal(paramData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	
+
 	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("operation failed with status: %s", resp.Status)
 	}
-	
+
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	return result, nil
 }

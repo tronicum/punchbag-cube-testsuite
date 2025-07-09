@@ -2,6 +2,7 @@ package mock
 
 import (
 	"errors"
+
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 

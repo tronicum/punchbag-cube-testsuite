@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"punchbag-cube-testsuite/api"
+
 	"github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"

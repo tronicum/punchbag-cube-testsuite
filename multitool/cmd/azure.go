@@ -168,7 +168,7 @@ var azureCreateAppInsightsCmd = &cobra.Command{
 			Name:          name,
 			ResourceGroup: resourceGroup,
 			Location:      location,
-			AppType:       appType, // Use appType field
+			AppType:       appType,   // Use appType field
 			RetentionDays: retention, // Use retention field
 			// InstrumentationKey and other fields can be set if needed
 		}

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"io/ioutil"
+	"net/http"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"net/http"
 )
 
 var cloudformationCmd = &cobra.Command{

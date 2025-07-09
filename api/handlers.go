@@ -94,7 +94,7 @@ func (h *Handlers) GetCluster(c *gin.Context) {
 // ListClusters handles GET /clusters
 func (h *Handlers) ListClusters(c *gin.Context) {
 	provider := c.Query("provider")
-	
+
 	var clusters []*sharedmodels.Cluster
 	var err error
 

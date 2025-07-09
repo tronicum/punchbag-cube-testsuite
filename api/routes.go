@@ -2,7 +2,7 @@ package api
 
 import (
 	"time"
-	
+
 	"github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"
@@ -60,13 +60,13 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 
 		// Provider simulation endpoints
 		providerHandlers := NewProviderSimulationHandlers(store, logger)
-		
+
 		// Validation endpoints
 		validate := v1.Group("/validate")
 		{
 			validate.GET("/:provider", providerHandlers.ValidateProvider)
 		}
-		
+
 		// Provider-specific endpoints
 		providers := v1.Group("/providers")
 		{
@@ -99,8 +99,8 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 					"GET /api/v1/metrics/status": "Service status",
 				},
 				"providers": gin.H{
-					"GET /api/v1/providers/:provider/info":         "Get provider information",
-					"GET /api/v1/providers/:provider/clusters":     "List clusters for provider",
+					"GET /api/v1/providers/:provider/info":        "Get provider information",
+					"GET /api/v1/providers/:provider/clusters":    "List clusters for provider",
 					"POST /api/v1/providers/:provider/operations": "Simulate provider operation",
 				},
 			},

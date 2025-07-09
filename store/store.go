@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"github.com/google/uuid"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 var (
