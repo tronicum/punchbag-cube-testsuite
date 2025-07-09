@@ -36,6 +36,11 @@
     - Add CLI support to multitool/mt for Azure logging and Application Insights management (medium priority):
         - Implement logging and App Insights resource management for Azure first
         - Plan enhancements for other providers (AWS, GCP, etc.) in future steps
+- [ ] Add automation/CI-friendly mode to multitool/mt:
+    - Add --skip-prompts and --automation-mode flags (alias: --automation-mode=true)
+    - When enabled, skip all interactive prompts, use --force for destructive actions, and print clear colored output for automation (red for errors, green for success)
+    - Prepare to support reading these flags from a config file in the future
+    - Improve CLI workflow for automation and scripting
 
 ## Next Steps
 - [ ] Finalize example coverage and documentation for all scenarios
@@ -44,6 +49,7 @@
 - [ ] Expand documentation and developer onboarding materials
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
 - [ ] Fix and re-enable failing provider simulation API tests in `server/api/provider_simulation_test.go` (currently failing with 400/Invalid request body and nil interface conversion). Ignore for now, revisit after break.
+- [ ] Add automated Go test for Hetzner S3 bucket create/delete workflow using automation mode flags (objectstorage create/delete, region fsn1, env credentials)
 
 ## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
