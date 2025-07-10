@@ -50,6 +50,15 @@
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
 - [ ] Fix and re-enable failing provider simulation API tests in `server/api/provider_simulation_test.go` (currently failing with 400/Invalid request body and nil interface conversion). Ignore for now, revisit after break.
 - [ ] Add automated Go test for Hetzner S3 bucket create/delete workflow using automation mode flags (objectstorage create/delete, region fsn1, env credentials)
+- [ ] Document and automate the steps to spin up and tear down (pin down) a Hetzner Kubernetes (K8s) service:
+    1. Prerequisites: Hetzner Cloud account, API token, and CLI tools (hcloud, kubectl).
+    2. Set environment variables: export HCLOUD_TOKEN=... and configure kubeconfig.
+    3. Create a new K8s cluster using Hetzner CLI or API (hcloud context, hcloud cluster create ...).
+    4. Wait for cluster provisioning and retrieve kubeconfig.
+    5. Deploy workloads or test connectivity with kubectl.
+    6. Tear down: delete the cluster and associated resources (hcloud cluster delete ...).
+    7. Clean up any remaining volumes, networks, or load balancers.
+    8. Automate these steps in a script for CI/CD or local testing.
 
 ## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
