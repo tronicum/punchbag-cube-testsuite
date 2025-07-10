@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "name": "test-eks",
+    "region": "us-west-2",
+    "nodeCount": 2
+  }
+}

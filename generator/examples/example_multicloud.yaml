@@ -1,0 +1,17 @@
+resources:
+  - resourceType: aks
+    properties:
+      name: my-aks
+      location: eastus
+      resourceGroup: my-rg
+      nodeCount: 3
+  - resourceType: eks
+    properties:
+      name: my-eks
+      region: us-west-2
+      nodeCount: 2
+  - resourceType: gke
+    properties:
+      name: my-gke
+      region: us-central1
+      nodeCount: 2
