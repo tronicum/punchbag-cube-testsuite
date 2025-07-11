@@ -4,14 +4,126 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
-	"punchbag-cube-testsuite/client/pkg/api"
-
+	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v3"
+
+	"punchbag-cube-testsuite/client/pkg/api"
 )
 
-// PrintClusters prints a list of clusters in the specified format (multi-cloud)
+type Formatter struct {
+	format string
+}
+
+func NewFormatter(format string) *Formatter {
+	return &Formatter{
+		format: format,
+	}
+}
+
+// FormatSimulationResult formats simulation results
+func (f *Formatter) FormatSimulationResult(result map[string]interface{}) error {
+	switch f.format {
+	case "json":
+		return f.formatJSON(result)
+	case "yaml":
+		return f.formatYAML(result)
+	default:
+		return f.formatTable(result)
+	}
+}
+
+// FormatProviderInfo formats provider information
+func (f *Formatter) FormatProviderInfo(info map[string]interface{}) error {
+	switch f.format {
+	case "json":
+		return f.formatJSON(info)
+	case "yaml":
+		return f.formatYAML(info)
+	default:
+		return formatProviderInfoTable(info)
+	}
+}
+
+// FormatClusterList formats cluster list
+func (f *Formatter) FormatClusterList(clusters []map[string]interface{}) error {
+	switch f.format {
+	case "json":
+		return f.formatJSON(clusters)
+	case "yaml":
+		return f.formatYAML(clusters)
+	default:
+		return f.formatClusterTable(clusters)
+	}
+}
+
+// FormatProviderOperation formats provider operation results
+func (f *Formatter) FormatProviderOperation(result interface{}) error {
+	switch f.format {
+	case "json":
+		return f.formatJSON(result)
+	case "yaml":
+		return f.formatYAML(result)
+	default:
+		return f.formatTable(result)
+	}
+}
+
+func (f *Formatter) formatJSON(data interface{}) error {
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(data)
+}
+
+func (f *Formatter) formatYAML(data interface{}) error {
+	encoder := yaml.NewEncoder(os.Stdout)
+	encoder.SetIndent(2)
+	return encoder.Encode(data)
+}
+
+func (f *Formatter) formatTable(data interface{}) error {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Key", "Value"})
+
+	// Convert data to map for table display
+	jsonBytes, _ := json.Marshal(data)
+	var dataMap map[string]interface{}
+	json.Unmarshal(jsonBytes, &dataMap)
+
+	for key, value := range dataMap {
+		valueStr := fmt.Sprintf("%v", value)
+		table.Append([]string{key, valueStr})
+	}
+
+	table.Render()
+	return nil
+}
+
+func (f *Formatter) formatClusterTable(clusters []map[string]interface{}) error {
+	if len(clusters) == 0 {
+		fmt.Println("No clusters found")
+		return nil
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Provider", "Status", "Location"})
+
+	for _, cluster := range clusters {
+		name := getStringValue(cluster, "name")
+		provider := getStringValue(cluster, "provider")
+		status := getStringValue(cluster, "status")
+		location := getStringValue(cluster, "location")
+
+		table.Append([]string{name, provider, status, location})
+	}
+
+	table.Render()
+	return nil
+}
+
+// Legacy printing functions for backward compatibility
 func PrintClusters(clusters []*api.Cluster, format string) {
 	switch format {
 	case "json":
@@ -23,7 +135,6 @@ func PrintClusters(clusters []*api.Cluster, format string) {
 	}
 }
 
-// PrintAKSClusters prints a list of AKS clusters in the specified format (backward compatibility)
 func PrintAKSClusters(clusters []*api.AKSCluster, format string) {
 	switch format {
 	case "json":
@@ -35,7 +146,6 @@ func PrintAKSClusters(clusters []*api.AKSCluster, format string) {
 	}
 }
 
-// PrintCluster prints a single cluster in the specified format (multi-cloud)
 func PrintCluster(cluster *api.Cluster, format string) {
 	switch format {
 	case "json":
@@ -47,7 +157,6 @@ func PrintCluster(cluster *api.Cluster, format string) {
 	}
 }
 
-// PrintAKSCluster prints a single AKS cluster in the specified format (backward compatibility)
 func PrintAKSCluster(cluster *api.AKSCluster, format string) {
 	switch format {
 	case "json":
@@ -59,7 +168,6 @@ func PrintAKSCluster(cluster *api.AKSCluster, format string) {
 	}
 }
 
-// PrintTestResults prints a list of test results in the specified format (multi-cloud)
 func PrintTestResults(results []*api.TestResult, format string) {
 	switch format {
 	case "json":
@@ -71,7 +179,6 @@ func PrintTestResults(results []*api.TestResult, format string) {
 	}
 }
 
-// PrintAKSTestResults prints a list of AKS test results in the specified format (backward compatibility)
 func PrintAKSTestResults(results []*api.AKSTestResult, format string) {
 	switch format {
 	case "json":
@@ -83,7 +190,6 @@ func PrintAKSTestResults(results []*api.AKSTestResult, format string) {
 	}
 }
 
-// PrintTestResult prints a single test result in the specified format (multi-cloud)
 func PrintTestResult(result *api.TestResult, format string) {
 	switch format {
 	case "json":
@@ -95,7 +201,6 @@ func PrintTestResult(result *api.TestResult, format string) {
 	}
 }
 
-// PrintAKSTestResult prints a single AKS test result in the specified format (backward compatibility)
 func PrintAKSTestResult(result *api.AKSTestResult, format string) {
 	switch format {
 	case "json":
@@ -107,54 +212,7 @@ func PrintAKSTestResult(result *api.AKSTestResult, format string) {
 	}
 }
 
-// FormatProviderValidation formats provider validation results
-func FormatProviderValidation(data map[string]interface{}) error {
-	switch format {
-	case "json":
-		return formatJSON(data)
-	case "yaml":
-		return formatYAML(data)
-	default: // table
-		return formatProviderValidationTable(data)
-	}
-}
-
-// FormatProviderInfo formats provider information
-func FormatProviderInfo(data map[string]interface{}) error {
-	switch format {
-	case "json":
-		return formatJSON(data)
-	case "yaml":
-		return formatYAML(data)
-	default: // table
-		return formatProviderInfoTable(data)
-	}
-}
-
-// FormatProviderClusters formats provider cluster list
-func FormatProviderClusters(data map[string]interface{}) error {
-	switch format {
-	case "json":
-		return formatJSON(data)
-	case "yaml":
-		return formatYAML(data)
-	default: // table
-		return formatProviderClustersTable(data)
-	}
-}
-
-// FormatProviderOperation formats provider operation results
-func FormatProviderOperation(data map[string]interface{}) error {
-	switch format {
-	case "json":
-		return formatJSON(data)
-	case "yaml":
-		return formatYAML(data)
-	default: // table
-		return formatProviderOperationTable(data)
-	}
-}
-
+// Helper functions
 func printJSON(data interface{}) {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
@@ -167,7 +225,6 @@ func printYAML(data interface{}) {
 	encoder.Encode(data)
 }
 
-// Multi-cloud table printing functions
 func printClustersTable(clusters []*api.Cluster) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "ID\tNAME\tPROVIDER\tSTATUS\tCREATED")
@@ -200,81 +257,6 @@ func printClusterTable(cluster *api.Cluster) {
 		for key, value := range cluster.Config {
 			fmt.Fprintf(w, "  %s:\t%v\n", key, value)
 		}
-	}
-
-	w.Flush()
-}
-
-func printTestResultsTable(results []*api.TestResult) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "ID\tCLUSTER ID\tTEST TYPE\tSTATUS\tDURATION\tSTARTED")
-
-	for _, result := range results {
-		duration := ""
-		if result.Duration > 0 {
-			duration = result.Duration.String()
-		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
-			result.ID,
-			result.ClusterID,
-			result.TestType,
-			result.Status,
-			duration,
-			result.StartedAt.Format("2006-01-02 15:04:05"),
-		)
-	}
-
-	w.Flush()
-}
-
-func printTestResultTable(result *api.TestResult) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-
-	fmt.Fprintf(w, "ID:\t%s\n", result.ID)
-	fmt.Fprintf(w, "Cluster ID:\t%s\n", result.ClusterID)
-	fmt.Fprintf(w, "Test Type:\t%s\n", result.TestType)
-	fmt.Fprintf(w, "Status:\t%s\n", result.Status)
-
-	if result.Duration > 0 {
-		fmt.Fprintf(w, "Duration:\t%s\n", result.Duration.String())
-	}
-
-	fmt.Fprintf(w, "Started:\t%s\n", result.StartedAt.Format("2006-01-02 15:04:05"))
-
-	if result.CompletedAt != nil {
-		fmt.Fprintf(w, "Completed:\t%s\n", result.CompletedAt.Format("2006-01-02 15:04:05"))
-	}
-
-	if result.ErrorMsg != "" {
-		fmt.Fprintf(w, "Error:\t%s\n", result.ErrorMsg)
-	}
-
-	if len(result.Details) > 0 {
-		fmt.Fprintf(w, "Details:\t\n")
-		for key, value := range result.Details {
-			fmt.Fprintf(w, "  %s:\t%v\n", key, value)
-		}
-	}
-
-	w.Flush()
-}
-
-// Backward compatibility table printing functions
-func printAKSClustersTable(clusters []*api.AKSCluster) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tRESOURCE GROUP\tLOCATION\tSTATUS\tNODES\tCREATED")
-
-	for _, cluster := range clusters {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\t%s\n",
-			cluster.ID,
-			cluster.Name,
-			cluster.ResourceGroup,
-			cluster.Location,
-			cluster.Status,
-			cluster.NodeCount,
-			cluster.CreatedAt.Format("2006-01-02 15:04:05"),
-		)
 	}
 
 	w.Flush()
@@ -441,41 +423,15 @@ func formatProviderInfoTable(data map[string]interface{}) error {
 	table.Render()
 	return nil
 }
-
-func formatProviderClustersTable(data map[string]interface{}) error {
-	fmt.Printf("Provider: %v\n", data["provider"])
-	fmt.Printf("Count: %v\n", data["count"])
-	fmt.Printf("Timestamp: %v\n\n", data["timestamp"])
-
-	if clusters, ok := data["clusters"].([]interface{}); ok {
-		if len(clusters) == 0 {
-			fmt.Println("No clusters found for this provider.")
-			return nil
+		for key, value := range result.Details {
+			fmt.Fprintf(w, "  %s:\t%v\n", key, value)
 		}
-
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Name", "Status", "Location", "Created"})
-		table.SetBorder(false)
-
-		for _, cluster := range clusters {
-			if clusterMap, ok := cluster.(map[string]interface{}); ok {
-				id := fmt.Sprintf("%v", clusterMap["id"])
-				name := fmt.Sprintf("%v", clusterMap["name"])
-				status := fmt.Sprintf("%v", clusterMap["status"])
-				location := fmt.Sprintf("%v", clusterMap["location"])
-				created := fmt.Sprintf("%v", clusterMap["created_at"])
-
-				table.Append([]string{id, name, status, location, created})
-			}
-		}
-
-		table.Render()
 	}
 
-	return nil
+	w.Flush()
 }
 
-func formatProviderOperationTable(data map[string]interface{}) error {
+func formatProviderValidationTable(data map[string]interface{}) error {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Property", "Value"})
 	table.SetBorder(false)
@@ -483,24 +439,70 @@ func formatProviderOperationTable(data map[string]interface{}) error {
 	if provider, ok := data["provider"].(string); ok {
 		table.Append([]string{"Provider", provider})
 	}
-	if operation, ok := data["operation"].(string); ok {
-		table.Append([]string{"Operation", operation})
-	}
 	if status, ok := data["status"].(string); ok {
 		table.Append([]string{"Status", status})
 	}
-	if operationID, ok := data["operation_id"].(string); ok {
-		table.Append([]string{"Operation ID", operationID})
+	if timestamp, ok := data["timestamp"].(string); ok {
+		table.Append([]string{"Timestamp", timestamp})
 	}
 
-	// Add result message
-	if result, ok := data["result"].(map[string]interface{}); ok {
-		if message, ok := result["message"].(string); ok {
-			table.Append([]string{"Message", message})
+	// Add regions/locations
+	if regions, ok := data["regions"].([]interface{}); ok {
+		regionStr := ""
+		for i, region := range regions {
+			if i > 0 {
+				regionStr += ", "
+			}
+			regionStr += fmt.Sprintf("%v", region)
 		}
-		if timestamp, ok := result["timestamp"].(string); ok {
-			table.Append([]string{"Timestamp", timestamp})
+		table.Append([]string{"Regions", regionStr})
+	}
+	if locations, ok := data["locations"].([]interface{}); ok {
+		locationStr := ""
+		for i, location := range locations {
+			if i > 0 {
+				locationStr += ", "
+			}
+			locationStr += fmt.Sprintf("%v", location)
 		}
+		table.Append([]string{"Locations", locationStr})
+	}
+
+	table.Render()
+	return nil
+}
+
+func formatProviderInfoTable(data map[string]interface{}) error {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Property", "Value"})
+	table.SetBorder(false)
+
+	if provider, ok := data["provider"].(string); ok {
+		table.Append([]string{"Provider", provider})
+	}
+	if name, ok := data["name"].(string); ok {
+		table.Append([]string{"Name", name})
+	}
+	if description, ok := data["description"].(string); ok {
+		table.Append([]string{"Description", description})
+	}
+	if documentation, ok := data["documentation"].(string); ok {
+		table.Append([]string{"Documentation", documentation})
+	}
+	if pricingModel, ok := data["pricing_model"].(string); ok {
+		table.Append([]string{"Pricing Model", pricingModel})
+	}
+
+	// Add supported features
+	if features, ok := data["supported_features"].([]interface{}); ok {
+		featureStr := ""
+		for i, feature := range features {
+			if i > 0 {
+				featureStr += ", "
+			}
+			featureStr += fmt.Sprintf("%v", feature)
+		}
+		table.Append([]string{"Features", featureStr})
 	}
 
 	table.Render()

@@ -9,6 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	apiBaseURL   string
+	outputFormat string
+)
+
 // providerCmd represents the provider command
 var providerCmd = &cobra.Command{
 	Use:   "provider",
@@ -103,9 +108,9 @@ var azureCreateMonitorCmd = &cobra.Command{
 		if simulationMode {
 			// Use simulation mode via cube-server
 			return executeAzureSimulation(client, "monitor", "create", map[string]interface{}{
-				"resource_group":  resourceGroup,
-				"location":        location,
-				"workspace_name":  workspaceName,
+				"resource_group": resourceGroup,
+				"location":       location,
+				"workspace_name": workspaceName,
 			})
 		}
 
@@ -287,6 +292,10 @@ func init() {
 	azureMonitorCmd.AddCommand(azureCreateMonitorCmd)
 	azureBudgetCmd.AddCommand(azureCreateBudgetCmd)
 	azureAksCmd.AddCommand(azureCreateAksCmd)
+
+	// Global flags
+	providerCmd.PersistentFlags().StringVar(&apiBaseURL, "api-url", "http://localhost:8080", "API base URL")
+	providerCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table, json, yaml)")
 
 	// Provider operation flags
 	providerOperationCmd.Flags().StringVar(&operationParams, "params", "", "JSON parameters for the operation")

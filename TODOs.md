@@ -1,11 +1,49 @@
 # TODOs for punchbag-cube-testsuite
 
+## Project Architecture Overview
+
+**Core Components:**
+- **multitool/mt**: Multi-cloud CLI for direct cloud operations (can proxy via cube-server)
+- **werfty-generator**: Creates new Terraform code from cloud state (JSON/YAML → .tf)
+- **werfty-transformator**: Imports/exports Terraform code between cloud providers (.tf ↔ .tf)
+- **terraform-multicloud-provider**: Generic Terraform provider for simulation and multi-cloud workflows
+- **cube-server**: Simulation backend for testing and development
+- **shared/**: Common code shared across all applications (models, utilities, sim-server integration)
+- **client/**: API client and formatting utilities
+
+## Current Sprint Tasks (This Week)
+
+### Phase B: Strategic Architecture (ACTIVE)
+- [x] Scaffold terraform-multicloud-provider structure
+- [ ] Design provider plugin architecture using shared/ models
+
+### Phase A: Fix & Test Immediately (NEXT)
+- [ ] Fix compilation issues in client/pkg/output/formatter.go
+- [ ] Add missing AWS dependencies to multitool
+- [ ] Fix vendor directory inconsistencies
+- [ ] Test multitool Azure functions in both direct and simulation modes
+- [ ] Implement missing API client methods for cube-server integration
+
+### Phase C: Expand Functionality (AFTER A)
+- [ ] Add more cloud providers to multitool (AWS, GCP basics)
+- [ ] Enhance werfty-generator capabilities
+- [ ] Implement object storage commands across providers
+
 ## Milestones
 - [ ] Finalize example coverage and documentation for all scenarios
 - [ ] Set up automated integration testing (CI, example validation)
 - [ ] Expand documentation and developer onboarding materials
-- [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
+- [ ] Complete shared module integration across all components (high priority):
+    - Ensure all applications use unified models from shared/
+    - Standardize API interfaces between multitool, generators, and cube-server
+    - Complete migration of common code to shared/ module
+    - Step-by-step suggestions:
+        1. Audit current shared/ usage across multitool, werfty-generator, werfty-transformator
+        2. Move remaining common models and utilities to shared/
+        3. Update import paths in all applications to use shared/
+        4. Standardize error handling and logging across components
+        5. Document shared module API and usage patterns
 - [ ] Add StackIT, Hetzner, and IONOS object storage support (abstraction + mock logic) [medium priority]
 - [ ] Add Azure DevOps support to multitool framework (medium priority):
     - Implement Azure DevOps project, pipeline, and repository management
@@ -18,69 +56,101 @@
         4. Integrate with existing Azure functions for unified Azure management
         5. Add comprehensive authentication and organization handling for Azure DevOps
         6. Document Azure DevOps multitool usage and CI/CD integration examples
-- [ ] Add Azure functions to multitool framework (high priority):
-    - Implement Azure Monitor, Log Analytics, Application Insights, and Budget management
-    - Support for AKS cluster operations and monitoring stack creation
-    - Integration with existing transformer/generator Azure functions
+- [x] Add Azure functions to multitool framework (high priority) - COMPLETED:
+    - [x] Implement Azure Monitor, Log Analytics, Application Insights, and Budget management
+    - [x] Support for AKS cluster operations and monitoring stack creation
+    - [x] Integration with existing transformer/generator Azure functions
+    - [x] Step-by-step suggestions:
+        1. [x] Add Azure provider commands to multitool CLI (monitor, loganalytics, appinsights, budget, aks)
+        2. [ ] Implement Azure SDK integration for real cloud operations - IN PROGRESS
+        3. [x] Add simulation mode support via cube-server proxy
+        4. [x] Integrate with multitool provider commands for Azure monitoring and budget operations
+        5. [x] Add comprehensive error handling and validation for Azure operations
+        6. [ ] Document Azure multitool usage and workflow examples - PENDING
+- [ ] Test Azure functions with simulator and direct mode (high priority):
+    - [ ] Test simulation mode functionality via cube-server
+    - [ ] Implement missing API client methods (ExecuteSimulation, GetProviderInfo, etc.)
+    - [ ] Test direct mode with real Azure SDK integration
+    - [ ] Validate error handling and output formatting
+    - [ ] Add integration tests for both modes
+- [ ] Enhance werfty-generator application (high priority):
+    - Creates new Terraform templates from cloud state (JSON/YAML → .tf files)
+    - Multi-cloud code generation (Azure, AWS, GCP, Hetzner, StackIT, IONOS)
+    - Integration with cube-server for simulation workflows
+    - Uses shared/ models for consistent data structures
     - Step-by-step suggestions:
-        1. Add Azure provider commands to multitool CLI (monitor, loganalytics, appinsights, budget, aks)
-        2. Implement Azure SDK integration for real cloud operations
-        3. Add simulation mode support via cube-server proxy
-        4. Integrate with werfty provider commands for Azure monitoring and budget operations
-        5. Add comprehensive error handling and validation for Azure operations
-        6. Document Azure multitool usage and workflow examples
-- [ ] Enhance terraform-provider via punchbag generator (high priority):
-    - Act as a multi-layer-cloud provider to run simulations against cube-server
-    - Expose an interface for werfty-transformator to migrate Terraform code between cloud providers
+        1. Extend werfty-generator to support more cloud providers and resources
+        2. Add JSON/YAML input support for template generation from multitool exports
+        3. Implement provider-specific template optimization and best practices
+        4. Add CLI interface for batch template generation
+        5. Integrate with multitool workflow (mt export → werfty-generator → .tf files)
+        6. Use shared/ models for input/output data consistency
+        7. Document werfty-generator usage and integration examples
+- [ ] Enhance werfty-transformator application (high priority):
+    - Imports and exports Terraform code between cloud providers (.tf ↔ .tf)
+    - Cross-cloud migration and translation capabilities
+    - Uses shared/ models for provider mapping and translation rules
+    - Integration with cube-server for validation and testing
     - Step-by-step suggestions:
-        1. Refactor punchbag generator to expose a Go API and CLI for provider simulation and migration.
-        2. Implement a Terraform provider plugin that proxies resource CRUD to punchbag/cube-server for simulation.
-        3. Add a migration interface for werfty-transformator to convert Terraform HCL between providers using punchbag logic.
-        4. Document provider mapping, simulation, and migration workflows.
-        5. Add integration tests for simulation and migration via the Terraform provider.
-- [ ] Add CLI support to multitool for managing object storage across all clouds (high priority):
-    - Support direct management (create, list, delete, etc.) for AWS, Azure, GCP, StackIT, Hetzner, IONOS
-    - Support management via simulation/proxy through sim-server or cube-server
+        1. Implement HCL parsing and AST manipulation for .tf files
+        2. Add provider mapping rules using shared/ models
+        3. Support bidirectional transformation (Azure ↔ AWS, GCP ↔ Hetzner, etc.)
+        4. Add validation via cube-server simulation before transformation
+        5. Implement resource dependency analysis and preservation
+        6. Add CLI interface for batch transformations
+        7. Document transformation rules and supported provider pairs
+- [ ] Develop terraform-multicloud-provider (high priority):
+    - Generic Terraform provider for simulation and multi-cloud workflows
+    - Proxies operations to cube-server for simulation
+    - Supports real cloud operations via provider delegation
+    - Uses shared/ models for consistent resource definitions
     - Step-by-step suggestions:
-        1. Extend multitool CLI to add unified object storage commands (create, list, delete, etc.)
-        2. Implement provider selection and config (direct vs. proxy/simulation)
-        3. Integrate with sim-server/cube-server APIs for simulation mode
-        4. Add tests and documentation for all supported providers and modes
-- [ ] Modularize monorepo for standalone multitool/mt releases and shared Go modules (medium priority):
-    - Add go.mod to multitool/ and shared/ directories
-    - Use go.work at repo root for local development
-    - Ensure all imports use canonical module paths
-    - Document and automate release process for mt binary and shared Go modules
-    - Document the new modular/release workflow for multitool/mt and shared modules (medium priority)
-    - Automate the release process for mt and shared modules (medium priority)
-    - Set up GitHub Actions or CI for building and releasing mt and shared modules (medium priority)
-    - Test the CLI and shared modules in both local development and release scenarios (medium priority)
-    - Add CLI support to multitool/mt for Azure logging and Application Insights management (medium priority):
-        - Implement logging and App Insights resource management for Azure first
-        - Plan enhancements for other providers (AWS, GCP, etc.) in future steps
-- [ ] Add automation/CI-friendly mode to multitool/mt:
-    - Add --skip-prompts and --automation-mode flags (alias: --automation-mode=true)
-    - When enabled, skip all interactive prompts, use --force for destructive actions, and print clear colored output for automation (red for errors, green for success)
-    - Prepare to support reading these flags from a config file in the future
-    - Improve CLI workflow for automation and scripting
+        1. [x] Scaffold terraform-multicloud-provider basic structure
+        2. [ ] Implement Terraform provider plugin architecture using shared/ models
+        3. [ ] Add resource CRUD operations that proxy to cube-server for simulation
+        4. [ ] Support real cloud operations via direct provider delegation
+        5. [ ] Add migration interface for werfty-transformator HCL conversion
+        6. [ ] Implement provider mapping and simulation workflows
+        7. [ ] Add comprehensive integration tests for simulation and migration
+        8. [ ] Document provider usage, simulation, and migration workflows
+- [ ] Enhance multitool CLI capabilities (high priority):
+    - Direct cloud operations with option to proxy via cube-server
+    - Export cloud state for werfty-generator input
+    - Import/export configurations for werfty-transformator
+    - Unified object storage management across all clouds
+    - Step-by-step suggestions:
+        1. Add export commands to generate JSON/YAML for werfty-generator
+        2. Add import commands to apply configurations from werfty-transformator
+        3. Extend object storage commands (create, list, delete, etc.) for all providers
+        4. Implement provider selection and config (direct vs. proxy/simulation)
+        5. Add batch operations and scripting support
+        6. Integrate with sim-server/cube-server APIs for simulation mode
+        7. Add tests and documentation for all supported providers and modes
 
 ## Next Steps
-- [ ] Finalize example coverage and documentation for all scenarios
+- [ ] Complete shared/ module integration and standardization
+- [ ] Fix compilation issues in client/pkg/output/formatter.go
+- [ ] Test multitool Azure functions in both direct and simulation modes
+- [ ] Implement missing API client methods for cube-server integration
+- [ ] Add comprehensive integration tests for the complete workflow:
+    1. multitool export cloud state → JSON/YAML
+    2. werfty-generator create Terraform → .tf files
+    3. werfty-transformator migrate between clouds → .tf files
+    4. terraform-provider-punchbag simulate and validate
 - [ ] Set up automated integration testing (CI, example validation)
 - [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
 - [ ] Expand documentation and developer onboarding materials
-- [ ] Prepare release process and distribution (versioning, changelog, binaries)
-- [ ] Fix and re-enable failing provider simulation API tests in `server/api/provider_simulation_test.go` (currently failing with 400/Invalid request body and nil interface conversion). Ignore for now, revisit after break.
-- [ ] Add automated Go test for Hetzner S3 bucket create/delete workflow using automation mode flags (objectstorage create/delete, region fsn1, env credentials)
-- [ ] Document and automate the steps to spin up and tear down (pin down) a Hetzner Kubernetes (K8s) service:
-    1. Prerequisites: Hetzner Cloud account, API token, and CLI tools (hcloud, kubectl).
-    2. Set environment variables: export HCLOUD_TOKEN=... and configure kubeconfig.
-    3. Create a new K8s cluster using Hetzner CLI or API (hcloud context, hcloud cluster create ...).
-    4. Wait for cluster provisioning and retrieve kubeconfig.
-    5. Deploy workloads or test connectivity with kubectl.
-    6. Tear down: delete the cluster and associated resources (hcloud cluster delete ...).
-    7. Clean up any remaining volumes, networks, or load balancers.
-    8. Automate these steps in a script for CI/CD or local testing.
+- [ ] Fix and re-enable failing provider simulation API tests in `server/api/provider_simulation_test.go`
+- [ ] Add automated Go test for Hetzner S3 bucket create/delete workflow using automation mode flags
+- [ ] Document and automate the steps to spin up and tear down Hetzner Kubernetes (K8s) service
+
+## Integration Workflow Vision
+1. **multitool export**: Download current cloud state → JSON/YAML files
+2. **werfty-generator**: Convert cloud state → Terraform .tf files
+3. **werfty-transformator**: Migrate .tf files between cloud providers
+4. **terraform-multicloud-provider**: Simulate and test Terraform configurations
+5. **cube-server**: Provide simulation backend for all components
+6. **shared/**: Ensure consistent data models across all applications
 
 ## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
@@ -88,33 +158,22 @@
 - [ ] Add support for StackIT Object Storage in generator
 - [ ] Further automate the Terraform generation workflow (e.g., config-driven, batch generation, etc.)
 - [ ] Add more provider pairs and conversion logic to `werfty-transformator`
-- [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only, and add a notice with the commit hash and author info.
+- [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only
 
 ## Notes
-- There should be only one `multitool` directory in the workspace. Remove or merge any duplicates to avoid confusion and Go module issues.
+- All new features and refactors should use the unified model layer in `shared/`
+- Keep Terraform provider code and backend logic strictly separated
+- Ensure clear distinction between:
+    - **werfty-generator**: Creates new Terraform code from cloud state
+    - **werfty-transformator**: Transforms existing Terraform code between providers
+    - **multitool**: Direct cloud operations with optional cube-server proxy
+    - **terraform-provider-punchbag**: Generic provider for simulation workflows
+- Always check shared/ module usage for consistency across applications
+- Use environment variables (e.g., PUNCHBAG_BASE_DIR) for all scripts and automation
 
----
-
-**Note:**
-- All new features and refactors should use the unified model layer in `shared/`.
-- Keep Terraform provider code and backend logic strictly separated.
-- Ensure all documentation, scripts, and instructions clearly distinguish between:
-    - `multitool/` (the source directory)
-    - `mt` (the CLI binary built from multitool)
-- Always run the CLI as `./mt ...` from within the `multitool` directory, not as `./multitool/mt` or similar.
-- Update all README, help, and onboarding docs to avoid confusion between the directory and the binary.
-- Always check and set the correct working directory before running tests or commands. Use an environment variable (e.g., PUNCHBAG_BASE_DIR) as the base directory for all scripts and automation.
-
-- Action plan for object storage provider integration:
-  1. Ensure each provider uses the best/official SDK or API:
-     - AWS: AWS SDK for S3
-     - Azure: Azure SDK for Go (Blob Storage)
-     - GCP: Google Cloud Storage SDK for Go
-     - Hetzner: S3-compatible API (AWS SDK)
-     - StackIT/IONOS: S3-compatible or official SDK
-  2. Integrate and test each provider in the CLI, starting with Hetzner S3.
-  3. Add full debug/error output for all create/list/delete operations.
-  4. Only fall back to mock implementations if no credentials/config are found.
-  5. Document and validate all endpoints, credentials, and region handling.
-
-- Start with Hetzner S3: ensure real bucket creation, listing, and error handling work end-to-end.
+## Architecture Validation Checklist
+- [ ] All applications properly use shared/ models
+- [ ] Clear separation between generator (new code) and transformator (existing code)
+- [ ] multitool supports both direct and proxy modes
+- [ ] cube-server integration works across all components
+- [ ] API consistency between multitool, generators, and terraform provider
