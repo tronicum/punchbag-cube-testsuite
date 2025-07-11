@@ -7,6 +7,28 @@
 - [ ] Enhance generator/transformator for more providers/resources and config-driven workflows
 - [ ] Prepare release process and distribution (versioning, changelog, binaries)
 - [ ] Add StackIT, Hetzner, and IONOS object storage support (abstraction + mock logic) [medium priority]
+- [ ] Add Azure DevOps support to multitool framework (medium priority):
+    - Implement Azure DevOps project, pipeline, and repository management
+    - Support for Azure Boards, Repos, Artifacts, and Test Plans operations
+    - Integration with existing Azure provider functions and CI/CD workflows
+    - Step-by-step suggestions:
+        1. Add Azure DevOps provider commands to multitool CLI (projects, pipelines, repos, boards)
+        2. Implement Azure DevOps REST API integration for real operations
+        3. Add simulation mode support via cube-server proxy for DevOps resources
+        4. Integrate with existing Azure functions for unified Azure management
+        5. Add comprehensive authentication and organization handling for Azure DevOps
+        6. Document Azure DevOps multitool usage and CI/CD integration examples
+- [ ] Add Azure functions to multitool framework (high priority):
+    - Implement Azure Monitor, Log Analytics, Application Insights, and Budget management
+    - Support for AKS cluster operations and monitoring stack creation
+    - Integration with existing transformer/generator Azure functions
+    - Step-by-step suggestions:
+        1. Add Azure provider commands to multitool CLI (monitor, loganalytics, appinsights, budget, aks)
+        2. Implement Azure SDK integration for real cloud operations
+        3. Add simulation mode support via cube-server proxy
+        4. Integrate with werfty provider commands for Azure monitoring and budget operations
+        5. Add comprehensive error handling and validation for Azure operations
+        6. Document Azure multitool usage and workflow examples
 - [ ] Enhance terraform-provider via punchbag generator (high priority):
     - Act as a multi-layer-cloud provider to run simulations against cube-server
     - Expose an interface for werfty-transformator to migrate Terraform code between cloud providers
