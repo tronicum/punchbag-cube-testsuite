@@ -1,3 +1,7 @@
-module github.com/tronicum/punchbag-cube-testsuite/shared
+module punchbag-cube-testsuite/shared
 
 go 1.21
+
+require (
+	// Add dependencies as needed
+)
