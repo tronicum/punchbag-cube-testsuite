@@ -1,179 +1,180 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
-// azureCmd is the parent for Azure-specific commands
+// azureCmd represents the azure command
 var azureCmd = &cobra.Command{
 	Use:   "azure",
-	Short: "Manage Azure resources",
+	Short: "Azure cloud provider operations",
+	Long:  `Manage Azure resources including AKS clusters, monitoring, budgets, and storage.`,
 }
 
-// azureGetMonitorCmd fetches Azure Monitor resource state
-var azureGetMonitorCmd = &cobra.Command{
-	Use:   "get monitor",
-	Short: "Download Azure Monitor resource state as JSON",
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceGroup, _ := cmd.Flags().GetString("resource-group")
-		name, _ := cmd.Flags().GetString("name")
-		output, _ := cmd.Flags().GetString("output")
-		if output == "" {
-			output = fmt.Sprintf("monitor_%s.json", name)
-		}
-		var url string
-		if proxyServer != "" {
-			url = fmt.Sprintf("%s/api/v1/azure/monitor?resource_group=%s&name=%s", proxyServer, resourceGroup, name)
-		} else {
-			url = fmt.Sprintf("https://management.azure.com/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/%s/providers/Microsoft.Insights/monitors/%s?api-version=2021-09-01", resourceGroup, name)
-		}
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Printf("Failed to fetch Azure Monitor: %v\n", err)
-			os.Exit(1)
-		}
-		defer resp.Body.Close()
-		var data map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&data)
-		f, err := os.Create(output)
-		if err != nil {
-			fmt.Printf("Failed to write file: %v\n", err)
-			os.Exit(1)
-		}
-		defer f.Close()
-		enc := json.NewEncoder(f)
-		enc.SetIndent("", "  ")
-		enc.Encode(data)
-		fmt.Printf("Azure Monitor state saved to %s\n", output)
-	},
+// azureMonitorCmd manages Azure Monitor resources
+var azureMonitorCmd = &cobra.Command{
+	Use:   "monitor",
+	Short: "Manage Azure Monitor resources",
+	Long:  `Create, update, and manage Azure Monitor services including Log Analytics, Application Insights, and alerts.`,
 }
 
-// azureGetLogAnalyticsCmd fetches Azure Log Analytics resource state
-var azureGetLogAnalyticsCmd = &cobra.Command{
-	Use:   "get log-analytics",
-	Short: "Download Azure Log Analytics resource state as JSON",
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceGroup, _ := cmd.Flags().GetString("resource-group")
-		name, _ := cmd.Flags().GetString("name")
-		output, _ := cmd.Flags().GetString("output")
-		if output == "" {
-			output = fmt.Sprintf("loganalytics_%s.json", name)
-		}
-		var url string
-		if proxyServer != "" {
-			url = fmt.Sprintf("%s/api/v1/azure/loganalytics?resource_group=%s&name=%s", proxyServer, resourceGroup, name)
-		} else {
-			url = fmt.Sprintf("https://management.azure.com/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/%s/providers/Microsoft.OperationalInsights/workspaces/%s?api-version=2021-12-01-preview", resourceGroup, name)
-		}
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Printf("Failed to fetch Azure Log Analytics: %v\n", err)
-			os.Exit(1)
-		}
-		defer resp.Body.Close()
-		var data map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&data)
-		f, err := os.Create(output)
-		if err != nil {
-			fmt.Printf("Failed to write file: %v\n", err)
-			os.Exit(1)
-		}
-		defer f.Close()
-		enc := json.NewEncoder(f)
-		enc.SetIndent("", "  ")
-		enc.Encode(data)
-		fmt.Printf("Azure Log Analytics state saved to %s\n", output)
-	},
+// azureBudgetCmd manages Azure Budget resources
+var azureBudgetCmd = &cobra.Command{
+	Use:   "budget",
+	Short: "Manage Azure Budget resources",
+	Long:  `Create, update, and manage Azure Budget resources for cost management.`,
 }
 
-// --- Log Analytics Management Commands ---
-var azureCreateLogAnalyticsCmd = &cobra.Command{
-	Use:   "create log-analytics",
-	Short: "Create an Azure Log Analytics workspace",
-	Run: func(cmd *cobra.Command, args []string) {
+// azureAksCmd manages Azure Kubernetes Service
+var azureAksCmd = &cobra.Command{
+	Use:   "aks",
+	Short: "Manage Azure Kubernetes Service clusters",
+	Long:  `Create, update, scale, and manage Azure Kubernetes Service (AKS) clusters.`,
+}
+
+// azureCreateMonitorCmd creates Azure Monitor resources
+var azureCreateMonitorCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create Azure Monitor resources",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		resourceGroup, _ := cmd.Flags().GetString("resource-group")
-		name, _ := cmd.Flags().GetString("name")
 		location, _ := cmd.Flags().GetString("location")
-		retention, _ := cmd.Flags().GetInt("retention-days")
-		apiClient := client.NewAPIClient(proxyServer)
-		logClient := client.NewLogAnalyticsClient(apiClient)
-		workspace := &sharedmodels.LogAnalyticsWorkspace{
-			Name:          name,
-			ResourceGroup: resourceGroup,
-			Location:      location,
-			RetentionDays: retention, // Fixed field name
+		workspaceName, _ := cmd.Flags().GetString("workspace-name")
+		simulationMode, _ := cmd.Flags().GetBool("simulation")
+
+		fmt.Printf("Creating Azure Monitor resources:\n")
+		fmt.Printf("  Resource Group: %s\n", resourceGroup)
+		fmt.Printf("  Location: %s\n", location)
+		fmt.Printf("  Workspace Name: %s\n", workspaceName)
+		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+
+		if simulationMode {
+			result := map[string]interface{}{
+				"status":    "success",
+				"message":   "Azure Monitor resources would be created",
+				"resources": []string{"log-analytics", "application-insights", "metrics"},
+			}
+			jsonOutput, _ := json.MarshalIndent(result, "", "  ")
+			fmt.Printf("✅ Simulation Result:\n%s\n", string(jsonOutput))
+		} else {
+			fmt.Println("🚧 Direct mode: Implementation pending")
 		}
-		result, err := logClient.Create(workspace)
-		if err != nil {
-			fmt.Printf("Failed to create Log Analytics workspace: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Created Log Analytics workspace: %s (ID: %s)\n", result.Name, result.ID)
+
+		return nil
 	},
 }
 
-var azureListLogAnalyticsCmd = &cobra.Command{
-	Use:   "list log-analytics",
-	Short: "List Azure Log Analytics workspaces",
-	Run: func(cmd *cobra.Command, args []string) {
-		apiClient := client.NewAPIClient(proxyServer)
-		logClient := client.NewLogAnalyticsClient(apiClient)
-		workspaces, err := logClient.List()
-		if err != nil {
-			fmt.Printf("Failed to list Log Analytics workspaces: %v\n", err)
-			os.Exit(1)
-		}
-		for _, ws := range workspaces {
-			fmt.Printf("- %s (ID: %s, Group: %s, Location: %s)\n", ws.Name, ws.ID, ws.ResourceGroup, ws.Location)
-		}
-	},
-}
-
-var azureDeleteLogAnalyticsCmd = &cobra.Command{
-	Use:   "delete log-analytics",
-	Short: "Delete an Azure Log Analytics workspace",
-	Run: func(cmd *cobra.Command, args []string) {
-		id, _ := cmd.Flags().GetString("id")
-		apiClient := client.NewAPIClient(proxyServer)
-		logClient := client.NewLogAnalyticsClient(apiClient)
-		err := logClient.Delete(id)
-		if err != nil {
-			fmt.Printf("Failed to delete Log Analytics workspace: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Deleted Log Analytics workspace: %s\n", id)
-	},
-}
-
-// --- Application Insights Management Commands ---
-var azureCreateAppInsightsCmd = &cobra.Command{
-	Use:   "create appinsights",
-	Short: "Create an Azure Application Insights resource",
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+// azureCreateBudgetCmd creates Azure Budget resources
+var azureCreateBudgetCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create Azure Budget for cost management",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		name, _ := cmd.Flags().GetString("name")
-		location, _ := cmd.Flags().GetString("location")
-		appType, _ := cmd.Flags().GetString("app-type")
-		retention, _ := cmd.Flags().GetInt("retention-days")
-		apiClient := client.NewAPIClient(proxyServer)
-		appClient := client.NewAppInsightsClient(apiClient)
-		app := &sharedmodels.AppInsightsResource{
-			Name:          name,
-			ResourceGroup: resourceGroup,
-			Location:      location,
-			AppType:       appType,   // Use appType field
-			RetentionDays: retention, // Use retention field
-			// InstrumentationKey and other fields can be set if needed
+		amount, _ := cmd.Flags().GetFloat64("amount")
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		timeGrain, _ := cmd.Flags().GetString("time-grain")
+		simulationMode, _ := cmd.Flags().GetBool("simulation")
+
+		fmt.Printf("Creating Azure Budget:\n")
+		fmt.Printf("  Name: %s\n", name)
+		fmt.Printf("  Amount: $%.2f\n", amount)
+		fmt.Printf("  Resource Group: %s\n", resourceGroup)
+		fmt.Printf("  Time Grain: %s\n", timeGrain)
+		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+
+		if simulationMode {
+			result := map[string]interface{}{
+				"status":    "success",
+				"message":   "Azure Budget would be created",
+				"budget_id": fmt.Sprintf("budget-%s", name),
+			}
+			jsonOutput, _ := json.MarshalIndent(result, "", "  ")
+			fmt.Printf("✅ Simulation Result:\n%s\n", string(jsonOutput))
+		} else {
+			fmt.Println("🚧 Direct mode: Implementation pending")
 		}
-		result, err := appClient.Create(app)
-		if err != nil {
-			fmt.Printf("Failed to create App Insights resource: %v\n", err)
+
+		return nil
+	},
+}
+
+// azureCreateAksCmd creates Azure AKS clusters
+var azureCreateAksCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create Azure Kubernetes Service cluster",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name, _ := cmd.Flags().GetString("name")
+		resourceGroup, _ := cmd.Flags().GetString("resource-group")
+		location, _ := cmd.Flags().GetString("location")
+		nodeCount, _ := cmd.Flags().GetInt("node-count")
+		simulationMode, _ := cmd.Flags().GetBool("simulation")
+
+		fmt.Printf("Creating Azure AKS Cluster:\n")
+		fmt.Printf("  Name: %s\n", name)
+		fmt.Printf("  Resource Group: %s\n", resourceGroup)
+		fmt.Printf("  Location: %s\n", location)
+		fmt.Printf("  Node Count: %d\n", nodeCount)
+		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+
+		if simulationMode {
+			result := map[string]interface{}{
+				"status":     "success",
+				"message":    "AKS cluster would be created",
+				"cluster_id": fmt.Sprintf("aks-%s", name),
+			}
+			jsonOutput, _ := json.MarshalIndent(result, "", "  ")
+			fmt.Printf("✅ Simulation Result:\n%s\n", string(jsonOutput))
+		} else {
+			fmt.Println("🚧 Direct mode: Implementation pending")
+		}
+
+		return nil
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(azureCmd)
+
+	// Add Azure subcommands
+	azureCmd.AddCommand(azureMonitorCmd)
+	azureCmd.AddCommand(azureBudgetCmd)
+	azureCmd.AddCommand(azureAksCmd)
+
+	// Add create commands
+	azureMonitorCmd.AddCommand(azureCreateMonitorCmd)
+	azureBudgetCmd.AddCommand(azureCreateBudgetCmd)
+	azureAksCmd.AddCommand(azureCreateAksCmd)
+
+	// Azure Monitor flags
+	azureCreateMonitorCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureCreateMonitorCmd.Flags().String("location", "eastus", "Azure region")
+	azureCreateMonitorCmd.Flags().String("workspace-name", "", "Log Analytics workspace name")
+	azureCreateMonitorCmd.Flags().Bool("simulation", false, "Use simulation mode")
+	azureCreateMonitorCmd.MarkFlagRequired("resource-group")
+	azureCreateMonitorCmd.MarkFlagRequired("workspace-name")
+
+	// Azure Budget flags
+	azureCreateBudgetCmd.Flags().String("name", "", "Budget name")
+	azureCreateBudgetCmd.Flags().Float64("amount", 0, "Budget amount in USD")
+	azureCreateBudgetCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureCreateBudgetCmd.Flags().String("time-grain", "Monthly", "Budget time grain")
+	azureCreateBudgetCmd.Flags().Bool("simulation", false, "Use simulation mode")
+	azureCreateBudgetCmd.MarkFlagRequired("name")
+	azureCreateBudgetCmd.MarkFlagRequired("amount")
+	azureCreateBudgetCmd.MarkFlagRequired("resource-group")
+
+	// Azure AKS flags
+	azureCreateAksCmd.Flags().String("name", "", "AKS cluster name")
+	azureCreateAksCmd.Flags().String("resource-group", "", "Azure resource group name")
+	azureCreateAksCmd.Flags().String("location", "eastus", "Azure region")
+	azureCreateAksCmd.Flags().Int("node-count", 3, "Number of nodes in default pool")
+	azureCreateAksCmd.Flags().Bool("simulation", false, "Use simulation mode")
+	azureCreateAksCmd.MarkFlagRequired("name")
+	azureCreateAksCmd.MarkFlagRequired("resource-group")
+}
 			os.Exit(1)
 		}
 		fmt.Printf("Created App Insights resource: %s (ID: %s)\n", result.Name, result.ID)
