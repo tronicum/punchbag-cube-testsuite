@@ -103,7 +103,7 @@ type TestResultsResponse struct {
 // doRequest performs an HTTP request
 func (c *Client) doRequest(method, path string, body interface{}) (*http.Response, error) {
 	url := c.BaseURL + path
-
+	
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -301,7 +301,7 @@ func (c *Client) CreateStackITCluster(name, projectID, region string, config map
 			},
 		},
 	}
-
+	
 	// Merge additional config
 	if config != nil {
 		if stackitConfig, ok := cluster.Config["stackit_config"].(map[string]interface{}); ok {
@@ -310,7 +310,7 @@ func (c *Client) CreateStackITCluster(name, projectID, region string, config map
 			}
 		}
 	}
-
+	
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -327,7 +327,7 @@ func (c *Client) CreateAzureCluster(name, resourceGroup, location string, config
 			},
 		},
 	}
-
+	
 	// Merge additional config
 	if config != nil {
 		if azureConfig, ok := cluster.Config["azure_config"].(map[string]interface{}); ok {
@@ -336,7 +336,7 @@ func (c *Client) CreateAzureCluster(name, resourceGroup, location string, config
 			}
 		}
 	}
-
+	
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -352,7 +352,7 @@ func (c *Client) CreateHetznerCluster(name, location string, config map[string]i
 			},
 		},
 	}
-
+	
 	// Merge additional config
 	if config != nil {
 		if hetznerConfig, ok := cluster.Config["hetzner_config"].(map[string]interface{}); ok {
@@ -361,7 +361,7 @@ func (c *Client) CreateHetznerCluster(name, location string, config map[string]i
 			}
 		}
 	}
-
+	
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -377,7 +377,7 @@ func (c *Client) CreateIONOSCluster(name, datacenterID string, config map[string
 			},
 		},
 	}
-
+	
 	// Merge additional config
 	if config != nil {
 		if ionosConfig, ok := cluster.Config["ionos_config"].(map[string]interface{}); ok {
@@ -386,7 +386,7 @@ func (c *Client) CreateIONOSCluster(name, datacenterID string, config map[string
 			}
 		}
 	}
-
+	
 	return c.CreateMultiCloudCluster(cluster)
 }
 
@@ -461,12 +461,12 @@ func (c *Client) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTest
 		TestType:  testReq.TestType,
 		Config:    testReq.Config,
 	}
-
+	
 	result, err := c.RunTest(clusterID, multiTestReq)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// Convert to AKSTestResult for backward compatibility
 	aksResult := &AKSTestResult{
 		ID:          result.ID,
@@ -479,7 +479,7 @@ func (c *Client) RunAKSTest(clusterID string, testReq *AKSTestRequest) (*AKSTest
 		StartedAt:   result.StartedAt,
 		CompletedAt: result.CompletedAt,
 	}
-
+	
 	return aksResult, nil
 }
 
@@ -512,7 +512,7 @@ func (c *Client) GetAKSTestResult(id string) (*AKSTestResult, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// Convert to AKSTestResult for backward compatibility
 	aksResult := &AKSTestResult{
 		ID:          result.ID,
@@ -525,7 +525,7 @@ func (c *Client) GetAKSTestResult(id string) (*AKSTestResult, error) {
 		StartedAt:   result.StartedAt,
 		CompletedAt: result.CompletedAt,
 	}
-
+	
 	return aksResult, nil
 }
 
@@ -555,7 +555,7 @@ func (c *Client) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// Convert to AKSTestResult for backward compatibility
 	aksResults := make([]*AKSTestResult, len(results))
 	for i, result := range results {
@@ -571,138 +571,106 @@ func (c *Client) ListAKSTestResults(clusterID string) ([]*AKSTestResult, error) 
 			CompletedAt: result.CompletedAt,
 		}
 	}
-
+	
 	return aksResults, nil
 }
 
 // ValidateProvider validates a cloud provider configuration
 func (c *Client) ValidateProvider(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/validate/%s", c.baseURL, provider)
-
+	
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-
+	
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("validation failed with status: %s", resp.Status)
 	}
-
+	
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-
+	
 	return result, nil
 }
 
 // GetProviderInfo gets information about a cloud provider
 func (c *Client) GetProviderInfo(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/info", c.baseURL, provider)
-
+	
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-
+	
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
 	}
-
+	
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-
+	
 	return result, nil
 }
 
 // ListProviderClusters lists clusters for a specific provider
 func (c *Client) ListProviderClusters(provider string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/clusters", c.baseURL, provider)
-
+	
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-
+	
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
 	}
-
+	
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-
+	
 	return result, nil
 }
 
 // ExecuteProviderOperation executes a provider-specific operation
 func (c *Client) ExecuteProviderOperation(provider, operation, params string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/v1/providers/%s/operations/%s", c.baseURL, provider, operation)
-
+	
 	// Parse params as JSON
 	var paramData map[string]interface{}
 	if err := json.Unmarshal([]byte(params), &paramData); err != nil {
 		return nil, fmt.Errorf("failed to parse params JSON: %w", err)
 	}
-
+	
 	// Create request body
 	body, err := json.Marshal(paramData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-
+	
 	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
-
+	
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("operation failed with status: %s", resp.Status)
 	}
-
+	
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-
-	return result, nil
-}
-
-// ExecuteSimulation executes a simulation operation via cube-server
-func (c *Client) ExecuteSimulation(provider, resourceType, operation string, params map[string]interface{}) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/api/v1/simulator/%s/%s", c.baseURL, provider, resourceType)
-
-	payload := map[string]interface{}{
-		"operation":  operation,
-		"parameters": params,
-	}
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal simulation request: %w", err)
-	}
-
-	resp, err := c.HTTPClient.Post(url, "application/json", bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("simulation request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("simulation failed with status %d", resp.StatusCode)
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode simulation response: %w", err)
-	}
-
+	
 	return result, nil
 }
