@@ -2,6 +2,7 @@ package mock
 
 import (
 	"time"
+
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
@@ -14,8 +15,8 @@ var (
 // In-memory stores for AKS, Log Analytics, and Budget mocks
 var (
 	mockAksClusters  = []*sharedmodels.Cluster{}
-	mockLogAnalytics  = []*sharedmodels.LogAnalyticsWorkspace{}
-	mockBudgets       = []*sharedmodels.AzureBudget{}
+	mockLogAnalytics = []*sharedmodels.LogAnalyticsWorkspace{}
+	mockBudgets      = []*sharedmodels.AzureBudget{}
 )
 
 // In-memory store for Blob Storage mocks
@@ -45,7 +46,9 @@ func MockCreateEks(cluster *sharedmodels.Cluster) *sharedmodels.Cluster {
 func MockListEks() []*sharedmodels.Cluster { return mockEksClusters }
 func MockGetEks(id string) *sharedmodels.Cluster {
 	for _, c := range mockEksClusters {
-		if c.ID == id { return c }
+		if c.ID == id {
+			return c
+		}
 	}
 	return nil
 }
@@ -70,7 +73,9 @@ func MockCreateS3(bucket *sharedmodels.ObjectStorageBucket) *sharedmodels.Object
 func MockListS3() []*sharedmodels.ObjectStorageBucket { return mockS3Buckets }
 func MockGetS3(id string) *sharedmodels.ObjectStorageBucket {
 	for _, b := range mockS3Buckets {
-		if b.ID == id { return b }
+		if b.ID == id {
+			return b
+		}
 	}
 	return nil
 }
@@ -96,7 +101,9 @@ func MockCreateAks(cluster *sharedmodels.Cluster) *sharedmodels.Cluster {
 func MockListAks() []*sharedmodels.Cluster { return mockAksClusters }
 func MockGetAks(id string) *sharedmodels.Cluster {
 	for _, c := range mockAksClusters {
-		if c.ID == id { return c }
+		if c.ID == id {
+			return c
+		}
 	}
 	return nil
 }
@@ -120,7 +127,9 @@ func MockCreateLogAnalytics(ws *sharedmodels.LogAnalyticsWorkspace) *sharedmodel
 func MockListLogAnalytics() []*sharedmodels.LogAnalyticsWorkspace { return mockLogAnalytics }
 func MockGetLogAnalytics(id string) *sharedmodels.LogAnalyticsWorkspace {
 	for _, ws := range mockLogAnalytics {
-		if ws.ID == id { return ws }
+		if ws.ID == id {
+			return ws
+		}
 	}
 	return nil
 }
@@ -144,7 +153,9 @@ func MockCreateBudget(budget *sharedmodels.AzureBudget) *sharedmodels.AzureBudge
 func MockListBudgets() []*sharedmodels.AzureBudget { return mockBudgets }
 func MockGetBudget(id string) *sharedmodels.AzureBudget {
 	for _, b := range mockBudgets {
-		if b.ID == id { return b }
+		if b.ID == id {
+			return b
+		}
 	}
 	return nil
 }
@@ -169,7 +180,9 @@ func MockCreateBlobStorage(bucket *sharedmodels.ObjectStorageBucket) *sharedmode
 func MockListBlobStorage() []*sharedmodels.ObjectStorageBucket { return mockBlobBuckets }
 func MockGetBlobStorage(id string) *sharedmodels.ObjectStorageBucket {
 	for _, b := range mockBlobBuckets {
-		if b.ID == id { return b }
+		if b.ID == id {
+			return b
+		}
 	}
 	return nil
 }
@@ -193,7 +206,9 @@ func MockCreateAppInsights(ai *sharedmodels.AppInsightsResource) *sharedmodels.A
 func MockListAppInsights() []*sharedmodels.AppInsightsResource { return mockAppInsights }
 func MockGetAppInsights(id string) *sharedmodels.AppInsightsResource {
 	for _, ai := range mockAppInsights {
-		if ai.ID == id { return ai }
+		if ai.ID == id {
+			return ai
+		}
 	}
 	return nil
 }
@@ -218,7 +233,9 @@ func MockCreateGCS(bucket *sharedmodels.ObjectStorageBucket) *sharedmodels.Objec
 func MockListGCS() []*sharedmodels.ObjectStorageBucket { return mockGcsBuckets }
 func MockGetGCS(id string) *sharedmodels.ObjectStorageBucket {
 	for _, b := range mockGcsBuckets {
-		if b.ID == id { return b }
+		if b.ID == id {
+			return b
+		}
 	}
 	return nil
 }
@@ -231,4 +248,5 @@ func MockDeleteGCS(id string) bool {
 	}
 	return false
 }
+
 // Add similar mocks for AWS CloudWatch and Budget as needed.

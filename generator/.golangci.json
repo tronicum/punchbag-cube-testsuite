@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "run": {
+    "tests": true,
+    "timeout": "5m"
+  },
+  "linters": {
+    "enable": [
+      "govet",
+      "gofmt",
+      "revive",
+      "staticcheck",
+      "unused",
+      "errcheck",
+      "gosimple",
+      "ineffassign",
+      "structcheck",
+      "typecheck",
+      "varcheck"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Install dependencies
+        run: go mod download
+      - name: Build
+        run: go build ./...
+      - name: Lint
+        run: golangci-lint run || true
+      - name: Test
+        run: go test ./...
+      - name: Terraform Init
+        run: terraform init || true
+      - name: Terraform Validate
+        run: terraform validate || true
+      - name: TFLint
+        run: tflint || true
+      # Add your deployment step here, e.g. upload artifacts, deploy to cloud, etc.
+      # - name: Deploy to Cloud
+      #   run: ./deploy.sh

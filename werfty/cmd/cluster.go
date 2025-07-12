@@ -94,6 +94,19 @@ var clusterCreateCmd = &cobra.Command{
 				config["node_count"] = nodeCount
 			}
 
+			// Add Azure-specific features
+			enableMonitoring, _ := cmd.Flags().GetBool("enable-monitoring")
+			enableBudget, _ := cmd.Flags().GetBool("enable-budget")
+			budgetAmount, _ := cmd.Flags().GetFloat64("budget-amount")
+
+			if enableMonitoring {
+				config["enable_monitoring"] = true
+			}
+			if enableBudget {
+				config["enable_budget"] = true
+				config["budget_amount"] = budgetAmount
+			}
+
 			created, err = client.CreateAzureCluster(name, resourceGroup, location, config)
 
 		case "schwarz-stackit":
@@ -263,6 +276,9 @@ func init() {
 	// Azure-specific flags
 	clusterCreateCmd.Flags().String("resource-group", "", "Azure resource group (required for Azure)")
 	clusterCreateCmd.Flags().String("location", "", "Azure/Hetzner location (required for Azure/Hetzner)")
+	clusterCreateCmd.Flags().Bool("enable-monitoring", false, "Enable Azure Monitor for AKS")
+	clusterCreateCmd.Flags().Bool("enable-budget", false, "Enable Azure Budget for cost management")
+	clusterCreateCmd.Flags().Float64("budget-amount", 1000.0, "Budget amount for Azure cost management")
 
 	// StackIT-specific flags
 	clusterCreateCmd.Flags().String("project-id", "", "StackIT project ID (required for StackIT)")

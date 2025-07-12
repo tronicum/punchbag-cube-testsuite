@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 	store "github.com/tronicum/punchbag-cube-testsuite/store"
 
 	"github.com/gin-gonic/gin"

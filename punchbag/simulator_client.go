@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
 	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 )
 
 // SimulatorClient allows punchbag to call the cube-server simulation endpoints
-//
 type SimulatorClient struct {
 	BaseURL string
 }

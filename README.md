@@ -8,58 +8,193 @@ This project provides a complete ecosystem for testing various aspects of the pu
 - REST API server for multi-cloud cluster management and test execution
 - Command-line werfty for interacting with the API across cloud providers
 - Terraform provider for Infrastructure as Code (IaC) support
-- Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE)
+- Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE), Hetzner Cloud, IONOS Cloud
 - Performance and load testing capabilities across different cloud environments
+- **Comprehensive Azure support** including monitoring, budgets, and cost management
 
 ## Supported Cloud Providers
 
-- **Azure**: Azure Kubernetes Service (AKS)
+- **Azure**: Azure Kubernetes Service (AKS), Azure Monitor, Log Analytics, Application Insights, Azure Budgets
 - **StackIT (Schwarz IT)**: StackIT Kubernetes Engine (SKE)
-- **AWS**: Amazon Elastic Kubernetes Service (EKS) [planned]
-- **GCP**: Google Kubernetes Engine (GKE) [planned]
+- **AWS**: Amazon Elastic Kubernetes Service (EKS), CloudWatch, AWS Budgets [planned]
+- **GCP**: Google Kubernetes Engine (GKE), Google Cloud Monitoring [planned]
+- **Hetzner Cloud**: Hetzner Kubernetes, Hetzner Cloud Monitoring
+- **IONOS Cloud**: IONOS Kubernetes, IONOS Monitoring
 
-## Project Structure
+## Azure Features
 
+### 🔵 Azure Kubernetes Service (AKS)
+- Create, manage, and monitor AKS clusters
+- Integrated Azure Monitor for containers
+- Cost management with Azure Budgets
+- Terraform generation for AKS resources
+
+### 📊 Azure Monitor Integration
+- Log Analytics workspace creation and management
+- Application Insights for application monitoring
+- Container Insights for Kubernetes monitoring
+- Service Map and VM Insights
+- Network Watcher integration
+
+### 💰 Azure Cost Management
+- Azure Budget creation with alerting
+- Cost monitoring and reporting
+- Integration with AKS cluster creation
+- Terraform templates for budget management
+
+## Azure Usage Examples
+
+### Creating AKS Cluster with Monitoring and Budget
+
+```bash
+# Create AKS cluster with full monitoring and budget
+./punchbag-werfty cluster create \
+  --name my-aks-cluster \
+  --provider azure \
+  --resource-group my-rg \
+  --location eastus \
+  --kubernetes-version 1.28.0 \
+  --node-count 3 \
+  --enable-monitoring \
+  --enable-budget \
+  --budget-amount 2000.0
+
+# Create Azure Monitor stack
+./punchbag-werfty provider azure monitor create \
+  --resource-group my-rg \
+  --location eastus \
+  --workspace-name my-monitoring-workspace
+
+# Create Azure Budget
+./punchbag-werfty provider azure budget create \
+  --name my-project-budget \
+  --amount 1500.0 \
+  --resource-group my-rg \
+  --time-grain Monthly \
+  --alert-threshold 80.0
 ```
-├── README.md                    # This file
-├── LICENSE                      # License file
-├── server/                      # REST API Server (Multi-Cloud)
-│   ├── main.go                  # Server entry point
-│   ├── go.mod                   # Server dependencies
-│   ├── Dockerfile               # Server container config
-│   ├── README.md                # Server documentation
-│   ├── api/                     # API layer
-│   │   ├── handlers.go          # Multi-cloud HTTP request handlers
-│   │   ├── routes.go            # Route definitions
-│   │   └── openapi.yaml         # API specification
-│   ├── models/                  # Data models
-│   │   └── aks.go               # Multi-cloud cluster models
-│   └── store/                   # Data storage layer
-│       └── store.go             # Multi-cloud storage interface
-├── werfty/                      # CLI Werfty (Multi-Cloud)
-│   ├── main.go                  # Werfty entry point
-│   ├── go.mod                   # Werfty dependencies
-│   ├── README.md                # Werfty documentation
-│   └── pkg/                     # Werfty packages
-│       ├── api/                 # API werfty
-│       │   └── werfty.go        # Multi-cloud HTTP werfty
-│       └── output/              # Output formatting
-│           └── formatter.go     # Multi-cloud output formatters
-├── terraform-provider/          # Terraform Provider (Multi-Cloud)
-│   ├── main.go                  # Provider entry point
-│   ├── go.mod                   # Provider dependencies (includes StackIT provider)
-│   ├── README.md                # Provider documentation
-│   └── internal/                # Provider implementation
-│       └── provider/            # Multi-cloud provider logic
-├── models/                      # Shared data models
-│   └── aks.go                   # Multi-cloud cluster models
-└── store/                       # Shared storage layer
-    └── store.go                 # Multi-cloud storage interface
+
+### Using Multitool for Azure Operations
+
+```bash
+# Create Azure monitoring stack
+mt azure create monitoring-stack \
+  --resource-group my-rg \
+  --name my-monitoring \
+  --location eastus
+
+# Create Azure budget with monitoring
+mt azure create budget-stack \
+  --resource-group my-rg \
+  --name my-budget \
+  --amount 1000.0
+
+# Download Azure Monitor configuration
+mt azure get monitor \
+  --resource-group my-rg \
+  --name my-monitor \
+  --output monitor_config.json
+
+# Create Log Analytics workspace
+mt azure create log-analytics \
+  --resource-group my-rg \
+  --name my-workspace \
+  --location eastus \
+  --retention-days 30
 ```
-            ├── provider.go      # Main provider
-            ├── cluster_resource.go
-            ├── test_resource.go
-            └── clusters_data_source.go
+
+### Terraform Provider Examples
+
+**Azure AKS cluster with monitoring:**
+```hcl
+resource "punchbag_cluster" "example_azure" {
+  name     = "my-aks-cluster"
+  provider = "azure"
+
+  azure_config = {
+    resource_group       = "my-rg"
+    location            = "eastus"
+    kubernetes_version  = "1.28.0"
+    node_count          = 3
+    enable_monitoring   = true
+    enable_budget       = true
+    budget_amount       = 2000.0
+  }
+}
+```
+
+**Azure Monitor stack:**
+```hcl
+resource "azurerm_log_analytics_workspace" "example" {
+  name                = "my-workspace"
+  location            = "eastus"
+  resource_group_name = "my-rg"
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_application_insights" "example" {
+  name                = "my-ai"
+  location            = "eastus"
+  resource_group_name = "my-rg"
+  application_type    = "web"
+  workspace_id        = azurerm_log_analytics_workspace.example.id
+}
+```
+
+## 🔄 Werfty-Transformator: Enhanced Azure Support
+
+The `werfty-transformator` now includes comprehensive Azure to AWS conversion:
+
+### Azure to AWS Conversions
+- Azure Monitor → AWS CloudWatch
+- Azure Budget → AWS Budget
+- Azure Log Analytics → CloudWatch Log Groups
+- Application Insights → CloudWatch Dashboards
+- Azure Blob Storage → AWS S3
+
+### Usage Examples
+
+```bash
+# Convert Azure monitoring to AWS CloudWatch
+go run main.go \
+  --input azure_monitoring.tf \
+  --src-provider azure \
+  --destination-provider aws
+
+# Convert complete Azure stack to AWS
+go run main.go \
+  --input azure_full_stack.tf \
+  --src-provider azure \
+  --destination-provider aws \
+  --terraspace
+```
+
+## 🧪 API Usage Examples
+
+### Azure-specific API calls:
+
+```bash
+# Create Azure Monitor services
+curl -X POST http://localhost:8081/api/v1/azure/monitor \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "resource_group": "my-rg",
+    "location": "eastus",
+    "workspace_name": "my-workspace",
+    "services": ["log-analytics", "application-insights", "container-insights"]
+  }'
+
+# Create Azure Budget
+curl -X POST http://localhost:8081/api/v1/azure/budget \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "my-budget",
+    "amount": 1000.0,
+    "resource_group": "my-rg",
+    "time_grain": "Monthly",
+    "alert_threshold": 80.0
+  }'
 ```
 
 ## Components

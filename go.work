@@ -3,8 +3,11 @@ go 1.23.0
 toolchain go1.24.4
 
 use (
+	./client
 	./multitool
-	./server
 	./shared
-	./werfty-transformator
+	./terraform-multicloud-provider
+	./werfty
 )
+
+replace github.com/tronicum/punchbag-cube-testsuite/shared => ./shared

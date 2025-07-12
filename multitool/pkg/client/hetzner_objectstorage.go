@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"time"
 
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 // Hetzner Object Storage S3-compatible API usage:
@@ -37,8 +37,8 @@ func NewHetznerObjectStorageClientFromKeys(accessKey, secretKey string) *Hetzner
 func (c *HetznerObjectStorageClient) CreateBucket(bucket *sharedmodels.ObjectStorageBucket) (*sharedmodels.ObjectStorageBucket, error) {
 	fmt.Println("[Hetzner] CreateBucket called")
 	region := bucket.Region
-	if region == "" {
-		region = "fsn1"
+	if region == "" || region == "eu-central" {
+		region = "fsn1" // Hetzner's default region is fsn1
 	}
 	endpoint := fmt.Sprintf("https://%s.your-objectstorage.com", region)
 	parsed, err := url.Parse(endpoint)
@@ -74,7 +74,10 @@ func (c *HetznerObjectStorageClient) CreateBucket(bucket *sharedmodels.ObjectSto
 		if resp != nil {
 			fmt.Printf("[Hetzner] CreateBucket response: %+v\n", resp)
 		}
-		if ae, ok := err.(interface{ ErrorCode() string; ErrorMessage() string }); ok {
+		if ae, ok := err.(interface {
+			ErrorCode() string
+			ErrorMessage() string
+		}); ok {
 			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
 		}
 		return nil, err
@@ -125,7 +128,10 @@ func (c *HetznerObjectStorageClient) ListBuckets() ([]*sharedmodels.ObjectStorag
 		if resp != nil {
 			fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
 		}
-		if ae, ok := err.(interface{ ErrorCode() string; ErrorMessage() string }); ok {
+		if ae, ok := err.(interface {
+			ErrorCode() string
+			ErrorMessage() string
+		}); ok {
 			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
 		}
 		return nil, err
@@ -144,13 +150,58 @@ func (c *HetznerObjectStorageClient) ListBuckets() ([]*sharedmodels.ObjectStorag
 			fmt.Printf("[Hetzner] WARNING: Bucket %s has suspiciously old timestamp: %v\n", *b.Name, created)
 		}
 		out = append(out, &sharedmodels.ObjectStorageBucket{
-			Name:   *b.Name,
-			Region: region,
-			Provider: sharedmodels.CloudProvider("hetzner"),
+			Name:      *b.Name,
+			Region:    region,
+			Provider:  sharedmodels.CloudProvider("hetzner"),
 			CreatedAt: created,
 		})
 	}
 	return out, nil
+}
+
+// DeleteBucket deletes a Hetzner object storage bucket by name (S3-compatible API)
+func (c *HetznerObjectStorageClient) DeleteBucket(name string) error {
+	fmt.Println("[Hetzner] DeleteBucket called")
+	region := "fsn1"
+	endpoint := fmt.Sprintf("https://%s.your-objectstorage.com", region)
+	parsed, err := url.Parse(endpoint)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return fmt.Errorf("invalid endpoint URL: %s", endpoint)
+	}
+	urlStr := parsed.String()
+	fmt.Printf("[Hetzner] Using endpoint: %s\n", urlStr)
+	fmt.Printf("[Hetzner] Using region: %s\n", region)
+	fmt.Printf("[Hetzner] Using access key: %s...\n", maskToken(c.accessKey))
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(c.accessKey, c.secretKey, "")),
+		config.WithEndpointResolver(
+			aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+				return aws.Endpoint{URL: urlStr, SigningRegion: region}, nil
+			}),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("[Hetzner] config error: %v", err)
+	}
+
+	s3client := s3.NewFromConfig(cfg)
+	_, err = s3client.DeleteBucket(context.TODO(), &s3.DeleteBucketInput{
+		Bucket: &name,
+	})
+	if err != nil {
+		fmt.Printf("[Hetzner] DeleteBucket error: %v\n", err)
+		if ae, ok := err.(interface {
+			ErrorCode() string
+			ErrorMessage() string
+		}); ok {
+			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
+		}
+		return err
+	}
+	fmt.Println("[Hetzner] DeleteBucket succeeded.")
+	return nil
 }
 
 func maskToken(token string) string {
@@ -160,4 +211,4 @@ func maskToken(token string) string {
 	return token[:4] + "****" + token[len(token)-4:]
 }
 
-// TODO: Implement GetBucket, DeleteBucket using Hetzner API
+// TODO: Implement GetBucket

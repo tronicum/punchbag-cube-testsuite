@@ -267,40 +267,40 @@ func (h *Handlers) getProviderSpecificMetrics(provider string) map[string]interf
 	case string(sharedmodels.CloudProviderStackIT):
 		return map[string]interface{}{
 			"stackit_specific_metric": "sample_value",
-			"project_usage": "normal",
-			"hibernation_supported": true,
+			"project_usage":           "normal",
+			"hibernation_supported":   true,
 		}
 	case string(sharedmodels.CloudProviderHetzner):
 		return map[string]interface{}{
 			"hetzner_specific_metric": "sample_value",
-			"network_zone": "eu-central",
-			"load_balancer_type": "lb11",
-			"server_type": "cx21",
+			"network_zone":            "eu-central",
+			"load_balancer_type":      "lb11",
+			"server_type":             "cx21",
 		}
 	case string(sharedmodels.CloudProviderIONOS):
 		return map[string]interface{}{
 			"ionos_specific_metric": "sample_value",
-			"datacenter_location": "de/fra",
-			"k8s_cluster_type": "managed",
-			"maintenance_window": "automatic",
+			"datacenter_location":   "de/fra",
+			"k8s_cluster_type":      "managed",
+			"maintenance_window":    "automatic",
 		}
 	case string(sharedmodels.CloudProviderAzure):
 		return map[string]interface{}{
-			"azure_specific_metric": "sample_value",
-			"aks_version": "1.28.0",
+			"azure_specific_metric":   "sample_value",
+			"aks_version":             "1.28.0",
 			"resource_group_location": "eastus",
 		}
 	case string(sharedmodels.CloudProviderAWS):
 		return map[string]interface{}{
 			"aws_specific_metric": "sample_value",
-			"eks_version": "1.28",
-			"vpc_configuration": "standard",
+			"eks_version":         "1.28",
+			"vpc_configuration":   "standard",
 		}
 	case string(sharedmodels.CloudProviderGCP):
 		return map[string]interface{}{
 			"gcp_specific_metric": "sample_value",
-			"gke_version": "1.28.0",
-			"autopilot_enabled": false,
+			"gke_version":         "1.28.0",
+			"autopilot_enabled":   false,
 		}
 	default:
 		return map[string]interface{}{}

@@ -49,7 +49,13 @@ func main() {
 // ConvertTerraform maps resources from src to dest provider.
 func ConvertTerraform(tf, src, dest string) string {
 	if src == "azure" && dest == "aws" {
-		return transform.ConvertAzureBlobToAWSS3(tf)
+		// Convert storage first
+		tf = transform.ConvertAzureBlobToAWSS3(tf)
+		// Convert monitoring resources
+		tf = transform.ConvertAzureMonitorToAWSCloudWatch(tf)
+		// Convert budget resources
+		tf = transform.ConvertAzureBudgetToAWSBudget(tf)
+		return tf
 	}
 	if src == "aws" && dest == "azure" {
 		return transform.ConvertAWSS3ToAzureBlob(tf)

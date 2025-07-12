@@ -6,30 +6,15 @@ import (
 	"os"
 
 	"github.com/tronicum/punchbag-cube-testsuite/server/api"
-	"github.com/tronicum/punchbag-cube-testsuite/store"
-	"github.com/tronicum/punchbag-cube-testsuite/server/config"
+	"github.com/tronicum/punchbag-cube-testsuite/server/store"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-func getLogger() (*zap.Logger, error) {
-	logCfg := zap.NewProductionConfig()
-	if config.IsDebug() {
-		logCfg = zap.NewDevelopmentConfig()
-		logCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-	logFile := os.Getenv("LOGFILE")
-	if logFile == "" {
-		logFile = "server.log"
-	}
-	logCfg.OutputPaths = []string{"stdout", logFile}
-	return logCfg.Build()
-}
-
 func main() {
 	// Initialize logger
-	logger, err := getLogger()
+	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
@@ -39,16 +24,12 @@ func main() {
 	dataStore := store.NewMemoryStore()
 
 	// Set up Gin router
-	if config.IsDebug() {
-		gin.SetMode(gin.DebugMode)
-	} else if os.Getenv("GIN_MODE") == "release" {
+	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.New()
-	if config.IsDebug() {
-		router.Use(gin.Logger())
-	}
+	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
 	// Add CORS middleware
