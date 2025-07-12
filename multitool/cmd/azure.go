@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	azureprovider "github.com/tronicum/punchbag-cube-testsuite/shared/providers/azure"
 )
 
 // Root Azure Command
@@ -30,17 +33,16 @@ var azureCreateMonitorCmd = &cobra.Command{
 		workspaceName, _ := cmd.Flags().GetString("workspace-name")
 		simulationMode, _ := cmd.Flags().GetBool("simulation")
 
-		fmt.Printf("Creating Azure Monitor resources:\n")
-		fmt.Printf("  Resource Group: %s\n", resourceGroup)
-		fmt.Printf("  Location: %s\n", location)
-		fmt.Printf("  Workspace Name: %s\n", workspaceName)
-		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+		provider := azureprovider.NewAzureProvider()
+		provider.SetSimulationMode(simulationMode)
 
-		if simulationMode {
-			fmt.Printf("✅ Simulation: Azure Monitor resources would be created\n")
-		} else {
-			fmt.Printf("🚧 Direct mode: Implementation pending\n")
+		ctx := context.Background()
+		result, err := provider.CreateMonitor(ctx, resourceGroup, location, workspaceName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating Azure Monitor: %v\n", err)
+			return err
 		}
+		fmt.Printf("Azure Monitor created: ID=%s, Status=%s, Resources=%v\n", result.ID, result.Status, result.Resources)
 		return nil
 	},
 }
@@ -63,18 +65,16 @@ var azureCreateBudgetCmd = &cobra.Command{
 		timeGrain, _ := cmd.Flags().GetString("time-grain")
 		simulationMode, _ := cmd.Flags().GetBool("simulation")
 
-		fmt.Printf("Creating Azure Budget:\n")
-		fmt.Printf("  Name: %s\n", name)
-		fmt.Printf("  Amount: $%.2f\n", amount)
-		fmt.Printf("  Resource Group: %s\n", resourceGroup)
-		fmt.Printf("  Time Grain: %s\n", timeGrain)
-		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+		provider := azureprovider.NewAzureProvider()
+		provider.SetSimulationMode(simulationMode)
 
-		if simulationMode {
-			fmt.Printf("✅ Simulation: Azure Budget would be created\n")
-		} else {
-			fmt.Printf("🚧 Direct mode: Implementation pending\n")
+		ctx := context.Background()
+		result, err := provider.CreateBudget(ctx, name, amount, resourceGroup, timeGrain)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating Azure Budget: %v\n", err)
+			return err
 		}
+		fmt.Printf("Azure Budget created: ID=%s, Status=%s\n", result.ID, result.Status)
 		return nil
 	},
 }
@@ -97,91 +97,22 @@ var azureCreateAksCmd = &cobra.Command{
 		nodeCount, _ := cmd.Flags().GetInt("node-count")
 		simulationMode, _ := cmd.Flags().GetBool("simulation")
 
-		fmt.Printf("Creating Azure AKS Cluster:\n")
-		fmt.Printf("  Name: %s\n", name)
-		fmt.Printf("  Resource Group: %s\n", resourceGroup)
-		fmt.Printf("  Location: %s\n", location)
-		fmt.Printf("  Node Count: %d\n", nodeCount)
-		fmt.Printf("  Simulation Mode: %t\n", simulationMode)
+		provider := azureprovider.NewAzureProvider()
+		provider.SetSimulationMode(simulationMode)
 
-		if simulationMode {
-			fmt.Printf("✅ Simulation: AKS cluster would be created\n")
-		} else {
-			fmt.Printf("🚧 Direct mode: Implementation pending\n")
+		ctx := context.Background()
+		result, err := provider.CreateAKSCluster(ctx, name, resourceGroup, location, nodeCount)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating AKS cluster: %v\n", err)
+			return err
 		}
+		fmt.Printf("AKS Cluster created: ID=%s, Status=%s, URL=%s\n", result.ID, result.Status, result.URL)
 		return nil
 	},
 }
 
 // ==== MONITORING STACK ====
-
-var azureCreateMonitoringStackCmd = &cobra.Command{
-	Use:   "create monitoring-stack",
-	Short: "Create Azure monitoring stack",
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceGroup, _ := cmd.Flags().GetString("resource-group")
-		name, _ := cmd.Flags().GetString("name")
-		location, _ := cmd.Flags().GetString("location")
-		proxyServer, _ := cmd.Flags().GetString("proxy-server")
-
-		if proxyServer != "" {
-			createMonitoringStackViaProxy(resourceGroup, name, location)
-		} else {
-			createMonitoringStackDirect(resourceGroup, name, location)
-		}
-	},
-}
-
-func createMonitoringStackViaProxy(resourceGroup, name, location string) {
-	fmt.Printf("Creating Azure monitoring stack via proxy server...\n")
-	fmt.Printf("Resource Group: %s\n", resourceGroup)
-	fmt.Printf("Name: %s\n", name)
-	fmt.Printf("Location: %s\n", location)
-	fmt.Printf("Monitoring stack created successfully (simulated)\n")
-}
-
-func createMonitoringStackDirect(resourceGroup, name, location string) {
-	fmt.Printf("Creating Azure monitoring stack directly...\n")
-	fmt.Printf("Resource Group: %s\n", resourceGroup)
-	fmt.Printf("Name: %s\n", name)
-	fmt.Printf("Location: %s\n", location)
-	fmt.Printf("Monitoring stack created successfully\n")
-}
-
-// ==== BUDGET STACK ====
-
-var azureCreateBudgetStackCmd = &cobra.Command{
-	Use:   "create budget-stack",
-	Short: "Create Azure budget with monitoring integration",
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceGroup, _ := cmd.Flags().GetString("resource-group")
-		name, _ := cmd.Flags().GetString("name")
-		amount, _ := cmd.Flags().GetFloat64("amount")
-		proxyServer, _ := cmd.Flags().GetString("proxy-server")
-
-		if proxyServer != "" {
-			createBudgetStackViaProxy(resourceGroup, name, amount)
-		} else {
-			createBudgetStackDirect(resourceGroup, name, amount)
-		}
-	},
-}
-
-func createBudgetStackViaProxy(resourceGroup, name string, amount float64) {
-	fmt.Printf("Creating Azure budget stack via proxy server...\n")
-	fmt.Printf("Resource Group: %s\n", resourceGroup)
-	fmt.Printf("Name: %s\n", name)
-	fmt.Printf("Amount: $%.2f\n", amount)
-	fmt.Printf("Budget stack created successfully (simulated)\n")
-}
-
-func createBudgetStackDirect(resourceGroup, name string, amount float64) {
-	fmt.Printf("Creating Azure budget stack directly...\n")
-	fmt.Printf("Resource Group: %s\n", resourceGroup)
-	fmt.Printf("Name: %s\n", name)
-	fmt.Printf("Amount: $%.2f\n", amount)
-	fmt.Printf("Budget stack created successfully\n")
-}
+// (Optional: Implement stack commands using provider if needed)
 
 // ==== COMMAND TREE & FLAGS ====
 
@@ -192,9 +123,6 @@ func init() {
 	azureCmd.AddCommand(azureMonitorCmd)
 	azureCmd.AddCommand(azureBudgetCmd)
 	azureCmd.AddCommand(azureAksCmd)
-	// Custom create commands for stacks
-	azureCmd.AddCommand(azureCreateMonitoringStackCmd)
-	azureCmd.AddCommand(azureCreateBudgetStackCmd)
 
 	// Azure Monitor
 	azureMonitorCmd.AddCommand(azureCreateMonitorCmd)
@@ -225,20 +153,4 @@ func init() {
 	azureCreateAksCmd.Flags().Bool("simulation", false, "Use simulation mode")
 	azureCreateAksCmd.MarkFlagRequired("name")
 	azureCreateAksCmd.MarkFlagRequired("resource-group")
-
-	// Monitoring Stack
-	azureCreateMonitoringStackCmd.Flags().String("resource-group", "", "Azure resource group name")
-	azureCreateMonitoringStackCmd.Flags().String("name", "", "Monitoring stack name")
-	azureCreateMonitoringStackCmd.Flags().String("location", "eastus", "Azure location")
-	azureCreateMonitoringStackCmd.Flags().String("proxy-server", "", "Proxy server for simulation/direct")
-	azureCreateMonitoringStackCmd.MarkFlagRequired("resource-group")
-	azureCreateMonitoringStackCmd.MarkFlagRequired("name")
-
-	// Budget Stack
-	azureCreateBudgetStackCmd.Flags().String("resource-group", "", "Azure resource group name")
-	azureCreateBudgetStackCmd.Flags().String("name", "", "Budget name")
-	azureCreateBudgetStackCmd.Flags().Float64("amount", 1000.0, "Budget amount")
-	azureCreateBudgetStackCmd.Flags().String("proxy-server", "", "Proxy server for simulation/direct")
-	azureCreateBudgetStackCmd.MarkFlagRequired("resource-group")
-	azureCreateBudgetStackCmd.MarkFlagRequired("name")
 }

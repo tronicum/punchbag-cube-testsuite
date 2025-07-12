@@ -6,4 +6,6 @@ use (
 	./shared
 	./store
 	./terraform-multicloud-provider
+	./werfty
 )
+

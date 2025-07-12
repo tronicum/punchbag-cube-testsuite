@@ -1,10 +1,1 @@
-module github.com/tronicum/punchbag-cube-testsuite/generator
-
-go 1.23.0
-
-require (
-	github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0-00010101000000-000000000000
-	gopkg.in/yaml.v3 v3.0.1
-)
-
-replace github.com/tronicum/punchbag-cube-testsuite/shared => ../shared
+module github.com/tronicum/punchbag-cube-testsuite/generatorgithub.com/inconshreveable/mousetrap v1.1.0 // indirect	github.com/spf13/pflag v1.0.6 // indirect)
