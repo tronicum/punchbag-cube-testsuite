@@ -5,15 +5,15 @@ import (
 	"io"
 	"os"
 
-	"punchbag-cube-testsuite/shared/providers"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/types"
 )
 
 // CloudState represents the exportable cloud state
 type CloudState struct {
-	Provider string                   `json:"provider"`
-	Clusters []*providers.ClusterInfo `json:"clusters,omitempty"`
-	Monitors []*providers.MonitorInfo `json:"monitors,omitempty"`
-	Budgets  []*providers.BudgetInfo  `json:"budgets,omitempty"`
+	Provider string              `json:"provider"`
+	Clusters []*types.ClusterInfo `json:"clusters,omitempty"`
+	Monitors []*types.MonitorInfo `json:"monitors,omitempty"`
+	Budgets  []*types.BudgetInfo  `json:"budgets,omitempty"`
 }
 
 // ToJSON exports cloud state to JSON
@@ -30,7 +30,7 @@ func ToJSONFile(state *CloudState, filename string) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	return ToJSON(state, file)
 }
 
@@ -49,7 +49,7 @@ func FromJSONFile(filename string) (*CloudState, error) {
 		return nil, err
 	}
 	defer file.Close()
-	
+
 	return FromJSON(file)
 }
 
@@ -67,6 +67,31 @@ func ExportToJSONFile(data interface{}, filename string) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	return ExportToJSON(data, file)
+}
+
+// ExportClusters exports cluster information to JSON
+func ExportClusters(clusters []*types.ClusterInfo) ([]byte, error) {
+	return json.MarshalIndent(clusters, "", "  ")
+}
+
+// ExportMonitors exports monitor information to JSON
+func ExportMonitors(monitors []*types.MonitorInfo) ([]byte, error) {
+	return json.MarshalIndent(monitors, "", "  ")
+}
+
+// ExportBudgets exports budget information to JSON
+func ExportBudgets(budgets []*types.BudgetInfo) ([]byte, error) {
+	return json.MarshalIndent(budgets, "", "  ")
+}
+
+// ExportAll exports all resource types to JSON
+func ExportAll(clusters []*types.ClusterInfo, monitors []*types.MonitorInfo, budgets []*types.BudgetInfo) ([]byte, error) {
+	data := map[string]interface{}{
+		"clusters": clusters,
+		"monitors": monitors,
+		"budgets":  budgets,
+	}
+	return json.MarshalIndent(data, "", "  ")
 }
