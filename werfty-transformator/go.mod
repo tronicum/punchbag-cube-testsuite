@@ -1,11 +1,5 @@
-module github.com/tronicum/punchbag-cube-testsuite/werfty-transformator
+module github.com/tronicum/punchbag-cube-testsuite/werfty-transformator1.24.4
 
-go 1.23.0
+go 1.24.4
 
-toolchain go1.24.4
-
-replace github.com/tronicum/punchbag-cube-testsuite/multitool => ../multitool
-
-replace github.com/tronicum/punchbag-cube-testsuite/shared => ../shared
-
-require github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform v0.0.0-20250707112754-662c171ce0de
+require github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform v0.0.0-20250712064408-7f7611779cda
