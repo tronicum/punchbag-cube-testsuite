@@ -11,7 +11,7 @@ require (
    github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
    github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
    github.com/spf13/cobra v1.9.1
-   github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0-20250712132209-98bf0fd44b61
+   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.0
    gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -34,7 +34,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 )
 
-replace github.com/tronicum/punchbag-cube-testsuite/shared => ../shared
+
 
 replace github.com/tronicum/punchbag-cube-testsuite/store => ../store
 

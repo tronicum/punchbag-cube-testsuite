@@ -28,12 +28,13 @@ fix-deps:
 
 # Build werfty and other binaries
 build: fix-deps
-	@echo "Building multitool..."
+	@echo "Building multitool CLI (single binary: ../multitool/mt) ..."
 	cd ../multitool && go build -mod=readonly -o mt ./
 	@echo "Building cube-server..."
 	cd ../cube-server && go build -mod=readonly -o cube-server ./
 	@echo "Building werfty..."
 	cd ../werfty && go build -mod=readonly -o werfty ./cmd
+	@echo "NOTE: The only supported CLI binary is ../multitool/mt. Do not use ./mt or multitool/multitool."
 
 # Run all tests
 test:
@@ -57,6 +58,7 @@ clean:
 	rm -f ../cube-server/cube-server
 	rm -f ../multitool/mt
 	rm -f ../generator/werfty-generator
+	@echo "Cleaned all binaries. Only ../multitool/mt is supported as the CLI binary."
 
 # Start cube-server for testing
 start-server:

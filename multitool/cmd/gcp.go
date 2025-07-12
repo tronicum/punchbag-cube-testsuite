@@ -82,7 +82,6 @@ var gcpCreateBucketCmd = &cobra.Command{
 // ==== COMMAND TREE & FLAGS ====
 
 func init() {
-	rootCmd.AddCommand(gcpCmd)
 
 	// GCP GKE
 	gcpCmd.AddCommand(gcpGkeCmd)

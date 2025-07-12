@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
-	"strings"
+   "fmt"
+   "net/http"
+   "os"
+   "strings"
 
-	"github.com/spf13/cobra"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+   "github.com/spf13/cobra"
+   "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+   "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
+   sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+   importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
 )
 
 var (
@@ -93,14 +93,18 @@ Examples:
 
 		// Load additional config from file if provided
 		if configFile != "" {
-			fileConfig, err := loadConfigFromFile(configFile)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-				os.Exit(1)
-			}
-			for k, v := range fileConfig {
-				config[k] = v
-			}
+		   f, err := os.Open(configFile)
+		   if err != nil {
+			   output.FormatError(fmt.Errorf("failed to open config file: %w", err))
+			   os.Exit(1)
+		   }
+		   defer f.Close()
+		   _, err = importpkg.LoadConfigJSON(f)
+		   if err != nil {
+			   output.FormatError(fmt.Errorf("failed to load config file: %w", err))
+			   os.Exit(1)
+		   }
+		   // TODO: Merge loaded config into config map (extend as needed)
 		}
 
 		req := &sharedmodels.ClusterCreateRequest{
@@ -274,12 +278,18 @@ Examples:
 		// Load test config from file if provided
 		testConfig := make(map[string]interface{})
 		if configFile != "" {
-			fileConfig, err := loadConfigFromFile(configFile)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-				os.Exit(1)
-			}
-			testConfig = fileConfig
+		   f, err := os.Open(configFile)
+		   if err != nil {
+			   output.FormatError(fmt.Errorf("failed to open config file: %w", err))
+			   os.Exit(1)
+		   }
+		   defer f.Close()
+		   _, err = importpkg.LoadConfigJSON(f)
+		   if err != nil {
+			   output.FormatError(fmt.Errorf("failed to load config file: %w", err))
+			   os.Exit(1)
+		   }
+		   // TODO: Map config fields as needed
 		}
 
 		req := &sharedmodels.TestRequest{
@@ -387,19 +397,7 @@ func isValidProvider(provider sharedmodels.CloudProvider) bool {
 	return false
 }
 
-func loadConfigFromFile(filename string) (map[string]interface{}, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	var config map[string]interface{}
-	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON config: %w", err)
-	}
-
-	return config, nil
-}
+// Config loading is now handled by shared/import. See above for usage.
 
 // Helper for HTTP POST in proxy mode
 func httpPost(url string, body []byte) (*http.Response, error) {

@@ -117,40 +117,39 @@ var azureCreateAksCmd = &cobra.Command{
 // ==== COMMAND TREE & FLAGS ====
 
 func init() {
-	rootCmd.AddCommand(azureCmd)
 
-	// Azure subcommands
-	azureCmd.AddCommand(azureMonitorCmd)
-	azureCmd.AddCommand(azureBudgetCmd)
-	azureCmd.AddCommand(azureAksCmd)
+// Azure subcommands
+azureCmd.AddCommand(azureMonitorCmd)
+azureCmd.AddCommand(azureBudgetCmd)
+azureCmd.AddCommand(azureAksCmd)
 
-	// Azure Monitor
-	azureMonitorCmd.AddCommand(azureCreateMonitorCmd)
-	azureCreateMonitorCmd.Flags().String("resource-group", "", "Azure resource group name")
-	azureCreateMonitorCmd.Flags().String("location", "eastus", "Azure region")
-	azureCreateMonitorCmd.Flags().String("workspace-name", "", "Log Analytics workspace name")
-	azureCreateMonitorCmd.Flags().Bool("simulation", false, "Use simulation mode")
-	azureCreateMonitorCmd.MarkFlagRequired("resource-group")
-	azureCreateMonitorCmd.MarkFlagRequired("workspace-name")
+// Azure Monitor
+azureMonitorCmd.AddCommand(azureCreateMonitorCmd)
+azureCreateMonitorCmd.Flags().String("resource-group", "", "Azure resource group name")
+azureCreateMonitorCmd.Flags().String("location", "eastus", "Azure region")
+azureCreateMonitorCmd.Flags().String("workspace-name", "", "Log Analytics workspace name")
+azureCreateMonitorCmd.Flags().Bool("simulation", false, "Use simulation mode")
+azureCreateMonitorCmd.MarkFlagRequired("resource-group")
+azureCreateMonitorCmd.MarkFlagRequired("workspace-name")
 
-	// Azure Budget
-	azureBudgetCmd.AddCommand(azureCreateBudgetCmd)
-	azureCreateBudgetCmd.Flags().String("name", "", "Budget name")
-	azureCreateBudgetCmd.Flags().Float64("amount", 0, "Budget amount in USD")
-	azureCreateBudgetCmd.Flags().String("resource-group", "", "Azure resource group name")
-	azureCreateBudgetCmd.Flags().String("time-grain", "Monthly", "Budget time grain")
-	azureCreateBudgetCmd.Flags().Bool("simulation", false, "Use simulation mode")
-	azureCreateBudgetCmd.MarkFlagRequired("name")
-	azureCreateBudgetCmd.MarkFlagRequired("amount")
-	azureCreateBudgetCmd.MarkFlagRequired("resource-group")
+// Azure Budget
+azureBudgetCmd.AddCommand(azureCreateBudgetCmd)
+azureCreateBudgetCmd.Flags().String("name", "", "Budget name")
+azureCreateBudgetCmd.Flags().Float64("amount", 0, "Budget amount in USD")
+azureCreateBudgetCmd.Flags().String("resource-group", "", "Azure resource group name")
+azureCreateBudgetCmd.Flags().String("time-grain", "Monthly", "Budget time grain")
+azureCreateBudgetCmd.Flags().Bool("simulation", false, "Use simulation mode")
+azureCreateBudgetCmd.MarkFlagRequired("name")
+azureCreateBudgetCmd.MarkFlagRequired("amount")
+azureCreateBudgetCmd.MarkFlagRequired("resource-group")
 
-	// Azure AKS
-	azureAksCmd.AddCommand(azureCreateAksCmd)
-	azureCreateAksCmd.Flags().String("name", "", "AKS cluster name")
-	azureCreateAksCmd.Flags().String("resource-group", "", "Azure resource group name")
-	azureCreateAksCmd.Flags().String("location", "eastus", "Azure region")
-	azureCreateAksCmd.Flags().Int("node-count", 3, "Number of nodes in default pool")
-	azureCreateAksCmd.Flags().Bool("simulation", false, "Use simulation mode")
-	azureCreateAksCmd.MarkFlagRequired("name")
-	azureCreateAksCmd.MarkFlagRequired("resource-group")
+// Azure AKS
+azureAksCmd.AddCommand(azureCreateAksCmd)
+azureCreateAksCmd.Flags().String("name", "", "AKS cluster name")
+azureCreateAksCmd.Flags().String("resource-group", "", "Azure resource group name")
+azureCreateAksCmd.Flags().String("location", "eastus", "Azure region")
+azureCreateAksCmd.Flags().Int("node-count", 3, "Number of nodes in default pool")
+azureCreateAksCmd.Flags().Bool("simulation", false, "Use simulation mode")
+azureCreateAksCmd.MarkFlagRequired("name")
+azureCreateAksCmd.MarkFlagRequired("resource-group")
 }
