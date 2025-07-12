@@ -294,9 +294,12 @@ github.com/spf13/viper/internal/features
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
+# github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0-20250707192520-780350c16276 => ./shared
+## explicit; go 1.21
 # github.com/tronicum/punchbag-cube-testsuite/shared v0.0.0 => ./shared
 ## explicit; go 1.21
 github.com/tronicum/punchbag-cube-testsuite/shared/models
+github.com/tronicum/punchbag-cube-testsuite/shared/types
 # github.com/vmihailenco/msgpack/v5 v5.4.1
 ## explicit; go 1.19
 github.com/vmihailenco/msgpack/v5

@@ -1,13 +1,9 @@
-go 1.23.0
-
-toolchain go1.24.4
+go 1.24.4
 
 use (
-	./client
+	./cube-server
 	./multitool
 	./shared
+	./store
 	./terraform-multicloud-provider
-	./werfty
 )
-
-replace github.com/tronicum/punchbag-cube-testsuite/shared => ./shared
