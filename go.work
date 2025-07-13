@@ -7,5 +7,9 @@ use (
 	./store
 	./terraform-multicloud-provider
 	./werfty
+	./client
+	./werfty-generator
+	./werfty-transformator
+	./cube-client
 )
 

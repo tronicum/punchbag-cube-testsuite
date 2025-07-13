@@ -39,6 +39,5 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 )
 
-replace github.com/tronicum/punchbag-cube-testsuite/shared => ../shared
 
 replace github.com/tronicum/punchbag-cube-testsuite/store => ../store
