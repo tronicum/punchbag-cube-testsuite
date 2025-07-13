@@ -411,10 +411,13 @@ github.com/spf13/viper/internal/features
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tronicum/punchbag-cube-testsuite/shared v0.1.0 => ./shared
+# github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
 ## explicit; go 1.24
 # github.com/tronicum/punchbag-cube-testsuite/store v0.0.0-20250712064408-7f7611779cda => ./store
 ## explicit; go 1.24
+# github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform v0.0.0-20250712064408-7f7611779cda => ./werfty-transformator/transform
+## explicit; go 1.23.0
+github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform
 # github.com/twitchyliquid64/golang-asm v0.15.1
 ## explicit; go 1.13
 github.com/twitchyliquid64/golang-asm/asm/arch
@@ -634,3 +637,4 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform => ./werfty-transformator/transform

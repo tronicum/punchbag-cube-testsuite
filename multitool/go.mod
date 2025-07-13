@@ -5,14 +5,14 @@ go 1.24
 toolchain go1.24.4
 
 require (
-   github.com/aws/aws-sdk-go-v2 v1.36.5
-   github.com/aws/aws-sdk-go-v2/config v1.29.17
-   github.com/aws/aws-sdk-go-v2/credentials v1.17.70
-   github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
-   github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
-   github.com/spf13/cobra v1.9.1
-   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
-   gopkg.in/yaml.v2 v2.4.0
+	github.com/aws/aws-sdk-go-v2 v1.36.5
+	github.com/aws/aws-sdk-go-v2/config v1.29.17
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
+	github.com/spf13/cobra v1.9.1
+	github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -32,9 +32,8 @@ require (
 	github.com/aws/smithy-go v1.22.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-
 
 replace github.com/tronicum/punchbag-cube-testsuite/store => ../store
 
