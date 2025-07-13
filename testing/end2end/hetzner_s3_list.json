@@ -1,0 +1,52 @@
+Executing root command...
+[
+  {
+    "name": "aws-compat-bucket",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "e2e-test-bucket-1752383509-8277",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "e2e-test-bucket-1752383575-1144",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "e2e-test-bucket-1752383642-7698",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "e2e-test-bucket-1752383707-12434",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "e2e-test-bucket-1752385918-14126",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  },
+  {
+    "name": "test-hcloud-bucket",
+    "provider": "hetzner",
+    "region": "fsn1",
+    "created_at": "0001-01-01T00:00:00Z",
+    "updated_at": "0001-01-01T00:00:00Z"
+  }
+]
