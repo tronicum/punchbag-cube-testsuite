@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
-
 
 // Root Docker Command
 var dockerCmd = &cobra.Command{
@@ -74,7 +74,6 @@ var dockerComposeCmd = &cobra.Command{
 	Short: "Manage Docker Compose projects",
 	Long:  `Create, start, stop, and manage Docker Compose projects.`,
 }
-
 
 // ==== REGISTRY ====
 
@@ -151,29 +150,29 @@ var dockerComposeUpCmd = &cobra.Command{
 }
 
 func init() {
-   // Docker Containers
-   dockerCmd.AddCommand(dockerContainersCmd)
-   dockerContainersCmd.AddCommand(dockerListContainersCmd)
-   dockerListContainersCmd.Flags().BoolP("all", "a", false, "Show all containers (default shows just running)")
-   dockerListContainersCmd.Flags().StringP("format", "f", "table", "Output format (table, json, yaml)")
+	// Docker Containers
+	dockerCmd.AddCommand(dockerContainersCmd)
+	dockerContainersCmd.AddCommand(dockerListContainersCmd)
+	dockerListContainersCmd.Flags().BoolP("all", "a", false, "Show all containers (default shows just running)")
+	dockerListContainersCmd.Flags().StringP("format", "f", "table", "Output format (table, json, yaml)")
 
-   // Docker Images
-   dockerCmd.AddCommand(dockerImagesCmd)
-   dockerImagesCmd.AddCommand(dockerPullImageCmd)
-   dockerPullImageCmd.Flags().String("image", "", "Image name to pull")
-   dockerPullImageCmd.Flags().String("tag", "latest", "Image tag")
-   dockerPullImageCmd.MarkFlagRequired("image")
+	// Docker Images
+	dockerCmd.AddCommand(dockerImagesCmd)
+	dockerImagesCmd.AddCommand(dockerPullImageCmd)
+	dockerPullImageCmd.Flags().String("image", "", "Image name to pull")
+	dockerPullImageCmd.Flags().String("tag", "latest", "Image tag")
+	dockerPullImageCmd.MarkFlagRequired("image")
 
-   // Docker Compose
-   dockerCmd.AddCommand(dockerComposeCmd)
-   dockerComposeCmd.AddCommand(dockerComposeUpCmd)
-   dockerComposeUpCmd.Flags().StringP("file", "f", "docker-compose.yml", "Specify an alternate compose file")
-   dockerComposeUpCmd.Flags().StringP("project", "p", "", "Specify an alternate project name")
-   dockerComposeUpCmd.Flags().BoolP("detach", "d", false, "Detached mode: Run containers in the background")
+	// Docker Compose
+	dockerCmd.AddCommand(dockerComposeCmd)
+	dockerComposeCmd.AddCommand(dockerComposeUpCmd)
+	dockerComposeUpCmd.Flags().StringP("file", "f", "docker-compose.yml", "Specify an alternate compose file")
+	dockerComposeUpCmd.Flags().StringP("project", "p", "", "Specify an alternate project name")
+	dockerComposeUpCmd.Flags().BoolP("detach", "d", false, "Detached mode: Run containers in the background")
 
-   // Docker Registry
-   dockerCmd.AddCommand(dockerRegistryCmd)
-   dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
-   dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
-   dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
+	// Docker Registry
+	dockerCmd.AddCommand(dockerRegistryCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
 }

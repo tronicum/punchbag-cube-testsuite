@@ -71,7 +71,7 @@ var getStackCmd = &cobra.Command{
 }
 
 func init() {
-   getStackCmd.Flags().String("stack-name", "", "Name of the CloudFormation stack")
-   getStackCmd.Flags().StringP("output", "o", "", "Output file path")
-   cloudformationCmd.AddCommand(getStackCmd)
+	getStackCmd.Flags().String("stack-name", "", "Name of the CloudFormation stack")
+	getStackCmd.Flags().StringP("output", "o", "", "Output file path")
+	cloudformationCmd.AddCommand(getStackCmd)
 }

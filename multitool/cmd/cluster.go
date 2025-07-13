@@ -1,16 +1,16 @@
 package cmd
 
 import (
-   "fmt"
-   "net/http"
-   "os"
-   "strings"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
 
-   "github.com/spf13/cobra"
-   "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
-   "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
-   sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
-   importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
+	"github.com/spf13/cobra"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
+	importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 var (
@@ -93,18 +93,18 @@ Examples:
 
 		// Load additional config from file if provided
 		if configFile != "" {
-		   f, err := os.Open(configFile)
-		   if err != nil {
-			   output.FormatError(fmt.Errorf("failed to open config file: %w", err))
-			   os.Exit(1)
-		   }
-		   defer f.Close()
-		   _, err = importpkg.LoadConfigJSON(f)
-		   if err != nil {
-			   output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-			   os.Exit(1)
-		   }
-		   // TODO: Merge loaded config into config map (extend as needed)
+			f, err := os.Open(configFile)
+			if err != nil {
+				output.FormatError(fmt.Errorf("failed to open config file: %w", err))
+				os.Exit(1)
+			}
+			defer f.Close()
+			_, err = importpkg.LoadConfigJSON(f)
+			if err != nil {
+				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
+				os.Exit(1)
+			}
+			// TODO: Merge loaded config into config map (extend as needed)
 		}
 
 		req := &sharedmodels.ClusterCreateRequest{
@@ -278,18 +278,18 @@ Examples:
 		// Load test config from file if provided
 		testConfig := make(map[string]interface{})
 		if configFile != "" {
-		   f, err := os.Open(configFile)
-		   if err != nil {
-			   output.FormatError(fmt.Errorf("failed to open config file: %w", err))
-			   os.Exit(1)
-		   }
-		   defer f.Close()
-		   _, err = importpkg.LoadConfigJSON(f)
-		   if err != nil {
-			   output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-			   os.Exit(1)
-		   }
-		   // TODO: Map config fields as needed
+			f, err := os.Open(configFile)
+			if err != nil {
+				output.FormatError(fmt.Errorf("failed to open config file: %w", err))
+				os.Exit(1)
+			}
+			defer f.Close()
+			_, err = importpkg.LoadConfigJSON(f)
+			if err != nil {
+				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
+				os.Exit(1)
+			}
+			// TODO: Map config fields as needed
 		}
 
 		req := &sharedmodels.TestRequest{

@@ -1,3 +1,11 @@
+## Low Priority
+
+- [ ] Investigate enabling Copilot (AI assistant) to access GitHub for direct commits and merge requests. (Low priority)
+## Notes on end2end_multitool_test.sh
+
+- The variable `SIMULATOR_BIN` in `testing/end2end/end2end_multitool_test.sh` points to the multitool CLI binary. It is used to run multitool commands directly (such as objectstorage and resource simulations) and is not a client for the sim-server. This ensures all CLI calls use the correct binary location.
+## Notes on Hetzner S3 Bucket Metadata
+- [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
 # TODOs for punchbag-cube-testsuite
 
 > **NOTE:**
@@ -224,13 +232,18 @@ shared/
 5. **cube-server**: Uses shared/simulation for all components
 6. **All data flows through shared/ library - no direct component dependencies**
 
-## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
 - [ ] Add more advanced provider transformation features as needed
 - [ ] Add support for StackIT Object Storage in generator
 - [ ] Further automate the Terraform generation workflow (e.g., config-driven, batch generation, etc.)
 - [ ] Add more provider pairs and conversion logic to `werfty-transformator`
 - [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only
+
+## S3/Object Storage Abstraction (NEW)
+    - Unify S3 operations (list, create, delete buckets, etc.) for AWS, Hetzner, and future providers
+    - Abstract away direct usage of aws-sdk-go-v2 in provider implementations
+    - Ensure all CLI and app usage goes through this abstraction
+    - Add tests for all supported providers (AWS, Hetzner, etc.)
 
 ## Notes
 - **multitool is the central hub for all cloud operations** - generator and transformer depend on it

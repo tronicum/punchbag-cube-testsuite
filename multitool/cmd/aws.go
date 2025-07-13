@@ -49,14 +49,14 @@ var awsCreateBucketCmd = &cobra.Command{
 
 func init() {
 
-// AWS CloudFormation (from cloudformation.go)
-awsCmd.AddCommand(cloudformationCmd)
+	// AWS CloudFormation (from cloudformation.go)
+	awsCmd.AddCommand(cloudformationCmd)
 
-// AWS S3
-awsCmd.AddCommand(awsS3Cmd)
-awsS3Cmd.AddCommand(awsCreateBucketCmd)
-awsCreateBucketCmd.Flags().String("name", "", "S3 bucket name")
-awsCreateBucketCmd.Flags().String("region", "us-east-1", "AWS region")
-awsCreateBucketCmd.Flags().Bool("simulation", false, "Use simulation mode")
-awsCreateBucketCmd.MarkFlagRequired("name")
+	// AWS S3
+	awsCmd.AddCommand(awsS3Cmd)
+	awsS3Cmd.AddCommand(awsCreateBucketCmd)
+	awsCreateBucketCmd.Flags().String("name", "", "S3 bucket name")
+	awsCreateBucketCmd.Flags().String("region", "us-east-1", "AWS region")
+	awsCreateBucketCmd.Flags().Bool("simulation", false, "Use simulation mode")
+	awsCreateBucketCmd.MarkFlagRequired("name")
 }

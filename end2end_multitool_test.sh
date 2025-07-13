@@ -32,10 +32,11 @@ else
   SERVER_PID=""
 fi
 
+
+# Standard providers
 PROVIDERS=(azure aws gcp)
 for provider in "${PROVIDERS[@]}"; do
   SIM_TEST_JSON="$SCRIPT_DIR/sim_test_${provider}.json"
-  # Example args for each provider (customize as needed)
   case "$provider" in
     azure)
       args="--resource-type aks --name test-aks --resource-group test-rg --location eastus --node-count 2"
@@ -63,6 +64,23 @@ for provider in "${PROVIDERS[@]}"; do
   cat "$SIM_TEST_JSON"
   rm -f "$SIM_TEST_JSON"
 done
+
+# Hetzner S3 bucket listing test
+echo "[INFO] Running Hetzner S3 bucket listing test..."
+HETZNER_TEST_JSON="$SCRIPT_DIR/hetzner_s3_list.json"
+export HETZNER_S3_ACCESS_KEY="${HETZNER_S3_ACCESS_KEY:-dummy-access-key}"
+export HETZNER_S3_SECRET_KEY="${HETZNER_S3_SECRET_KEY:-dummy-secret-key}"
+set +e
+"$SIMULATOR_BIN" objectstorage list hetzner > "$HETZNER_TEST_JSON"
+status=$?
+set -e
+if [ $status -ne 0 ]; then
+  echo "[ERROR] Hetzner S3 bucket listing failed."
+  exit 1
+fi
+echo "[SUCCESS] Hetzner S3 bucket listing output:"
+cat "$HETZNER_TEST_JSON"
+rm -f "$HETZNER_TEST_JSON"
 
 if [ -n "${SERVER_PID:-}" ]; then
   kill "$SERVER_PID" || true
