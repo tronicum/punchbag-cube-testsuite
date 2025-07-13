@@ -11,7 +11,7 @@ require (
    github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
    github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
    github.com/spf13/cobra v1.9.1
-   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.1
+   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
    gopkg.in/yaml.v2 v2.4.0
 )
 

@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
    github.com/gin-gonic/gin v1.10.1
-   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.0
+   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
    github.com/tronicum/punchbag-cube-testsuite/store v0.0.0-20250712064408-7f7611779cda
    go.uber.org/zap v1.27.0
 )
