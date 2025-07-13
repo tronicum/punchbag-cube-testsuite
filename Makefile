@@ -2,24 +2,38 @@
 
 .PHONY: help build test test-azure test-azure-sim test-azure-direct clean
 
-# Default target
+
+# Default target: build multitool CLI only
+.PHONY: all
+all: multitool/mt
+
 help:
 	@echo "Available targets:"
-	@echo "  build           Build all binaries"
+	@echo "  all             Build multitool CLI only (default)"
+	@echo "  multitool/mt    Build multitool CLI only"
+	@echo "  build           Build all binaries (including werfty, cube-server, multitool)"
 	@echo "  test           Run all tests"
 	@echo "  test-azure     Test Azure functions (simulation mode)"
 	@echo "  test-azure-sim Test Azure functions (simulation mode)"
 	@echo "  test-azure-direct Test Azure functions (direct mode)"
 	@echo "  clean          Clean build artifacts"
 
-# Build werfty and other binaries
+# Build multitool CLI only
+.PHONY: multitool/mt
+multitool/mt:
+	cd multitool && go build -o mt ./
+
+
+# Build all binaries (optional: includes werfty, cube-server, multitool)
+.PHONY: build
 build:
-	@echo "Building werfty..."
-	cd werfty && go build -o werfty ./cmd
+	@echo "Building werfty (optional, ignore errors if not needed)..."
+	-cd werfty && go build -o werfty ./cmd || echo "[INFO] werfty build skipped or failed (optional)"
 	@echo "Building cube-server..."
 	cd cube-server && go build -o cube-server ./
-	@echo "Building multitool..."
+	@echo "Building multitool CLI (single binary: ./multitool/mt) ..."
 	cd multitool && go build -o mt ./
+	@echo "NOTE: The only supported CLI binary is ./multitool/mt. Do not use ./mt or multitool/multitool."
 
 # Run all tests
 test:
@@ -43,6 +57,7 @@ clean:
 	rm -f cube-server/cube-server
 	rm -f multitool/mt
 	rm -f generator/werfty-generator
+	@echo "Cleaned all binaries. Only ./multitool/mt is supported as the CLI binary."
 
 # Start cube-server for testing
 start-server:

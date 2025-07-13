@@ -33,21 +33,20 @@ var proxyServer string
 // Initialize commands
 func init() {
 	rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
-	rootCmd.AddCommand(manageCloudCmd)
-	rootCmd.AddCommand(osDetectCmd)
-	rootCmd.AddCommand(packageInstallCmd)
-	rootCmd.AddCommand(dockerRegistryCmd)
-	rootCmd.AddCommand(listPackagesCmd)
-	rootCmd.AddCommand(clusterCmd)
-	rootCmd.AddCommand(testCmd)
-	rootCmd.AddCommand(configCmd)
-	rootCmd.AddCommand(k8sCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
-	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
-	packageInstallCmd.Flags().Bool("relink", false, "Symlink the mt binary to /usr/local/bin/mt after install")
-	rootCmd.AddCommand(scaffoldCmd)
-	rootCmd.AddCommand(cloudformationCmd)
+
+	// Register only the correct top-level commands, matching the new CLI tree structure
+	rootCmd.AddCommand(awsCmd)           // mt aws ...
+	rootCmd.AddCommand(azureCmd)         // mt azure ...
+	rootCmd.AddCommand(gcpCmd)           // mt gcp ...
+	rootCmd.AddCommand(hetznerCmd)       // mt hetzner ...
+	rootCmd.AddCommand(dockerCmd)        // mt docker ...
+	rootCmd.AddCommand(k8sCmd)           // mt k8s ...
+	rootCmd.AddCommand(localCmd)         // mt local ...
+	rootCmd.AddCommand(configCmd)        // mt config ...
+	rootCmd.AddCommand(testCmd)          // mt test ...
+	rootCmd.AddCommand(scaffoldCmd)      // mt scaffold ...
+	rootCmd.AddCommand(objectStorageCmd) // mt objectstorage ...
+	rootCmd.AddCommand(objectStorageCmd) // mt objectstorage ...
 }
 
 // Add basic cloud management functionality
@@ -118,58 +117,6 @@ var packageInstallCmd = &cobra.Command{
 				fmt.Printf("Symlinked mt binary to %s\n", symlinkPath)
 			}
 		}
-	},
-}
-
-var dockerRegistryCmd = &cobra.Command{
-	Use:   "docker-registry",
-	Short: "Manage Docker registries",
-	Run: func(cmd *cobra.Command, args []string) {
-		data := map[string]string{
-			"Command": "Docker registry management commands will be implemented here.",
-		}
-		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
-	},
-}
-
-var dockerRegistryListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List Docker registries",
-	Run: func(cmd *cobra.Command, args []string) {
-		data := map[string]string{
-			"Registry": "Docker Hub",
-			"Status":   "Logged In",
-		}
-		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
-	},
-}
-
-var dockerRegistryLoginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Log in to a Docker registry",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			fmt.Println("Usage: docker-registry login <registry> <username>")
-			return
-		}
-		registry := args[0]
-		username := args[1]
-		fmt.Printf("Logging in to %s as %s\n", registry, username)
-		// Add logic for Docker login
-	},
-}
-
-var dockerRegistryLogoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Log out from a Docker registry",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			fmt.Println("Usage: docker-registry logout <registry>")
-			return
-		}
-		registry := args[0]
-		fmt.Printf("Logging out from %s\n", registry)
-		// Add logic for Docker logout
 	},
 }
 

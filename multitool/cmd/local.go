@@ -129,19 +129,15 @@ var localConfigShowCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(localCmd)
-
 	// OS Detection
 	localCmd.AddCommand(localOsDetectCmd)
 	localOsDetectCmd.Flags().BoolP("verbose", "v", false, "Show detailed OS information")
 
 	// Package Management
 	localCmd.AddCommand(localPackagesCmd)
-	
 	localPackagesCmd.AddCommand(localListPackagesCmd)
 	localListPackagesCmd.Flags().String("filter", "", "Filter packages by name pattern")
 	localListPackagesCmd.Flags().StringP("format", "f", "table", "Output format (table, json, yaml)")
-	
 	localPackagesCmd.AddCommand(localInstallPackageCmd)
 	localInstallPackageCmd.Flags().StringArrayP("package", "p", []string{}, "Package(s) to install")
 	localInstallPackageCmd.Flags().BoolP("yes", "y", false, "Auto-confirm installation")
@@ -149,7 +145,6 @@ func init() {
 
 	// System Configuration
 	localCmd.AddCommand(localConfigCmd)
-	
 	localConfigCmd.AddCommand(localConfigShowCmd)
 	localConfigShowCmd.Flags().String("section", "", "Configuration section to show")
 }

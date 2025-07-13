@@ -75,6 +75,60 @@ var dockerComposeCmd = &cobra.Command{
 	Long:  `Create, start, stop, and manage Docker Compose projects.`,
 }
 
+// ==== REGISTRY ====
+
+var dockerRegistryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "Manage Docker registries",
+	Run: func(cmd *cobra.Command, args []string) {
+		data := map[string]string{
+			"Command": "Docker registry management commands will be implemented here.",
+		}
+		fmt.Printf("%v\n", data)
+	},
+}
+
+var dockerRegistryListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List Docker registries",
+	Run: func(cmd *cobra.Command, args []string) {
+		data := map[string]string{
+			"Registry": "Docker Hub",
+			"Status":   "Logged In",
+		}
+		fmt.Printf("%v\n", data)
+	},
+}
+
+var dockerRegistryLoginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Log in to a Docker registry",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 2 {
+			fmt.Println("Usage: docker registry login <registry> <username>")
+			return
+		}
+		registry := args[0]
+		username := args[1]
+		fmt.Printf("Logging in to %s as %s\n", registry, username)
+		// Add logic for Docker login
+	},
+}
+
+var dockerRegistryLogoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Log out from a Docker registry",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			fmt.Println("Usage: docker registry logout <registry>")
+			return
+		}
+		registry := args[0]
+		fmt.Printf("Logging out from %s\n", registry)
+		// Add logic for Docker logout
+	},
+}
+
 var dockerComposeUpCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Start Docker Compose project",
@@ -96,8 +150,6 @@ var dockerComposeUpCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(dockerCmd)
-
 	// Docker Containers
 	dockerCmd.AddCommand(dockerContainersCmd)
 	dockerContainersCmd.AddCommand(dockerListContainersCmd)
@@ -117,4 +169,10 @@ func init() {
 	dockerComposeUpCmd.Flags().StringP("file", "f", "docker-compose.yml", "Specify an alternate compose file")
 	dockerComposeUpCmd.Flags().StringP("project", "p", "", "Specify an alternate project name")
 	dockerComposeUpCmd.Flags().BoolP("detach", "d", false, "Detached mode: Run containers in the background")
+
+	// Docker Registry
+	dockerCmd.AddCommand(dockerRegistryCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryListCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLoginCmd)
+	dockerRegistryCmd.AddCommand(dockerRegistryLogoutCmd)
 }

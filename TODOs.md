@@ -1,4 +1,18 @@
+## Low Priority
+
+- [ ] Investigate enabling Copilot (AI assistant) to access GitHub for direct commits and merge requests. (Low priority)
+## Notes on end2end_multitool_test.sh
+
+- The variable `SIMULATOR_BIN` in `testing/end2end/end2end_multitool_test.sh` points to the multitool CLI binary. It is used to run multitool commands directly (such as objectstorage and resource simulations) and is not a client for the sim-server. This ensures all CLI calls use the correct binary location.
+## Notes on Hetzner S3 Bucket Metadata
+- [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
 # TODOs for punchbag-cube-testsuite
+
+> **NOTE:**
+> The *only* supported CLI binary is `./multitool/mt`.
+> All documentation, scripts, and usage must reference this binary.
+> Do **not** use `./mt`, `multitool/multitool`, or any other binary name/location.
+> This is enforced in the Makefile and build process.
 
 ## Project Architecture Overview
 
@@ -39,31 +53,75 @@
 
 ## Milestones
 
+
 ### IMMEDIATE: Shared Library Migration (CRITICAL PRIORITY)
-- [ ] Migrate Azure cloud operations to shared/ library:
-    - Move Azure Monitor, Log Analytics, Application Insights, Budget operations to shared/providers/azure/
-    - Move AKS cluster operations to shared/providers/azure/
-    - Create shared/providers/azure/monitor.go, shared/providers/azure/aks.go, etc.
-    - Update multitool to import and use shared/providers/azure
-- [ ] Create shared/export and shared/import packages:
-    - Export cloud state to JSON/YAML (used by werfty-generator)
-    - Import configurations and validate (used by werfty-transformator)
+
+- [x] Migrate Azure cloud operations to `shared/providers/azure/`:
+    - Azure Monitor, Log Analytics, Application Insights, Budget, and AKS cluster operations
+    - All code moved from multitool to shared/providers/azure/
+    - multitool imports and uses shared/providers/azure
+- [x] Create `shared/export` and `shared/import` packages:
+    - Export cloud state to JSON/YAML (for werfty-generator)
+    - Import configurations and validate (for werfty-transformator)
     - Common data exchange formats across all applications
 - [ ] Standardize shared/ library interfaces:
-    - Common Provider interface for all clouds
-    - Standardized authentication and configuration
-    - Unified error handling and logging
-    - Consistent simulation vs direct mode handling
-- [ ] Complete shared module integration across all components (high priority):
-    - Ensure all applications use unified models from shared/
-    - Standardize API interfaces between multitool, generators, and cube-server
-    - Complete migration of common code to shared/ module
-    - Step-by-step suggestions:
-        1. Audit current shared/ usage across multitool, werfty-generator, werfty-transformator
-        2. Move remaining common models and utilities to shared/
-        3. Update import paths in all applications to use shared/
-        4. Standardize error handling and logging across components
-        5. Document shared module API and usage patterns
+    - [ ] Common Provider interface for all clouds (review for consistency)
+    - [ ] Standardized authentication and configuration (review/complete)
+    - [ ] Unified error handling and logging (standardize)
+    - [ ] Consistent simulation vs direct mode handling (review)
+- [ ] Complete shared module integration across all components:
+    - [x] All applications use unified models from shared/
+    - [ ] Standardize API interfaces between multitool, generators, and cube-server
+    - [x] Complete migration of common code to shared/ module
+
+#### Step-by-step suggestions:
+1. Review and finalize Provider interface in `shared/providers/interface.go`.
+2. Standardize authentication/config patterns across all providers.
+3. Refactor error handling and logging to use shared/log and shared/errors everywhere.
+4. Ensure all simulation/direct mode logic is consistent and provider-agnostic.
+5. Update multitool, werfty-generator, and werfty-transformator to use only shared/ code for all cloud/model logic.
+
+---
+
+**TODO: Refactor multitool command structure for clarity and maintainability**
+
+- [ ] Restructure multitool CLI commands to the following structure:
+    - `mt aws ...`
+        - `mt aws cloudformation ...` (all CloudFormation commands as subcommands)
+        - `mt aws s3 ...` (all S3 commands as subcommands)
+        - (future: `mt aws eks ...`, etc.)
+    - `mt azure ...` (all Azure-specific commands as subcommands: monitor, aks, budget, etc.)
+    - `mt gcp ...` (all GCP-specific commands as subcommands)
+    - `mt hetzner ...` (all Hetzner-specific commands as subcommands)
+    - `mt docker ...`
+        - `mt docker container ...` (container management)
+        - `mt docker image ...` (image management)
+        - `mt docker registry ...` (registry login/logout/list, etc.)
+    - `mt k8s ...` (provider-agnostic Kubernetes commands, with `--provider` flag)
+    - `mt local ...`
+        - `mt local os ...` (OS detection/info)
+        - `mt local package ...` (package management)
+        - `mt local file ...` (local file operations, validation, etc.)
+    - `mt config ...` (global config management)
+    - `mt test ...` (testing utilities)
+    - `mt scaffold ...` (project scaffolding, if needed)
+
+- [ ] Review and update documentation and help output to reflect the new structure
+- [ ] Ensure backward compatibility or provide migration notes for users
+    1. [x] Audit current shared/ usage across multitool, werfty-generator, werfty-transformator
+    2. [x] Move remaining common models and utilities to shared/
+    3. [x] Update import paths in all applications to use shared/
+    4. [ ] Standardize error handling and logging across components
+    5. [ ] Document shared module API and usage patterns
+
+---
+**Recommended Next Steps:**
+
+1. Standardize error handling and logging across all shared/ and consuming apps (multitool, werfty-generator, werfty-transformator, cube-server).
+2. Review and unify the Provider interface and authentication/config patterns in shared/providers/interface.go and all provider implementations.
+3. Document the shared module API and usage patterns for all teams.
+4. Test all applications (multitool, werfty-generator, werfty-transformator) independently using only the shared/ library (no local model/util code).
+5. (Optional) Add more provider-agnostic tests and CI checks to enforce shared/ usage and interface compliance.
 - [ ] Add StackIT, Hetzner, and IONOS object storage support (abstraction + mock logic) [medium priority]
 - [ ] Add Azure DevOps support to multitool framework (medium priority):
     - Implement Azure DevOps project, pipeline, and repository management
@@ -174,13 +232,18 @@ shared/
 5. **cube-server**: Uses shared/simulation for all components
 6. **All data flows through shared/ library - no direct component dependencies**
 
-## Low Priority / Future
 - [ ] Integration workflow between generator and backend/server
 - [ ] Add more advanced provider transformation features as needed
 - [ ] Add support for StackIT Object Storage in generator
 - [ ] Further automate the Terraform generation workflow (e.g., config-driven, batch generation, etc.)
 - [ ] Add more provider pairs and conversion logic to `werfty-transformator`
 - [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only
+
+## S3/Object Storage Abstraction (NEW)
+    - Unify S3 operations (list, create, delete buckets, etc.) for AWS, Hetzner, and future providers
+    - Abstract away direct usage of aws-sdk-go-v2 in provider implementations
+    - Ensure all CLI and app usage goes through this abstraction
+    - Add tests for all supported providers (AWS, Hetzner, etc.)
 
 ## Notes
 - **multitool is the central hub for all cloud operations** - generator and transformer depend on it

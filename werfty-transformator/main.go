@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 
+	importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
 	"github.com/tronicum/punchbag-cube-testsuite/werfty-transformator/transform"
 )
 
@@ -19,15 +20,34 @@ import (
 
 func main() {
 	inputPath := flag.String("input", "", "Input Terraform file")
+	configPath := flag.String("config", "", "Optional config file (JSON/YAML)")
 	srcProvider := flag.String("src-provider", "", "Source cloud provider (azure|aws|gcp)")
 	destProvider := flag.String("destination-provider", "", "Destination cloud provider (azure|aws|gcp|multipass-cloud-layer)")
 	terraspace := flag.Bool("terraspace", false, "Output as Terraspace project structure")
 	flag.Parse()
 
 	if *inputPath == "" || *srcProvider == "" || *destProvider == "" {
-		fmt.Println("Usage: werfty-transformator --input <input.tf> --src-provider <azure|aws|gcp> --destination-provider <azure|aws|gcp|multipass-cloud-layer> [--terraspace]")
+		fmt.Println("Usage: werfty-transformator --input <input.tf> --src-provider <azure|aws|gcp> --destination-provider <azure|aws|gcp|multipass-cloud-layer> [--config <config.json|yaml>] [--terraspace]")
 		os.Exit(1)
 	}
+
+	// Optionally load config file for transformation context
+	var config *importpkg.Config
+	if *configPath != "" {
+		f, err := os.Open(*configPath)
+		if err != nil {
+			fmt.Printf("Failed to open config file: %v\n", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		config, err = importpkg.LoadConfigJSON(f)
+		if err != nil {
+			fmt.Printf("Failed to parse config file: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Loaded config: %+v\n", config)
+	}
+
 	content, err := os.ReadFile(*inputPath)
 	if err != nil {
 		fmt.Printf("Failed to read input: %v\n", err)

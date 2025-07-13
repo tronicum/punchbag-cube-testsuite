@@ -117,7 +117,6 @@ var azureCreateAksCmd = &cobra.Command{
 // ==== COMMAND TREE & FLAGS ====
 
 func init() {
-	rootCmd.AddCommand(azureCmd)
 
 	// Azure subcommands
 	azureCmd.AddCommand(azureMonitorCmd)

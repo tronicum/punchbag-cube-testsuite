@@ -1,3 +1,4 @@
+
 package cmd
 
 import (
@@ -6,19 +7,41 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/mock"
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	awsS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/aws"
+	hetznerS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/hetzner"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
+var supportedProviders = []string{"aws", "hetzner"}
+
+var supportedProvidersCmd = &cobra.Command{
+	Use:   "supported-providers",
+	Short: "List supported object storage providers",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Supported object storage providers:")
+		for _, p := range supportedProviders {
+			fmt.Println("-", p)
+		}
+	},
+}
+
+
 var objectStorageCmd = &cobra.Command{
 	Use:   "objectstorage",
-	Short: "Manage S3-like object storage buckets (AWS, Azure, GCP, StackIT, Hetzner, IONOS)",
+   Short: "Manage S3-like object storage buckets (AWS, Hetzner)",
+   Run: func(cmd *cobra.Command, args []string) {
+	   fmt.Println("Supported object storage providers:")
+	   for _, p := range supportedProviders {
+		   fmt.Println("-", p)
+	   }
+	   fmt.Println("Use 'mt objectstorage [command] --help' for more info.")
+   },
 }
 
 var policyFile string
@@ -36,16 +59,8 @@ var createBucketCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, name, region := args[0], args[1], args[2]
-		bucket := &sharedmodels.ObjectStorageBucket{Name: name, Region: region, Provider: sharedmodels.CloudProvider(provider)}
-		// Advanced S3 features
-		if policyFile != "" {
-			// Optionally parse policy file here
-		}
-		if lifecycleFile != "" {
-			// Optionally parse lifecycle rules from file
-		}
+		bucket := &models.ObjectStorageBucket{Name: name, Region: region, Provider: models.CloudProvider(provider)}
 		if proxyServer != "" {
-			// Proxy mode: send to cube-server/sim-server
 			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage", proxyServer, provider)
 			jsonBody, err := json.Marshal(bucket)
 			if err != nil {
@@ -70,50 +85,27 @@ var createBucketCmd = &cobra.Command{
 			fmt.Printf("Created bucket (proxy): %+v\n", result)
 			return
 		}
-		// Local/mock or real provider mode
-		var store interface {
-			CreateBucket(*sharedmodels.ObjectStorageBucket) (*sharedmodels.ObjectStorageBucket, error)
-			ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error)
-		}
+		var err error
 		switch provider {
 		case "aws":
-			// TODO: Use AWS SDK (already implemented)
-			store = mock.NewAwsObjectStorage()
-		case "azure":
-			// TODO: Use Azure SDK for Go for real Azure Blob Storage
-			store = mock.NewAzureObjectStorage()
-		case "gcp":
-			// TODO: Use Google Cloud Storage SDK for Go
-			store = mock.NewGcpObjectStorage()
-		case "stackit":
-			// TODO: Use StackIT SDK or S3-compatible if available
-			store = mock.NewStackITObjectStorage()
-		case "hetzner":
-			// Hetzner S3: use env credentials, not token
-			accessKey, secretKey := client.LoadHetznerS3Credentials()
-			if accessKey != "" && secretKey != "" {
-				fmt.Println("[CLI] Using real Hetzner S3 client (access key and secret found in env)")
-				store = client.NewHetznerObjectStorageClientFromKeys(accessKey, secretKey)
-			} else {
-				fmt.Println("[CLI] ERROR: No Hetzner S3 access key/secret found in env. Using mock implementation.")
-				store = mock.NewHetznerObjectStorage()
+			s3Client, e := awsS3.NewS3Client(cmd.Context(), region)
+			if e != nil {
+				fmt.Println("AWS S3 client error:", e)
+				os.Exit(1)
 			}
-		case "hetzner-rest":
-			fmt.Println("[CLI] ERROR: Hetzner REST API does not support object storage management. Use the S3-compatible API and access keys.")
-			os.Exit(1)
-		case "ionos":
-			// TODO: Use IONOS SDK or S3-compatible if available
-			store = mock.NewIonosObjectStorage()
+			err = s3Client.CreateBucket(cmd.Context(), bucket)
+		case "hetzner":
+			hetznerClient := hetznerS3.NewHetznerS3Client()
+			err = hetznerClient.CreateBucket(cmd.Context(), bucket)
 		default:
-			fmt.Println("Unknown provider")
+			fmt.Println("Provider not implemented in shared library yet.")
 			os.Exit(1)
 		}
-		b, err := store.CreateBucket(bucket)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Created bucket: %+v\n", b)
+		fmt.Printf("Created bucket: %+v\n", bucket)
 	},
 }
 
@@ -121,85 +113,54 @@ var listBucketsCmd = &cobra.Command{
 	Use:   "list [provider]",
 	Short: "List all buckets for a provider",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("[CLI] listBucketsCmd called with provider: %s\n", args[0])
-		provider := args[0]
-		fmt.Println("[CLI] Before provider switch")
-		var store interface {
-			ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error)
-		}
-		switch provider {
-		case "aws":
-			fmt.Println("[CLI] Using AWS mock")
-			store = mock.NewAwsObjectStorage()
-		case "azure":
-			fmt.Println("[CLI] Using Azure mock")
-			store = mock.NewAzureObjectStorage()
-		case "gcp":
-			fmt.Println("[CLI] Using GCP mock")
-			store = mock.NewGcpObjectStorage()
-		case "stackit":
-			fmt.Println("[CLI] Using StackIT mock")
-			store = mock.NewStackITObjectStorage()
-		case "hetzner":
-			fmt.Println("[CLI] Entered hetzner case")
-			// Hetzner S3: use env credentials, not token
-			accessKey, secretKey := client.LoadHetznerS3Credentials()
-			if accessKey == "" || secretKey == "" {
-				fmt.Println("[CLI] ERROR: No Hetzner S3 access key/secret found in environment.")
-				fmt.Println("[CLI] Please login by setting HETZNER_S3_ACCESS_KEY and HETZNER_S3_SECRET_KEY in your environment.")
-				fmt.Println("[CLI] Example:")
-				fmt.Println("  export HETZNER_S3_ACCESS_KEY=your-access-key")
-				fmt.Println("  export HETZNER_S3_SECRET_KEY=your-secret-key")
-				os.Exit(1)
-			}
-			fmt.Println("[CLI] Using real Hetzner S3 client (access key and secret found in env)")
-			store = client.NewHetznerObjectStorageClientFromKeys(accessKey, secretKey)
-		case "hetzner-rest":
-			fmt.Println("[CLI] Entered hetzner-rest case")
-			token, _ := client.LoadHetznerAPIToken(hetznerToken)
-			if token != "" {
-				fmt.Println("[CLI] Using Hetzner REST API client (token found)")
-				store = client.NewHetznerRESTObjectStorageClient(token)
-			} else {
-				fmt.Println("[CLI] ERROR: No Hetzner API token found. Using mock implementation.")
-				store = mock.NewHetznerObjectStorage()
-			}
-		case "ionos":
-			fmt.Println("[CLI] Using IONOS mock")
-			store = mock.NewIonosObjectStorage()
-		default:
-			fmt.Println("Unknown provider")
-			os.Exit(1)
-		}
-		fmt.Println("[CLI] After provider switch, about to call ListBuckets")
-		buckets, err := store.ListBuckets()
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-		// Output filtering
-		if objectStorageOutputFormat == "json" {
-			jsonData, err := json.MarshalIndent(buckets, "", "  ")
-			if err != nil {
-				fmt.Println("Error marshaling buckets to JSON:", err)
-			} else {
-				fmt.Println(string(jsonData))
-			}
-		} else if objectStorageOutputFormat == "yaml" {
-			yamlData, err := yaml.Marshal(buckets)
-			if err != nil {
-				fmt.Println("Error marshaling buckets to YAML:", err)
-			} else {
-				fmt.Println(string(yamlData))
-			}
-		} else {
-			fmt.Printf("%-30s %-15s %-25s\n", "Name", "Region", "CreatedAt")
-			for _, b := range buckets {
-				fmt.Printf("%-30s %-15s %-25s\n", b.Name, b.Region, b.CreatedAt.Format(time.RFC3339))
-			}
-		}
-	},
+	   Run: func(cmd *cobra.Command, args []string) {
+			   provider := args[0]
+			   var buckets []models.ObjectStorageBucket
+			   var err error
+			   switch provider {
+			   case "aws":
+					   s3Client, e := awsS3.NewS3Client(cmd.Context(), "us-east-1") // TODO: region flag
+					   if e != nil {
+							   fmt.Println("AWS S3 client error:", e)
+							   os.Exit(1)
+					   }
+					   buckets, err = s3Client.ListBuckets(cmd.Context())
+			   case "hetzner":
+					   hetznerClient := hetznerS3.NewHetznerS3Client()
+					   buckets, err = hetznerClient.ListBuckets(cmd.Context())
+			   default:
+					   fmt.Println("Provider not implemented in shared library yet.")
+					   os.Exit(1)
+			   }
+			   if err != nil {
+					   fmt.Println("Error:", err)
+					   os.Exit(1)
+			   }
+			   // Output filtering
+			   switch objectStorageOutputFormat {
+			   case "json":
+					   jsonData, err := json.MarshalIndent(buckets, "", "  ")
+					   if err != nil {
+							   fmt.Println("Error marshaling buckets to JSON:", err)
+					   } else {
+							   fmt.Println(string(jsonData))
+					   }
+			   case "yaml":
+					   yamlData, err := yaml.Marshal(buckets)
+					   if err != nil {
+							   fmt.Println("Error marshaling buckets to YAML:", err)
+					   } else {
+							   fmt.Println(string(yamlData))
+					   }
+			   default:
+					   fmt.Printf("[CLI] listBucketsCmd called with provider: %s\n", provider)
+					   fmt.Println("[CLI] Before provider switch")
+					   fmt.Printf("%-30s %-15s %-25s\n", "Name", "Region", "CreatedAt")
+					   for _, b := range buckets {
+							   fmt.Printf("%-30s %-15s %-25s\n", b.Name, b.Region, b.CreatedAt.Format(time.RFC3339))
+					   }
+			   }
+	   },
 }
 
 var getBucketCmd = &cobra.Command{
@@ -228,32 +189,8 @@ var getBucketCmd = &cobra.Command{
 			fmt.Printf("Bucket (proxy): %+v\n", bucket)
 			return
 		}
-		var store interface {
-			GetBucket(string) (*sharedmodels.ObjectStorageBucket, error)
-		}
-		switch provider {
-		case "aws":
-			store = mock.NewAwsObjectStorage()
-		case "azure":
-			store = mock.NewAzureObjectStorage()
-		case "gcp":
-			store = mock.NewGcpObjectStorage()
-		case "stackit":
-			store = mock.NewStackITObjectStorage()
-		case "hetzner":
-			store = mock.NewHetznerObjectStorage()
-		case "ionos":
-			store = mock.NewIonosObjectStorage()
-		default:
-			fmt.Println("Unknown provider")
-			os.Exit(1)
-		}
-		b, err := store.GetBucket(id)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-		fmt.Printf("Bucket: %+v\n", b)
+		fmt.Println("GetBucket not implemented in shared library yet.")
+		os.Exit(1)
 	},
 }
 
@@ -262,7 +199,7 @@ var deleteBucketCmd = &cobra.Command{
 	Short: "Delete a bucket by ID",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		provider, id := args[0], args[1]
+	   provider, id := strings.ToLower(args[0]), args[1]
 		// Automation/skip-prompts logic
 		if automationMode {
 			skipPrompts = true
@@ -277,62 +214,48 @@ var deleteBucketCmd = &cobra.Command{
 				return
 			}
 		}
-		if proxyServer != "" {
-			client := &http.Client{}
-			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage?id=%s", proxyServer, provider, id)
-			req, err := http.NewRequest(http.MethodDelete, url, nil)
-			if err != nil {
-				printSuccessOrError(false, automationMode, "Failed to create proxy request: %v", err)
-				os.Exit(1)
-			}
-			resp, err := client.Do(req)
-			if err != nil {
-				printSuccessOrError(false, automationMode, "Proxy request failed: %v", err)
-				os.Exit(1)
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-				printSuccessOrError(false, automationMode, "Proxy server error: %s", resp.Status)
-				os.Exit(1)
-			}
-			printSuccessOrError(true, automationMode, "Bucket deleted successfully (proxy).")
-			return
-		}
-		var store interface {
-			DeleteBucket(string) error
-		}
-		switch provider {
-		case "aws":
-			store = mock.NewAwsObjectStorage()
-		case "azure":
-			store = mock.NewAzureObjectStorage()
-		case "gcp":
-			store = mock.NewGcpObjectStorage()
-		case "stackit":
-			store = mock.NewStackITObjectStorage()
-		case "hetzner":
-			accessKey, secretKey := client.LoadHetznerS3Credentials()
-			if accessKey == "" || secretKey == "" {
-				fmt.Println("[CLI] ERROR: No Hetzner S3 access key/secret found in environment.")
-				fmt.Println("[CLI] Please login by setting HETZNER_S3_ACCESS_KEY and HETZNER_S3_SECRET_KEY in your environment.")
-				fmt.Println("[CLI] Example:")
-				fmt.Println("  export HETZNER_S3_ACCESS_KEY=your-access-key")
-				fmt.Println("  export HETZNER_S3_SECRET_KEY=your-secret-key")
-				os.Exit(1)
-			}
-			store = client.NewHetznerObjectStorageClientFromKeys(accessKey, secretKey)
-		case "ionos":
-			store = mock.NewIonosObjectStorage()
-		default:
-			fmt.Println("Unknown provider")
-			os.Exit(1)
-		}
-		err := store.DeleteBucket(id)
-		if err != nil {
-			printSuccessOrError(false, automationMode, "Error: %v", err)
-			os.Exit(1)
-		}
-		printSuccessOrError(true, automationMode, "Bucket deleted successfully.")
+	   if proxyServer != "" {
+			   client := &http.Client{}
+			   url := fmt.Sprintf("%s/api/proxy/%s/objectstorage?id=%s", proxyServer, provider, id)
+			   req, err := http.NewRequest(http.MethodDelete, url, nil)
+			   if err != nil {
+					   printSuccessOrError(false, automationMode, "Failed to create proxy request: %v", err)
+					   os.Exit(1)
+			   }
+			   resp, err := client.Do(req)
+			   if err != nil {
+					   printSuccessOrError(false, automationMode, "Proxy request failed: %v", err)
+					   os.Exit(1)
+			   }
+			   defer resp.Body.Close()
+			   if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+					   printSuccessOrError(false, automationMode, "Proxy server error: %s", resp.Status)
+					   os.Exit(1)
+			   }
+			   printSuccessOrError(true, automationMode, "Bucket deleted successfully (proxy).")
+			   return
+	   }
+	   var err error
+	   switch provider {
+	   case "aws":
+			   s3Client, e := awsS3.NewS3Client(cmd.Context(), "us-east-1") // TODO: region flag
+			   if e != nil {
+					   printSuccessOrError(false, automationMode, "AWS S3 client error: %v", e)
+					   os.Exit(1)
+			   }
+			   err = s3Client.DeleteBucket(cmd.Context(), id)
+	   case "hetzner":
+			   hetznerClient := hetznerS3.NewHetznerS3Client()
+			   err = hetznerClient.DeleteBucket(cmd.Context(), id)
+	   default:
+			   printSuccessOrError(false, automationMode, "Provider not implemented in shared library yet.")
+			   os.Exit(1)
+	   }
+	   if err != nil {
+			   printSuccessOrError(false, automationMode, "Error deleting bucket: %v", err)
+			   os.Exit(1)
+	   }
+	   printSuccessOrError(true, automationMode, "Bucket deleted successfully.")
 	},
 }
 
@@ -359,8 +282,7 @@ func init() {
 	deleteBucketCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Force deletion without confirmation")
 	objectStorageCmd.PersistentFlags().BoolVar(&skipPrompts, "skip-prompts", false, "Skip all interactive prompts (for automation)")
 	objectStorageCmd.PersistentFlags().BoolVar(&automationMode, "automation-mode", false, "Enable automation/CI mode (alias for --skip-prompts --force, prints colored output)")
-	objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd)
-	rootCmd.AddCommand(objectStorageCmd)
+   objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd, supportedProvidersCmd)
 }
 
 func maskToken(token string) string {
