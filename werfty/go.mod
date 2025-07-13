@@ -8,7 +8,7 @@ require (
    github.com/olekukonko/tablewriter v1.0.8
    github.com/spf13/cobra v1.9.1
    github.com/spf13/viper v1.20.1
-   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.0
+   github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
    gopkg.in/yaml.v2 v2.4.0
    gopkg.in/yaml.v3 v3.0.1
 )
