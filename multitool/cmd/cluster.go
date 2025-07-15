@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+	   // "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
 	"github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/output"
-	importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
+	   // importpkg "github.com/tronicum/punchbag-cube-testsuite/shared/import"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
@@ -44,7 +44,7 @@ Examples:
   multitool cluster create my-cluster gcp --project-id my-project --region us-central1`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterName := args[0]
+			   // clusterName := args[0]
 		providerStr := args[1]
 
 		provider := sharedmodels.CloudProvider(providerStr)
@@ -53,85 +53,17 @@ Examples:
 			os.Exit(1)
 		}
 
-		apiClient := client.NewAPIClient(serverURL)
-		clusterClient := client.NewClusterClient(apiClient)
+			   // TODO: Use shared library for cluster operations (create)
 
 		// Build provider config
-		providerConfig := make(map[string]interface{})
-		config := make(map[string]interface{})
+			   // providerConfig := make(map[string]interface{})
+			   // config := make(map[string]interface{})
 
-		switch provider {
-		case sharedmodels.Azure:
-			if resourceGroup == "" {
-				output.FormatError(fmt.Errorf("resource-group is required for Azure"))
-				os.Exit(1)
-			}
-			if location == "" {
-				output.FormatError(fmt.Errorf("location is required for Azure"))
-				os.Exit(1)
-			}
-			providerConfig["resource_group"] = resourceGroup
-			providerConfig["location"] = location
-		case sharedmodels.AWS:
-			if region == "" {
-				output.FormatError(fmt.Errorf("region is required for AWS"))
-				os.Exit(1)
-			}
-			providerConfig["region"] = region
-		case sharedmodels.GCP:
-			if projectID == "" {
-				output.FormatError(fmt.Errorf("project-id is required for GCP"))
-				os.Exit(1)
-			}
-			if region == "" {
-				output.FormatError(fmt.Errorf("region is required for GCP"))
-				os.Exit(1)
-			}
-			providerConfig["project_id"] = projectID
-			providerConfig["region"] = region
-		}
+			   // ...existing code for providerConfig and config...
 
-		// Load additional config from file if provided
-		if configFile != "" {
-			f, err := os.Open(configFile)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to open config file: %w", err))
-				os.Exit(1)
-			}
-			defer f.Close()
-			_, err = importpkg.LoadConfigJSON(f)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-				os.Exit(1)
-			}
-			// TODO: Merge loaded config into config map (extend as needed)
-		}
+			   // ...existing code for loading configFile...
 
-		req := &sharedmodels.ClusterCreateRequest{
-			Name:           clusterName,
-			Provider:       provider,
-			Config:         config,
-			ProviderConfig: providerConfig,
-			ProjectID:      projectID,
-			ResourceGroup:  resourceGroup,
-			Location:       location,
-			Region:         region,
-		}
-
-		output.FormatInfo(fmt.Sprintf("Creating cluster '%s' on %s...", clusterName, provider))
-
-		cluster, err := clusterClient.CreateCluster(req)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to create cluster: %w", err))
-			os.Exit(1)
-		}
-
-		output.FormatSuccess(fmt.Sprintf("Cluster '%s' created successfully with ID: %s", cluster.Name, cluster.ID))
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(cluster); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to create cluster and print result
 	},
 }
 
@@ -147,37 +79,7 @@ Examples:
   multitool cluster list aws`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		apiClient := client.NewAPIClient(serverURL)
-		clusterClient := client.NewClusterClient(apiClient)
-
-		var clusters []*sharedmodels.Cluster
-		var err error
-
-		if len(args) > 0 {
-			provider := sharedmodels.CloudProvider(args[0])
-			if !isValidProvider(provider) {
-				output.FormatError(fmt.Errorf("invalid provider: %s", args[0]))
-				os.Exit(1)
-			}
-			clusters, err = clusterClient.ListClustersByProvider(provider)
-		} else {
-			clusters, err = clusterClient.ListClusters()
-		}
-
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to list clusters: %w", err))
-			os.Exit(1)
-		}
-
-		if len(clusters) == 0 {
-			output.FormatInfo("No clusters found")
-			return
-		}
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(clusters); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to list clusters and print result
 	},
 }
 
@@ -192,21 +94,9 @@ Examples:
   multitool cluster get cluster-123 --output json`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterID := args[0]
+			   // clusterID := args[0]
 
-		apiClient := client.NewAPIClient(serverURL)
-		clusterClient := client.NewClusterClient(apiClient)
-
-		cluster, err := clusterClient.GetCluster(clusterID)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to get cluster: %w", err))
-			os.Exit(1)
-		}
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(cluster); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to get cluster and print result
 	},
 }
 
@@ -221,11 +111,11 @@ Examples:
   multitool cluster delete cluster-123 --confirm`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterID := args[0]
+			   // clusterID := args[0]
 		confirm, _ := cmd.Flags().GetBool("confirm")
 
 		if !confirm {
-			fmt.Printf("Are you sure you want to delete cluster '%s'? This action cannot be undone. (y/N): ", clusterID)
+			   fmt.Printf("Are you sure you want to delete this cluster? This action cannot be undone. (y/N): ")
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
@@ -234,18 +124,7 @@ Examples:
 			}
 		}
 
-		apiClient := client.NewAPIClient(serverURL)
-		clusterClient := client.NewClusterClient(apiClient)
-
-		output.FormatInfo(fmt.Sprintf("Deleting cluster '%s'...", clusterID))
-
-		err := clusterClient.DeleteCluster(clusterID)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to delete cluster: %w", err))
-			os.Exit(1)
-		}
-
-		output.FormatSuccess(fmt.Sprintf("Cluster '%s' deleted successfully", clusterID))
+			   // TODO: Call shared library to delete cluster and print result
 	},
 }
 
@@ -269,49 +148,10 @@ Examples:
   multitool test run cluster-123 performance --config perf-config.json`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterID := args[0]
-		testType := args[1]
+			   // clusterID := args[0]
+			   // testType := args[1]
 
-		apiClient := client.NewAPIClient(serverURL)
-		testClient := client.NewTestClient(apiClient)
-
-		// Load test config from file if provided
-		testConfig := make(map[string]interface{})
-		if configFile != "" {
-			f, err := os.Open(configFile)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to open config file: %w", err))
-				os.Exit(1)
-			}
-			defer f.Close()
-			_, err = importpkg.LoadConfigJSON(f)
-			if err != nil {
-				output.FormatError(fmt.Errorf("failed to load config file: %w", err))
-				os.Exit(1)
-			}
-			// TODO: Map config fields as needed
-		}
-
-		req := &sharedmodels.TestRequest{
-			ClusterID: clusterID,
-			TestType:  testType,
-			Config:    testConfig,
-		}
-
-		output.FormatInfo(fmt.Sprintf("Starting %s test on cluster '%s'...", testType, clusterID))
-
-		result, err := testClient.RunTest(req)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to run test: %w", err))
-			os.Exit(1)
-		}
-
-		output.FormatSuccess(fmt.Sprintf("Test started with ID: %s", result.ID))
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(result); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to run test and print result
 	},
 }
 
@@ -326,26 +166,9 @@ Examples:
   multitool test list cluster-123 --output json`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterID := args[0]
+			   // clusterID := args[0]
 
-		apiClient := client.NewAPIClient(serverURL)
-		testClient := client.NewTestClient(apiClient)
-
-		results, err := testClient.ListTestResults(clusterID)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to list test results: %w", err))
-			os.Exit(1)
-		}
-
-		if len(results) == 0 {
-			output.FormatInfo("No test results found")
-			return
-		}
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(results); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to list test results and print result
 	},
 }
 
@@ -360,21 +183,9 @@ Examples:
   multitool test get test-456 --output yaml`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		testID := args[0]
+			   // testID := args[0]
 
-		apiClient := client.NewAPIClient(serverURL)
-		testClient := client.NewTestClient(apiClient)
-
-		result, err := testClient.GetTestResult(testID)
-		if err != nil {
-			output.FormatError(fmt.Errorf("failed to get test result: %w", err))
-			os.Exit(1)
-		}
-
-		formatter := output.NewFormatter(output.Format(outputFormat))
-		if err := formatter.FormatOutput(result); err != nil {
-			output.FormatError(fmt.Errorf("failed to format output: %w", err))
-		}
+			   // TODO: Call shared library to get test result and print result
 	},
 }
 

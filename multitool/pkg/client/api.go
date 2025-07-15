@@ -1,16 +1,14 @@
 package client
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
-	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	   "fmt"
+	   "net/http"
+	   "strings"
+	   "time"
 )
 
-// APIClient represents a client for interacting with the punchbag server API.
+
+// APIClient represents a minimal client for interacting with the cube-server API (health, login, SSO, etc).
 type APIClient struct {
 	   baseURL    string
 	   httpClient *http.Client
@@ -48,202 +46,21 @@ func (c *APIClient) Ping() error {
 	   return nil
 }
 
-// ClusterClient provides methods for cluster operations.
-type ClusterClient struct {
-	   client *APIClient
-}
-
-// NewClusterClient creates a new cluster client. Returns nil if client is nil.
-func NewClusterClient(client *APIClient) *ClusterClient {
-	   if client == nil {
-			   return nil
-	   }
-	   return &ClusterClient{client: client}
-}
-
-// CreateCluster creates a new cluster.
-func (c *ClusterClient) CreateCluster(req *sharedmodels.ClusterCreateRequest) (*sharedmodels.Cluster, error) {
-	   url := c.client.buildURL("/api/clusters")
-	   data, err := json.Marshal(req)
-	   if err != nil {
-			   return nil, fmt.Errorf("failed to marshal request: %w", err)
-	   }
-	   resp, err := c.client.httpClient.Post(url, "application/json", strings.NewReader(string(data)))
-	   if err != nil {
-			   return nil, fmt.Errorf("failed to create cluster: %w", err)
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode != http.StatusCreated {
-			   return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	   }
-	   var cluster sharedmodels.Cluster
-	   if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
-			   return nil, fmt.Errorf("failed to decode response: %w", err)
-	   }
-	   return &cluster, nil
-}
-
-// GetCluster retrieves a cluster by ID.
-func (c *ClusterClient) GetCluster(id string) (*sharedmodels.Cluster, error) {
-	   url := c.client.buildURL("/api/clusters/" + id)
-	   resp, err := c.client.httpClient.Get(url)
-	   if err != nil {
-			   return nil, fmt.Errorf("failed to get cluster: %w", err)
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode == http.StatusNotFound {
-			   return nil, fmt.Errorf("cluster not found")
-	   }
-	   if resp.StatusCode != http.StatusOK {
-			   return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	   }
-	   var cluster sharedmodels.Cluster
-	   if err := json.NewDecoder(resp.Body).Decode(&cluster); err != nil {
-			   return nil, fmt.Errorf("failed to decode response: %w", err)
-	   }
-	   return &cluster, nil
-}
-
-// ListClusters retrieves all clusters.
-func (c *ClusterClient) ListClusters() ([]*sharedmodels.Cluster, error) {
-	   url := c.client.buildURL("/api/clusters")
-	   resp, err := c.client.httpClient.Get(url)
-	   if err != nil {
-			   return nil, fmt.Errorf("failed to list clusters: %w", err)
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode != http.StatusOK {
-			   return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	   }
-	   var clusters []*sharedmodels.Cluster
-	   if err := json.NewDecoder(resp.Body).Decode(&clusters); err != nil {
-			   return nil, fmt.Errorf("failed to decode response: %w", err)
-	   }
-	   return clusters, nil
-}
-
-// ListClustersByProvider retrieves clusters filtered by provider.
-func (c *ClusterClient) ListClustersByProvider(provider sharedmodels.CloudProvider) ([]*sharedmodels.Cluster, error) {
-	   url := c.client.buildURL("/api/clusters?provider=" + string(provider))
-	   resp, err := c.client.httpClient.Get(url)
-	   if err != nil {
-			   return nil, fmt.Errorf("failed to list clusters: %w", err)
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode != http.StatusOK {
-			   return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	   }
-	   var clusters []*sharedmodels.Cluster
-	   if err := json.NewDecoder(resp.Body).Decode(&clusters); err != nil {
-			   return nil, fmt.Errorf("failed to decode response: %w", err)
-	   }
-	   return clusters, nil
-}
-
-// DeleteCluster deletes a cluster by ID.
-func (c *ClusterClient) DeleteCluster(id string) error {
-	   url := c.client.buildURL("/api/clusters/" + id)
-	   req, err := http.NewRequest(http.MethodDelete, url, nil)
-	   if err != nil {
-			   return fmt.Errorf("failed to create request: %w", err)
-	   }
-	   resp, err := c.client.httpClient.Do(req)
-	   if err != nil {
-			   return fmt.Errorf("failed to delete cluster: %w", err)
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode == http.StatusNotFound {
-			   return fmt.Errorf("cluster not found")
-	   }
-	   if resp.StatusCode != http.StatusNoContent {
-			   return fmt.Errorf("API returned status %d", resp.StatusCode)
-	   }
-	   return nil
-}
-
-// TestClient provides methods for test operations.
-type TestClient struct {
-	   client *APIClient
-}
-
-// NewTestClient creates a new test client. Returns nil if client is nil.
-func NewTestClient(client *APIClient) *TestClient {
-	   if client == nil {
-			   return nil
-	   }
-	   return &TestClient{client: client}
-}
-
-// RunTest runs a test on a cluster
-func (t *TestClient) RunTest(req *sharedmodels.TestRequest) (*sharedmodels.TestResult, error) {
-	url := fmt.Sprintf("%s/api/tests", t.client.baseURL)
-
-	data, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := t.client.httpClient.Post(url, "application/json", strings.NewReader(string(data)))
-	if err != nil {
-		return nil, fmt.Errorf("failed to run test: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	}
-
-	var result sharedmodels.TestResult
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &result, nil
-}
-
-// GetTestResult retrieves a test result by ID
-func (t *TestClient) GetTestResult(id string) (*sharedmodels.TestResult, error) {
-	url := fmt.Sprintf("%s/api/tests/%s", t.client.baseURL, id)
-
-	resp, err := t.client.httpClient.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get test result: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("test result not found")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	}
-
-	var result sharedmodels.TestResult
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &result, nil
-}
-
-// ListTestResults retrieves test results for a cluster
-func (t *TestClient) ListTestResults(clusterID string) ([]*sharedmodels.TestResult, error) {
-	url := fmt.Sprintf("%s/api/clusters/%s/tests", t.client.baseURL, clusterID)
-
-	resp, err := t.client.httpClient.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list test results: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
-	}
-
-	var results []*sharedmodels.TestResult
-	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return results, nil
-}
+// TODO (medium priority):
+// - Only keep endpoints in this client for:
+//   - Health checks (Ping)
+//   - Authentication (login, logout, SSO, token refresh)
+//   - User/session info (current user, session diagnostics)
+//   - Server info/config (version, capabilities, status)
+// - All cloud resource logic (clusters, tests, etc.) must be handled by the shared Go library, not by this client.
+// - Add mock/test code for login, SSO, and other cube-server interaction endpoints as they are implemented.
+// - Remove all cluster/test logic from this client; use only for server/user/session endpoints.
+// - Proxy/Simulation mode:
+//   - Add a way to switch between proxy and simulation mode (flag/config)
+//   - In proxy mode, forward API requests to cube-server (configurable URL)
+//   - In simulation mode, use local mocks/stubs for endpoints
+//   - Pass through authentication/session tokens if required
+//   - Unified interface for proxy/simulation so rest of mt is agnostic
+//   - Document configuration for users (mode, server URL, etc)
+// Next milestone:
+//   - Emulate a Hetzner S3 session in simulation mode (mock S3 API)
