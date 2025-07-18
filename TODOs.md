@@ -1,3 +1,4 @@
+#
 # SPDX-License-Identifier: AGPL-3.0-only
 #
 # Copyright (C) 2023-2025 tronicum@user.github.com
@@ -39,20 +40,6 @@
 > Do **not** use `./mt`, `multitool/multitool`, or any other binary name/location.
 > This is enforced in the Makefile and build process.
 
-## Project Architecture Overview
-
-**Core Components (All use shared/ library):**
-- **shared/**: Central library containing all cloud operations, models, and utilities
-  - Azure, AWS, GCP, Hetzner, StackIT, IONOS providers
-  - Common data models and interfaces
-  - Cube-server integration and simulation logic
-  - Cloud state export/import functionality
-- **multitool/mt**: CLI for direct cloud operations (uses shared/ library)
-- **werfty-generator**: CLI for creating Terraform from cloud state (uses shared/ library)
-- **werfty-transformator**: CLI for transforming Terraform between providers (uses shared/ library)
-- **terraform-multicloud-provider**: Terraform provider (uses shared/ library)
-- **cube-server**: Simulation backend (uses shared/ library)
-- **client/**: API client utilities (part of shared ecosystem)
 
 ## Current Sprint Tasks (This Week)
 
@@ -164,7 +151,9 @@
 
 # Phase 3: Generator and Transformer Enhancements
 - [ ] Enhance werfty-generator application (high priority)
+    - [ ] Integrate Magic Modules as the code generator for Google Cloud resources (automated IaC support)
 - [ ] Enhance werfty-transformator application (high priority)
+    - [ ] Use Magic Modules output for Google resource transformation logic
 - [ ] Enhance multitool CLI capabilities (high priority)
 
 # Phase 4: Advanced Integration & CI
