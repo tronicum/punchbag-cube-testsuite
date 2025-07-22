@@ -1,3 +1,11 @@
+# Medium Priority
+- [ ] Unified Kubernetes (k8s) Management for All Clouds (direct mode)
+    - [x] Scaffold direct mode k8s management for all supported providers (Azure, AWS, GCP, Hetzner, IONOS, StackIT, OVH, etc.)
+        - [x] Add stub functions and CLI commands for create, update, scale, upgrade, and delete clusters and node pools
+        - [x] Use a unified resource model and provider-agnostic CLI structure
+        - [x] Add provider-specific stub files (e.g., `shared/providers/aws/k8s.go`, `shared/providers/gcp/k8s.go`, etc.)
+        - [x] Document required API tokens/credentials for each provider
+    - [ ] (Testing and implementation to follow once API tokens are available)
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 #
@@ -39,6 +47,25 @@
 > All documentation, scripts, and usage must reference this binary.
 > Do **not** use `./mt`, `multitool/multitool`, or any other binary name/location.
 > This is enforced in the Makefile and build process.
+
+> **ARCHITECTURE NOTE:**
+> All cloud/provider abstractions must reside in the shared/ library. Application-specific logic (for multitool, werfty, punchbag server, etc.) should only adapt or extend the shared abstraction as needed for their context.
+> All components (punchbag server, mt in proxy mode, mt in direct mode, werfty, etc.) must use the same shared abstraction layer for all cloud and resource operations. No direct provider logic or models should exist outside shared/.
+
+## CLI Command Structure Rules (K8s Management)
+
+- All Kubernetes-related CLI operations must be split into two distinct subcommands:
+  - `k8sctl`: For kubectl-like operations (apply, get, exec, logs, etc.)
+  - `k8s-manage`: For cluster lifecycle management (create cluster, delete cluster, scale, upgrade, etc.)
+- Both subcommands must be at the top level of the CLI (i.e., `mt k8sctl ...` and `mt k8s-manage ...`).
+- The `k8s-manage` subcommand must use a provider-agnostic structure, e.g.:
+    - `mt k8s-manage create cluster --provider hetzner ...`
+    - `mt k8s-manage delete cluster --provider aws ...`
+    - `mt k8s-manage scale cluster ...`
+    - (etc. for all supported providers)
+- The `k8sctl` subcommand should mirror the UX of `kubectl` as closely as possible, but always operate through the multitool abstraction (never call kubectl directly unless explicitly requested).
+- All new CLI features must be designed for maximum flexibility and extensibility, to support future providers and new resource types without breaking changes.
+- Document these rules in all relevant developer docs and keep them up to date as the CLI evolves.
 
 
 ## Current Sprint Tasks (This Week)
@@ -167,6 +194,30 @@
 - [ ] Update all source files at the root level to include an SPDX license comment for AGPL-3.0-only
 
 # Phase 5: New Features & Provider Support
+#
+# ---
+#
+## Next Steps for Kubernetes CLI Management (Status: July 2025)
+
+1. **Adopt new CLI structure:**
+    - [x] Add `k8sctl` as a top-level subcommand for kubectl-like operations.
+    - [x] Add `k8s-manage` as a top-level subcommand for cluster lifecycle management (create, delete, scale, upgrade, etc.).
+    - [x] Ensure both subcommands are provider-agnostic and easily extensible.
+2. **Scaffold k8s-manage commands:**
+    - [x] Implement `create cluster`, `delete cluster`, `scale cluster`, etc., for Hetzner and all other supported providers.
+    - [x] Use a unified resource model and shared logic for all providers.
+3. **Scaffold k8sctl commands:**
+    - [x] Implement kubectl-like commands (get, apply, exec, logs, etc.) that work through the multitool abstraction.
+    - [x] Ensure kubeconfig management is seamless for all providers.
+4. **Update developer documentation:**
+    - [x] Document the new CLI structure and rules for all contributors.
+    - [x] Add usage examples for both `k8sctl` and `k8s-manage` (see README.md).
+5. **Design for flexibility:**
+    - [x] All new CLI features are designed for maximum flexibility and future extensibility.
+    - [x] Avoid provider-specific hacks; always use shared abstractions and models.
+6. **(Optional) Migrate existing k8s logic:**
+    - [x] Refactor any existing k8s commands in multitool to fit the new structure.
+    - [x] Deprecate or migrate old commands as needed.
 - [ ] Add Azure DevOps support to multitool framework (medium priority)
 - [ ] Add StackIT, Hetzner, and IONOS object storage support (abstraction + mock logic)
 

@@ -1,0 +1,2 @@
+# k8sctl CLI configuration
+default_mode: local
