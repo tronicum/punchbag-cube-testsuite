@@ -1,3 +1,55 @@
+# Configuration and CLI Flag Precedence
+
+The multitool CLI supports flexible configuration for all commands, including `k8sctl` and `k8s-manage`. The following precedence is used for flags such as `--mode` and `--provider`:
+
+1. **CLI flag** (e.g. `--mode`, `--provider`)
+2. **Environment variable** (`K8SCTL_MODE`, `K8SCTL_PROVIDER`)
+3. **User config** (`$HOME/.mt/config.yaml`)
+4. **Project config** (`./conf/k8sctl.yml`)
+5. **Default** (hardcoded fallback)
+
+This allows you to set global, per-user, or per-project defaults, and override them at runtime as needed.
+
+**Example for k8sctl:**
+
+```sh
+# Use local mode by default (set in conf/k8sctl.yml or $HOME/.mt/config.yaml)
+mt k8sctl get nodes
+
+# Override mode for a single command
+mt k8sctl get nodes --mode=proxy
+
+# Use an environment variable for a session
+export K8SCTL_MODE=direct
+mt k8sctl get pods
+```
+
+### --provider flag meaning
+
+The `--provider` flag is context-sensitive:
+
+- For `k8s-manage` and other cloud lifecycle commands, it refers to the cloud provider (e.g., `hetzner`, `azure`, `aws`, `gcp`, etc.).
+- For `k8sctl`, it may refer to the Kubernetes provider context, which can be mapped to a specific kubeconfig or cluster abstraction.
+
+Always check the command help for the expected values and usage.
+
+#### Example config files
+
+**conf/k8sctl.yml**
+```yaml
+default_mode: local
+default_provider: hetzner
+```
+
+**$HOME/.mt/config.yaml**
+```yaml
+default_mode: proxy
+default_provider: azure
+```
+
+## CLI Structure
+
+...existing documentation...
 # Punchbag Cube Test Suite
 
 A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, werfty, and Terraform provider components.

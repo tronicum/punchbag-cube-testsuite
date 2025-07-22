@@ -2,20 +2,22 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
-	"strings"
-	"time"
+	   "bytes"
+	   "encoding/json"
+	   "fmt"
+	   "net/http"
+	   "os"
+	   "strings"
+	   "time"
 
-	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
-	awsS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/aws"
-	hetznerS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/hetzner"
+	   "github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	   awsS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/aws"
+	   hetznerS3 "github.com/tronicum/punchbag-cube-testsuite/shared/providers/hetzner"
 
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	   "github.com/spf13/cobra"
+	   "gopkg.in/yaml.v2"
+
+	   . "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
 )
 
 var supportedProviders = []string{"aws", "hetzner"}
@@ -33,15 +35,38 @@ var supportedProvidersCmd = &cobra.Command{
 
 
 var objectStorageCmd = &cobra.Command{
-	Use:   "objectstorage",
+   Use:   "objectstorage",
    Short: "Manage S3-like object storage buckets (AWS, Hetzner)",
    Run: func(cmd *cobra.Command, args []string) {
-	   fmt.Println("Supported object storage providers:")
-	   for _, p := range supportedProviders {
-		   fmt.Println("-", p)
-	   }
-	   fmt.Println("Use 'mt objectstorage [command] --help' for more info.")
+	  fmt.Println("Supported object storage providers:")
+	  for _, p := range supportedProviders {
+		 fmt.Println("-", p)
+	  }
+	  fmt.Println("Use 'mt objectstorage [command] --help' for more info.")
    },
+   Annotations: map[string]string{"group": "Cloud ObjectStorage (S3) Commands"},
+}
+
+var simulateS3Cmd = &cobra.Command{
+	   Use:   "simulate-s3",
+	   Short: "Start a local S3 simulation server for a provider (e.g., --provider hetzner)",
+	   Run: func(cmd *cobra.Command, args []string) {
+			   provider, _ := cmd.Flags().GetString("provider")
+			   port, _ := cmd.Flags().GetString("port")
+			   if provider == "hetzner" {
+					   mock := NewHetznerS3Mock()
+					   fmt.Printf("Starting Hetzner S3 simulation on http://localhost:%s\n", port)
+					   http.Handle("/", mock)
+					   err := http.ListenAndServe(":"+port, nil)
+					   if err != nil {
+							   fmt.Fprintf(os.Stderr, "Failed to start server: %v\n", err)
+							   os.Exit(1)
+					   }
+			   } else {
+					   fmt.Println("Provider not supported for simulation.")
+					   os.Exit(1)
+			   }
+	   },
 }
 
 var policyFile string
@@ -282,7 +307,9 @@ func init() {
 	deleteBucketCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Force deletion without confirmation")
 	objectStorageCmd.PersistentFlags().BoolVar(&skipPrompts, "skip-prompts", false, "Skip all interactive prompts (for automation)")
 	objectStorageCmd.PersistentFlags().BoolVar(&automationMode, "automation-mode", false, "Enable automation/CI mode (alias for --skip-prompts --force, prints colored output)")
-   objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd, supportedProvidersCmd)
+   simulateS3Cmd.Flags().String("provider", "hetzner", "Object storage provider to simulate (hetzner)")
+   simulateS3Cmd.Flags().String("port", "8081", "Port to run the simulation server on")
+   objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd, supportedProvidersCmd, simulateS3Cmd)
 }
 
 func maskToken(token string) string {

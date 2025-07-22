@@ -1,16 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
-	"text/tabwriter"
-
-	"gopkg.in/yaml.v2"
-
-	"github.com/spf13/cobra"
+	   "fmt"
+	   "os"
+	   "github.com/spf13/cobra"
+	   "text/template"
+	   "strings"
+	   "runtime"
 )
 
 // Rename CLI tool to multitool
@@ -32,21 +28,27 @@ var proxyServer string
 
 // Initialize commands
 func init() {
+	   awsCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
+	   azureCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
+	   gcpCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
+	   hetznerCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
+	   objectStorageCmd.Annotations = map[string]string{"group": "Cloud ObjectStorage (S3) Commands"}
 	rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
 
 	// Register only the correct top-level commands, matching the new CLI tree structure
-	rootCmd.AddCommand(awsCmd)           // mt aws ...
-	rootCmd.AddCommand(azureCmd)         // mt azure ...
-	rootCmd.AddCommand(gcpCmd)           // mt gcp ...
-	rootCmd.AddCommand(hetznerCmd)       // mt hetzner ...
-	rootCmd.AddCommand(dockerCmd)        // mt docker ...
-	rootCmd.AddCommand(k8sCmd)           // mt k8s ...
-	rootCmd.AddCommand(localCmd)         // mt local ...
-	rootCmd.AddCommand(configCmd)        // mt config ...
-	rootCmd.AddCommand(testCmd)          // mt test ...
-	rootCmd.AddCommand(scaffoldCmd)      // mt scaffold ...
-	rootCmd.AddCommand(objectStorageCmd) // mt objectstorage ...
-	rootCmd.AddCommand(objectStorageCmd) // mt objectstorage ...
+rootCmd.AddCommand(awsCmd)           // mt aws ...
+rootCmd.AddCommand(azureCmd)         // mt azure ...
+rootCmd.AddCommand(gcpCmd)           // mt gcp ...
+rootCmd.AddCommand(hetznerCmd)       // mt hetzner ...
+rootCmd.AddCommand(dockerCmd)        // mt docker ...
+rootCmd.AddCommand(localCmd)         // mt local ...
+rootCmd.AddCommand(configCmd)        // mt config ...
+rootCmd.AddCommand(testCmd)          // mt test ...
+rootCmd.AddCommand(scaffoldCmd)      // mt scaffold ...
+rootCmd.AddCommand(objectStorageCmd) // mt objectstorage ...
+// k8sctl and k8s-manage are now top-level via their own files
+	   // simulate-hetzner-s3 removed per user request
+	   rootCmd.SetHelpFunc(printGroupedHelp)
 }
 
 // Add basic cloud management functionality
@@ -61,141 +63,104 @@ var manageCloudCmd = &cobra.Command{
 var osDetectCmd = &cobra.Command{
 	Use:   "os-detect",
 	Short: "Detect the operating system and package manager",
-	Run: func(cmd *cobra.Command, args []string) {
-		os := runtime.GOOS
-		data := map[string]string{
-			"OS":              os,
-			"Package Manager": "Unsupported",
-		}
-		if os == "darwin" {
-			data["Package Manager"] = "Homebrew"
-		} else if os == "linux" {
-			data["Package Manager"] = "apt or rpm"
-		}
-		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
-	},
+	   Run: func(cmd *cobra.Command, args []string) {
+			   osys := runtime.GOOS
+			   pkgMgr := "Unsupported"
+			   if osys == "darwin" {
+					   pkgMgr = "Homebrew"
+			   } else if osys == "linux" {
+					   pkgMgr = "apt or rpm"
+			   }
+			   fmt.Printf("OS: %s\nPackage Manager: %s\n", osys, pkgMgr)
+	   },
 }
 
 var packageInstallCmd = &cobra.Command{
 	Use:   "install-package",
 	Short: "Install a package based on the detected OS",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			fmt.Println("Please specify a package to install.")
-			return
-		}
-		packageName := args[0]
-		osys := runtime.GOOS
-		data := map[string]string{
-			"Package": packageName,
-			"OS":      osys,
-			"Command": "Unsupported",
-		}
-		var installCmd string
-		if osys == "darwin" {
-			installCmd = fmt.Sprintf("brew install %s", packageName)
-			data["Command"] = installCmd
-		} else if osys == "linux" {
-			installCmd = fmt.Sprintf("apt install %s or rpm install %s", packageName, packageName)
-			data["Command"] = installCmd
-		}
-		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
+	   Run: func(cmd *cobra.Command, args []string) {
+			   if len(args) == 0 {
+					   fmt.Println("Please specify a package to install.")
+					   return
+			   }
+			   packageName := args[0]
+			   osys := runtime.GOOS
+			   var installCmd string
+			   if osys == "darwin" {
+					   installCmd = fmt.Sprintf("brew install %s", packageName)
+			   } else if osys == "linux" {
+					   installCmd = fmt.Sprintf("apt install %s or rpm install %s", packageName, packageName)
+			   } else {
+					   installCmd = "Unsupported"
+			   }
+			   fmt.Printf("Package: %s\nOS: %s\nCommand: %s\n", packageName, osys, installCmd)
 
-		relink, _ := cmd.Flags().GetBool("relink")
-		if relink {
-			mtPath, err := os.Executable()
-			if err != nil {
-				fmt.Println("Could not determine mt binary path:", err)
-				return
-			}
-			symlinkPath := "/usr/local/bin/mt"
-			_ = os.Remove(symlinkPath) // Remove if exists
-			err = os.Symlink(mtPath, symlinkPath)
-			if err != nil {
-				fmt.Printf("Failed to create symlink at %s: %v\n", symlinkPath, err)
-			} else {
-				fmt.Printf("Symlinked mt binary to %s\n", symlinkPath)
-			}
-		}
-	},
+			   relink, _ := cmd.Flags().GetBool("relink")
+			   if relink {
+					   mtPath, err := os.Executable()
+					   if err != nil {
+							   fmt.Println("Could not determine mt binary path:", err)
+							   return
+					   }
+					   symlinkPath := "/usr/local/bin/mt"
+					   _ = os.Remove(symlinkPath) // Remove if exists
+					   err = os.Symlink(mtPath, symlinkPath)
+					   if err != nil {
+							   fmt.Printf("Failed to create symlink at %s: %v\n", symlinkPath, err)
+					   } else {
+							   fmt.Printf("Symlinked mt binary to %s\n", symlinkPath)
+					   }
+			   }
+	   },
 }
 
 var listPackagesCmd = &cobra.Command{
-	Use:   "list-packages",
-	Short: "List installed packages based on the detected OS",
-	Run: func(cmd *cobra.Command, cmdArgs []string) {
-		os := runtime.GOOS
-		var command string
-		var args []string
-		if os == "darwin" {
-			command = "brew"
-			args = []string{"list"}
-		} else if os == "linux" {
-			if _, err := exec.LookPath("apt"); err == nil {
-				command = "apt"
-				args = []string{"list", "--installed"}
-			} else if _, err := exec.LookPath("rpm"); err == nil {
-				command = "rpm"
-				args = []string{"-qa"}
-			} else if _, err := exec.LookPath("pacman"); err == nil {
-				command = "pacman"
-				args = []string{"-Q"}
-			} else {
-				fmt.Println("No supported package manager found.")
-				return
-			}
-		} else if os == "windows" {
-			if _, err := exec.LookPath("choco"); err == nil {
-				command = "choco"
-				args = []string{"list", "-lo"}
-			} else if _, err := exec.LookPath("winget"); err == nil {
-				command = "winget"
-				args = []string{"list"}
-			} else {
-				fmt.Println("No supported package manager found.")
-				return
-			}
-		} else {
-			fmt.Println("Unsupported OS")
-			return
-		}
-		output, err := exec.Command(command, args...).Output()
-		if err != nil {
-			fmt.Println("Error executing command:", err)
-			return
-		}
-		data := map[string]string{
-			"Command": fmt.Sprintf("%s %s", command, args),
-			"Output":  string(output),
-		}
-		formatOutput(data, "table") // Replace "table" with "json" or "yaml" as needed
-	},
+	   Use:   "list-packages",
+	 SilenceUsage: true,
+	 DisableAutoGenTag: true,
+	   Short: "List installed packages based on the detected OS",
+	   Run: func(cmd *cobra.Command, cmdArgs []string) {
+			   // ...existing code...
+	   },
 }
 
-func formatOutput(data interface{}, format string) {
-	switch format {
-	case "json":
-		output, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			fmt.Println("Error formatting JSON:", err)
-			return
-		}
-		fmt.Println(string(output))
-	case "yaml":
-		output, err := yaml.Marshal(data)
-		if err != nil {
-			fmt.Println("Error formatting YAML:", err)
-			return
-		}
-		fmt.Println(string(output))
-	case "table":
-		writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(writer, "Key\tValue")
-		for k, v := range data.(map[string]string) {
-			fmt.Fprintf(writer, "%s\t%s\n", k, v)
-		}
-		writer.Flush()
-	default:
-		fmt.Println("Unsupported format. Use 'json', 'yaml', or 'table'.")
-	}
+// --- Custom help grouping ---
+func groupCommandsByAnnotation(cmds []*cobra.Command, annotation string) map[string][]*cobra.Command {
+	   groups := make(map[string][]*cobra.Command)
+	   for _, c := range cmds {
+			   group := c.Annotations[annotation]
+			   if group == "" {
+					   group = "Other Commands"
+			   }
+			   groups[group] = append(groups[group], c)
+	   }
+	   return groups
+}
+
+func printGroupedHelp(cmd *cobra.Command, args []string) {
+	   cmds := cmd.Commands()
+	   groups := groupCommandsByAnnotation(cmds, "group")
+	   tmpl := `{{.Long}}
+
+Usage:
+  {{.UseLine}}
+
+{{if .HasAvailableSubCommands}}Available Commands:
+{{range $group, $cmds := .Groups}}
+{{$group}}:
+{{range $cmd := $cmds}}  {{$cmd.Name | printf "%-20s"}} {{$cmd.Short}}
+{{end}}{{end}}{{end}}
+
+Flags:
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}
+`
+	   data := struct {
+			   *cobra.Command
+			   Groups map[string][]*cobra.Command
+	   }{cmd, groups}
+	   t := template.Must(template.New("help").Funcs(template.FuncMap{"trimTrailingWhitespaces": strings.TrimRight}).Parse(tmpl))
+	   t.Execute(os.Stdout, data)
 }
