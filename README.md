@@ -537,6 +537,24 @@ bash scripts/lint.sh
     -d '{"name":"test-cluster","provider":"azure","location":"eastus"}'
   ```
 
+## Testing GitHub Actions Workflows Locally
+
+You can test your GitHub Actions workflows locally using [`act`](https://github.com/nektos/act):
+
+1. Install act (macOS):
+   ```sh
+   brew install act
+   ```
+2. Run your workflow locally:
+   ```sh
+   act
+   ```
+   - Use `act pull_request` to simulate a pull request event.
+   - Use `-j <job-name>` to run a specific job.
+   - You may need Docker running and to set up secrets or environment variables for some jobs.
+
+This is useful for quickly validating CI changes before pushing to GitHub.
+
 ## Contributing
 
 Each component has its own documentation and development guidelines. See the README.md files in each directory for specific instructions.
