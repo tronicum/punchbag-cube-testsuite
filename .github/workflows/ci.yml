@@ -15,7 +15,8 @@ jobs:
         with:
           go-version: '1.22'
       - name: Run Go tests
-        run: go test ./... -v
+        run: |
+          go test ./cube-server/... ./multitool/... ./shared/... -v
 
       - name: Check module hygiene (go mod tidy)
         run: |
