@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	"github.com/tronicum/punchbag-cube-testsuite/cube-server/sim"
 )
 
 func main() {
@@ -44,6 +46,16 @@ func main() {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
+
+	// Simulation endpoints (migrated from sim-server)
+	router.POST("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
+	router.GET("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
+	router.DELETE("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
+
+	router.POST("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
+	router.GET("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
+
+	router.POST("/api/validation", gin.WrapF(sim.HandleValidation))
 
 	// Start server
 	logger.Info("Starting Cube Server...")

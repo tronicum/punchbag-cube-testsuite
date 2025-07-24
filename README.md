@@ -57,14 +57,50 @@ A comprehensive multi-cloud test suite for testing punchbag cube functionality w
 ## Overview
 
 This project provides a complete ecosystem for testing various aspects of the punchbag cube system across multiple cloud providers including:
-- REST API server for multi-cloud cluster management and test execution
-- Command-line werfty for interacting with the API across cloud providers
-- Terraform provider for Infrastructure as Code (IaC) support
-- Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE), Hetzner Cloud, IONOS Cloud
-- Performance and load testing capabilities across different cloud environments
-- **Comprehensive Azure support** including monitoring, budgets, and cost management
 
 ## Supported Cloud Providers
+
+# punchbag-cube-testsuite Architecture
+
+## Component Overview
+
+- **shared/**: Central Go module for all cloud/provider abstractions, models, and shared logic. All applications must use this for provider operations.
+- **cube-server/**: Unified server and simulation component. Contains all simulation, API, and backend logic. Uses only the shared module for provider abstractions. All simulation and server logic is consolidated here.
+- **sim/** and **sim-server/**: Legacy simulation modules. All unique logic has been migrated to cube-server. These are deprecated and removed after migration.
+- **multitool/**: Unified CLI tool. All commands (including k8sctl, k8s-manage) use shared abstractions and models. No direct provider logic outside shared.
+- **werfty/**, **werfty-generator/**, **werfty-transformator/**: Modular applications for resource management, code generation, and transformation. Each is a separate Go module for maintainability.
+
+## Architectural Rules
+
+- All provider/cloud logic must reside in shared/.
+- No direct provider logic or models outside shared/.
+- All applications (cube-server, multitool, werfty, etc.) must use shared/ for cloud/resource operations.
+- CLI structure: multitool provides top-level subcommands (k8sctl, k8s-manage, etc.) that are provider-agnostic and extensible.
+- Simulation and server logic is unified in cube-server. Legacy sim/sim-server are removed.
+- All documentation, scripts, and usage must reference the multitool binary as ./multitool/mt.
+
+## Simulation Endpoints
+
+The unified simulation API is served by `cube-server` and covers all supported providers:
+
+- **Azure**: `/api/simulate/azure/aks`, `/api/simulate/azure/loganalytics`, `/api/validation?provider=azure&resource=aks`
+- **AWS, GCP, etc.**: Extendable via shared/ abstractions and simulation handlers
+
+Example usage:
+
+```bash
+# Simulate AKS cluster creation (mock)
+curl -X POST http://localhost:8081/api/simulate/azure/aks
+
+# Simulate Log Analytics workspace creation (mock)
+curl -X POST http://localhost:8081/api/simulate/azure/loganalytics
+
+# Validate provider configuration
+curl -X POST "http://localhost:8081/api/validation?provider=azure&resource=aks"
+```
+
+See `ARCH.md` for the full architecture and migration plan.
+
 
 - **Azure**: Azure Kubernetes Service (AKS), Azure Monitor, Log Analytics, Application Insights, Azure Budgets
 - **StackIT (Schwarz IT)**: StackIT Kubernetes Engine (SKE)

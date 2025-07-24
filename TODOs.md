@@ -48,6 +48,15 @@
 > Do **not** use `./mt`, `multitool/multitool`, or any other binary name/location.
 > This is enforced in the Makefile and build process.
 
+## Next Steps (Post-Migration)
+
+- [ ] Fix simulation handler logic to ensure correct status codes and endpoint behavior.
+- [ ] Expand test coverage for all simulation endpoints (Azure, AWS, GCP, validation, etc.), including edge cases and error handling.
+- [ ] Audit all server and CLI code to enforce usage of shared/ for provider logic; remove any direct provider/model code outside shared/.
+- [ ] Update README.md and developer docs with new endpoint details, usage examples, and architectural rules.
+- [ ] Add CI checks to enforce module hygiene, run tests, and validate shared usage.
+- [ ] Review TODOs.md for remaining migration, refactor, and feature tasks; prioritize next CLI, provider, or integration features.
+
 > **ARCHITECTURE NOTE:**
 > All cloud/provider abstractions must reside in the shared/ library. Application-specific logic (for multitool, werfty, punchbag server, etc.) should only adapt or extend the shared abstraction as needed for their context.
 > All components (punchbag server, mt in proxy mode, mt in direct mode, werfty, etc.) must use the same shared abstraction layer for all cloud and resource operations. No direct provider logic or models should exist outside shared/.

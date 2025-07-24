@@ -1,1 +1,16 @@
-module github.com/tronicum/punchbag-cube-testsuite/generatorgithub.com/inconshreveable/mousetrap v1.1.0 // indirect	github.com/spf13/pflag v1.0.6 // indirect)
+module github.com/tronicum/punchbag-cube-testsuite/generator
+
+go 1.24.4
+
+require (
+	github.com/spf13/cobra v1.9.1
+	github.com/tronicum/punchbag-cube-testsuite/shared v0.1.2
+	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+)

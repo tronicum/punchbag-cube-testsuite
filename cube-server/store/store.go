@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	sharedmodels "punchbag-cube-testsuite/shared/models"
+	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 
 var (
