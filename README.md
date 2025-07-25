@@ -47,17 +47,16 @@ default_mode: proxy
 default_provider: azure
 ```
 
-## CLI Structure
+## Multitool CLI and Configuration
 
-...existing documentation...
-# Punchbag Cube Test Suite
+See [multitool/README.md](./multitool/README.md) for full documentation on the multitool CLI, configuration system, usage examples, and migration notes.
+
+## CLI Structure
 
 A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, werfty, and Terraform provider components.
 
-## Overview
-
-This project provides a complete ecosystem for testing various aspects of the punchbag cube system across multiple cloud providers including:
-
+### ⚙️ Configuration & Object Storage Management
+See [multitool/README.md](./multitool/README.md) for full details on configuration profiles, object storage, and advanced CLI usage.
 ## Supported Cloud Providers
 
 # punchbag-cube-testsuite Architecture

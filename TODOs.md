@@ -1,3 +1,8 @@
+## Documentation Modularization
+
+- [ ] Move multitool documentation to multitool/README.md and reference it from the main README.md
+- [ ] Keep main README.md compact, with only high-level project info and links to per-app docs
+- [ ] Repeat for other applications (e.g., cube-server, k8sctl) as needed
 # Medium Priority
 - [ ] Unified Kubernetes (k8s) Management for All Clouds (direct mode)
     - [x] Scaffold direct mode k8s management for all supported providers (Azure, AWS, GCP, Hetzner, IONOS, StackIT, OVH, etc.)
@@ -41,7 +46,20 @@
 ## Notes on Hetzner S3 Bucket Metadata
 - [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
 # TODOs for punchbag-cube-testsuite
+## Planned: Multitool kubeconfig-like config system
 
+- [ ] Implement `.mtconfig/<profile>/config.yaml` profile system for multitool:
+    - Each profile is a directory under `.mtconfig/`, e.g. `.mtconfig/aws-dev/config.yaml`.
+    - Config file in YAML format, supports provider, region, credentials, endpoints, and custom settings.
+    - Profile switching via CLI flag `--profile` or environment variable.
+    - Provider-specific settings and secrets (static, ENV, or external secret managers).
+    - Extensible for new fields/providers.
+
+### Implementation Steps
+1. Scaffold `.mtconfig/<profile>/config.yaml` loader in multitool.
+2. Add CLI flag `--profile` and env var support.
+3. Update provider selection logic to use config values.
+4. Document usage and migration in README.md.
 > **NOTE:**
 > The *only* supported CLI binary is `./multitool/mt`.
 > All documentation, scripts, and usage must reference this binary.

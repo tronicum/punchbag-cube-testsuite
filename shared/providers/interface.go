@@ -9,12 +9,24 @@ import (
 type Provider interface {
     // GetName returns the provider name (azure, aws, gcp, etc.)
     GetName() string
-    
+
     // SimulationMode returns true if in simulation mode
     SimulationMode() bool
-    
+
     // SetSimulationMode enables/disables simulation mode
     SetSimulationMode(enabled bool)
+
+    // SetCredentials sets authentication credentials (map for flexibility)
+    SetCredentials(creds map[string]string)
+
+    // SetConfig sets provider-specific config (region, endpoints, etc.)
+    SetConfig(cfg map[string]interface{})
+
+    // GetRegion returns the configured region
+    GetRegion() string
+
+    // GetEndpoint returns the endpoint for a given service
+    GetEndpoint(service string) string
 }
 
 // AzureProvider defines Azure-specific operations

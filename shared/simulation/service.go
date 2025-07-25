@@ -191,33 +191,79 @@ func (s *SimulationService) SimulateOperation(req *SimulationRequest) *Simulatio
 	delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
 	time.Sleep(delay)
 
-	switch req.Operation {
-	case "create_cluster":
-		result.Success = true
-		result.Result = s.simulateCreateCluster(req.Provider, req.Parameters)
-	case "delete_cluster":
-		result.Success = true
-		result.Result = map[string]interface{}{
-			"cluster_id": req.Parameters["cluster_id"],
-			"status":     "deleting",
-			"message":    "Cluster deletion initiated",
-		}
-	case "list_clusters":
-		result.Success = true
-		result.Result = s.simulateListClusters(req.Provider)
-	case "get_cluster":
-		result.Success = true
-		result.Result = s.simulateGetCluster(req.Provider, req.Parameters)
-	case "run_test":
-		result.Success = true
-		result.Result = s.simulateRunTest(req.Parameters)
-	default:
-		result.Success = false
-		result.Error = fmt.Sprintf("unsupported operation: %s", req.Operation)
-	}
+	   switch req.Operation {
+	   case "create_cluster":
+			   result.Success = true
+			   result.Result = s.simulateCreateCluster(req.Provider, req.Parameters)
+	   case "delete_cluster":
+			   result.Success = true
+			   result.Result = map[string]interface{}{
+					   "cluster_id": req.Parameters["cluster_id"],
+					   "status":     "deleting",
+					   "message":    "Cluster deletion initiated",
+			   }
+	   case "list_clusters":
+			   result.Success = true
+			   result.Result = s.simulateListClusters(req.Provider)
+	   case "get_cluster":
+			   result.Success = true
+			   result.Result = s.simulateGetCluster(req.Provider, req.Parameters)
+	   case "run_test":
+			   result.Success = true
+			   result.Result = s.simulateRunTest(req.Parameters)
+	   // S3/object storage simulation
+	   case "create_bucket":
+			   result.Success = true
+			   result.Result = s.simulateCreateBucket(req.Provider, req.Parameters)
+	   case "delete_bucket":
+			   result.Success = true
+			   result.Result = map[string]interface{}{
+					   "bucket": req.Parameters["bucket"],
+					   "status": "deleted",
+			   }
+	   case "set_bucket_policy":
+			   result.Success = true
+			   result.Result = map[string]interface{}{
+					   "bucket": req.Parameters["bucket"],
+					   "policy": req.Parameters["policy"],
+					   "status": "policy_set",
+			   }
+	   case "set_bucket_versioning":
+			   result.Success = true
+			   result.Result = map[string]interface{}{
+					   "bucket": req.Parameters["bucket"],
+					   "versioning": req.Parameters["enabled"],
+					   "status": "versioning_set",
+			   }
+	   case "set_bucket_lifecycle":
+			   result.Success = true
+			   result.Result = map[string]interface{}{
+					   "bucket": req.Parameters["bucket"],
+					   "lifecycle": req.Parameters["lifecycle"],
+					   "status": "lifecycle_set",
+			   }
+	   default:
+			   result.Success = false
+			   result.Error = fmt.Sprintf("unsupported operation: %s", req.Operation)
+	   }
+	   result.Duration = time.Since(start)
+	   return result
 
-	result.Duration = time.Since(start)
-	return result
+}
+
+// simulateCreateBucket simulates S3/object storage bucket creation
+func (s *SimulationService) simulateCreateBucket(provider string, params map[string]interface{}) map[string]interface{} {
+	   nameVal := s.getParamOrDefault(params, "name", "sim-bucket-")
+	   name, _ := nameVal.(string)
+	   bucketName := name + s.generateRandomID()
+	   regionVal := s.getParamOrDefault(params, "region", "us-west-2")
+	   region, _ := regionVal.(string)
+	   return map[string]interface{}{
+			   "bucket":   bucketName,
+			   "provider": provider,
+			   "region":   region,
+			   "status":   "created",
+	   }
 }
 
 // simulateCreateCluster simulates cluster creation

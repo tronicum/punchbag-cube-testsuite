@@ -47,15 +47,19 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	// Simulation endpoints (migrated from sim-server)
-	router.POST("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
-	router.GET("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
-	router.DELETE("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
 
-	router.POST("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
-	router.GET("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
+	   // Simulation endpoints (migrated from sim-server)
+	   router.POST("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
+	   router.GET("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
+	   router.DELETE("/api/simulate/azure/aks", gin.WrapF(sim.HandleAks))
 
-	router.POST("/api/validation", gin.WrapF(sim.HandleValidation))
+	   router.POST("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
+	   router.GET("/api/simulate/azure/loganalytics", gin.WrapF(sim.HandleLogAnalytics))
+
+	   router.POST("/api/validation", gin.WrapF(sim.HandleValidation))
+
+	   // Object storage simulation endpoint (Hetzner S3)
+	   router.Any("/api/simulate/objectstorage/hetzner/*any", gin.WrapH(sim.HetznerS3MockHandler()))
 
 	// Start server
 	logger.Info("Starting Cube Server...")

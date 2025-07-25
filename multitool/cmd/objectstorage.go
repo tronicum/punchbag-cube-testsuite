@@ -7,7 +7,6 @@ import (
 	   "fmt"
 	   "net/http"
 	   "os"
-	   "strings"
 	   "time"
 
 	   "github.com/tronicum/punchbag-cube-testsuite/shared/models"
@@ -17,8 +16,9 @@ import (
 	   "github.com/spf13/cobra"
 	   "gopkg.in/yaml.v2"
 
-	   . "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg/client"
+   configloader "github.com/tronicum/punchbag-cube-testsuite/multitool/pkg"
 )
+
 
 var supportedProviders = []string{"aws", "hetzner"}
 
@@ -34,6 +34,8 @@ var supportedProvidersCmd = &cobra.Command{
 }
 
 
+
+
 var objectStorageCmd = &cobra.Command{
    Use:   "objectstorage",
    Short: "Manage S3-like object storage buckets (AWS, Hetzner)",
@@ -47,28 +49,6 @@ var objectStorageCmd = &cobra.Command{
    Annotations: map[string]string{"group": "Cloud ObjectStorage (S3) Commands"},
 }
 
-var simulateS3Cmd = &cobra.Command{
-	   Use:   "simulate-s3",
-	   Short: "Start a local S3 simulation server for a provider (e.g., --provider hetzner)",
-	   Run: func(cmd *cobra.Command, args []string) {
-			   provider, _ := cmd.Flags().GetString("provider")
-			   port, _ := cmd.Flags().GetString("port")
-			   if provider == "hetzner" {
-					   mock := NewHetznerS3Mock()
-					   fmt.Printf("Starting Hetzner S3 simulation on http://localhost:%s\n", port)
-					   http.Handle("/", mock)
-					   err := http.ListenAndServe(":"+port, nil)
-					   if err != nil {
-							   fmt.Fprintf(os.Stderr, "Failed to start server: %v\n", err)
-							   os.Exit(1)
-					   }
-			   } else {
-					   fmt.Println("Provider not supported for simulation.")
-					   os.Exit(1)
-			   }
-	   },
-}
-
 var policyFile string
 var versioning bool
 var lifecycleFile string
@@ -79,11 +59,12 @@ var skipPrompts bool
 var automationMode bool
 
 var createBucketCmd = &cobra.Command{
-	Use:   "create [provider] [name] [region]",
-	Short: "Create a new bucket (supports --policy, --versioning, --lifecycle)",
-	Args:  cobra.ExactArgs(3),
+	Use:   "create [name] [region]",
+	Short: "Create a new bucket (supports --provider, --policy, --versioning, --lifecycle)",
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		provider, name, region := args[0], args[1], args[2]
+		name, region := args[0], args[1]
+		provider := getProvider(cmd)
 		bucket := &models.ObjectStorageBucket{Name: name, Region: region, Provider: models.CloudProvider(provider)}
 		if proxyServer != "" {
 			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage", proxyServer, provider)
@@ -135,11 +116,11 @@ var createBucketCmd = &cobra.Command{
 }
 
 var listBucketsCmd = &cobra.Command{
-	Use:   "list [provider]",
-	Short: "List all buckets for a provider",
-	Args:  cobra.ExactArgs(1),
+	Use:   "list",
+	Short: "List all buckets for a provider (use --provider)",
+	Args:  cobra.ExactArgs(0),
 	   Run: func(cmd *cobra.Command, args []string) {
-			   provider := args[0]
+			   provider := getProvider(cmd)
 			   var buckets []models.ObjectStorageBucket
 			   var err error
 			   switch provider {
@@ -189,11 +170,12 @@ var listBucketsCmd = &cobra.Command{
 }
 
 var getBucketCmd = &cobra.Command{
-	Use:   "get [provider] [id]",
-	Short: "Get a bucket by ID",
-	Args:  cobra.ExactArgs(2),
+	Use:   "get [id]",
+	Short: "Get a bucket by ID (use --provider)",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		provider, id := args[0], args[1]
+		id := args[0]
+		provider := getProvider(cmd)
 		if proxyServer != "" {
 			url := fmt.Sprintf("%s/api/proxy/%s/objectstorage?id=%s", proxyServer, provider, id)
 			resp, err := http.Get(url)
@@ -220,11 +202,12 @@ var getBucketCmd = &cobra.Command{
 }
 
 var deleteBucketCmd = &cobra.Command{
-	Use:   "delete [provider] [id]",
-	Short: "Delete a bucket by ID",
-	Args:  cobra.ExactArgs(2),
+	Use:   "delete [id]",
+	Short: "Delete a bucket by ID (use --provider)",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-	   provider, id := strings.ToLower(args[0]), args[1]
+	   id := args[0]
+	   provider := getProvider(cmd)
 		// Automation/skip-prompts logic
 		if automationMode {
 			skipPrompts = true
@@ -292,9 +275,9 @@ func printSuccessOrError(success, automation bool, format string, a ...interface
 		} else {
 			fmt.Printf("\033[31m%s\033[0m\n", msg) // red
 		}
-	} else {
-		fmt.Println(msg)
-	}
+   } else {
+	   fmt.Println(msg)
+   }
 }
 
 func init() {
@@ -307,9 +290,35 @@ func init() {
 	deleteBucketCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Force deletion without confirmation")
 	objectStorageCmd.PersistentFlags().BoolVar(&skipPrompts, "skip-prompts", false, "Skip all interactive prompts (for automation)")
 	objectStorageCmd.PersistentFlags().BoolVar(&automationMode, "automation-mode", false, "Enable automation/CI mode (alias for --skip-prompts --force, prints colored output)")
-   simulateS3Cmd.Flags().String("provider", "hetzner", "Object storage provider to simulate (hetzner)")
-   simulateS3Cmd.Flags().String("port", "8081", "Port to run the simulation server on")
-   objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd, supportedProvidersCmd, simulateS3Cmd)
+
+objectStorageCmd.AddCommand(createBucketCmd, listBucketsCmd, getBucketCmd, deleteBucketCmd, supportedProvidersCmd)
+}
+
+
+// Helper to get provider from flag or config
+var defaultProvider string // TODO: load from config/env
+func getProvider(cmd *cobra.Command) string {
+	p, _ := cmd.Flags().GetString("provider")
+	if p != "" {
+		return p
+	}
+	prof, _ := cmd.Flags().GetString("profile")
+	cfg, err := configloader.LoadMTConfig(prof)
+	if err == nil && cfg.Provider != "" {
+		return cfg.Provider
+	}
+	if defaultProvider != "" {
+		return defaultProvider
+	}
+	return "aws" // fallback default
+}
+func getRegion(cmd *cobra.Command) string {
+	prof, _ := cmd.Flags().GetString("profile")
+	cfg, err := configloader.LoadMTConfig(prof)
+	if err == nil && cfg.Region != "" {
+		return cfg.Region
+	}
+	return "us-east-1"
 }
 
 func maskToken(token string) string {
