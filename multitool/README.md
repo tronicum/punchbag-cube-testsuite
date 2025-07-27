@@ -1,3 +1,53 @@
+# Multitool CLI Documentation
+
+This document covers usage, commands, configuration, and architecture for the multitool CLI (`mt`).
+
+## Overview
+- The multitool CLI (`mt`) is the unified entrypoint for all cloud, Kubernetes, and local resource operations.
+- Only use the binary at `./multitool/mt` for all documentation, scripts, and usage examples.
+
+## Command Structure
+- All commands are organized by provider or resource type:
+    - `mt aws ...` (CloudFormation, S3, EKS, etc.)
+    - `mt gcp ...` (GCP-specific commands)
+    - `mt hetzner ...` (Hetzner-specific commands)
+    - `mt k8s ...` (provider-agnostic Kubernetes commands)
+    - `mt k8sctl ...` (kubectl-like operations)
+    - `mt k8s-manage ...` (cluster lifecycle management)
+    - `mt local ...` (local OS, package, file operations)
+    - `mt config ...` (global config management)
+    - `mt test ...` (testing utilities)
+    - `mt scaffold ...` (project scaffolding)
+
+## Configuration
+- Profiles are managed via `.mtconfig/<profile>/config.yaml`.
+- Switch profiles using `--profile` or the `MT_PROFILE` environment variable.
+- Config files support provider, region, credentials, endpoints, and custom settings.
+
+## Usage Examples
+```sh
+# List S3 buckets on AWS
+./multitool/mt aws s3 list-buckets --profile aws-dev
+
+# Create a Kubernetes cluster on Hetzner
+./multitool/mt k8s-manage create cluster --provider hetzner --profile hetzner-prod
+
+# Apply a manifest using k8sctl
+./multitool/mt k8sctl apply -f manifest.yaml --profile gcp-dev
+```
+
+## Developer Notes
+- All provider logic must use the shared/ library abstraction.
+- No direct provider/model code outside shared/.
+- CLI structure is designed for extensibility and future providers.
+
+## References
+- See main README.md for high-level project info and links to other app docs.
+- See `shared/README.md` for shared library API and usage.
+- See `cube-server/README.md` for server documentation.
+
+---
+SPDX-License-Identifier: AGPL-3.0-only
 # Multitool - Multi-Cloud CLI for Resource Management
 
 Multitool is a comprehensive command-line interface for managing cloud resources, running tests, and handling system operations across multiple cloud providers. It supports Azure, AWS, GCP, Hetzner, IONOS, and StackIT.

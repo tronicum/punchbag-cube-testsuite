@@ -12,6 +12,9 @@ This allows you to set global, per-user, or per-project defaults, and override t
 
 **Example for k8sctl:**
 
+## Migration Notes
+
+- The multitool CLI documentation has been moved to `multitool/README.md`.
 ```sh
 # Use local mode by default (set in conf/k8sctl.yml or $HOME/.mt/config.yaml)
 mt k8sctl get nodes
@@ -59,45 +62,15 @@ A comprehensive multi-cloud test suite for testing punchbag cube functionality w
 See [multitool/README.md](./multitool/README.md) for full details on configuration profiles, object storage, and advanced CLI usage.
 ## Supported Cloud Providers
 
-# punchbag-cube-testsuite Architecture
 
-## Component Overview
-
-- **shared/**: Central Go module for all cloud/provider abstractions, models, and shared logic. All applications must use this for provider operations.
-- **cube-server/**: Unified server and simulation component. Contains all simulation, API, and backend logic. Uses only the shared module for provider abstractions. All simulation and server logic is consolidated here. **This replaces the legacy server directory.**
-- **multitool/**: Unified CLI tool. All commands (including k8sctl, k8s-manage) use shared abstractions and models. No direct provider logic outside shared.
-- **werfty/**, **werfty-generator/**, **werfty-transformator/**: Modular applications for resource management, code generation, and transformation. Each is a separate Go module for maintainability.
-
-## Architectural Rules
-
-- All provider/cloud logic must reside in shared/.
-- No direct provider logic or models outside shared/.
-- All applications (cube-server, multitool, werfty, etc.) must use shared/ for cloud/resource operations.
-- CLI structure: multitool provides top-level subcommands (k8sctl, k8s-manage, etc.) that are provider-agnostic and extensible.
-- Simulation and server logic is unified in cube-server. Legacy sim/sim-server are removed.
-- All documentation, scripts, and usage must reference the multitool binary as ./multitool/mt.
-
-## Simulation Endpoints
-
-The unified simulation API is served by `cube-server` and covers all supported providers:
-
-- **Azure**: `/api/simulate/azure/aks`, `/api/simulate/azure/loganalytics`, `/api/validation?provider=azure&resource=aks`
 - **AWS, GCP, etc.**: Extendable via shared/ abstractions and simulation handlers
 
 Example usage:
 
 ```bash
-# Simulate AKS cluster creation (mock)
-curl -X POST http://localhost:8081/api/simulate/azure/aks
-
-# Simulate Log Analytics workspace creation (mock)
 curl -X POST http://localhost:8081/api/simulate/azure/loganalytics
 
-# Validate provider configuration
-curl -X POST "http://localhost:8081/api/validation?provider=azure&resource=aks"
 ```
-
-See `ARCH.md` for the full architecture and migration plan.
 
 
 - **Azure**: Azure Kubernetes Service (AKS), Azure Monitor, Log Analytics, Application Insights, Azure Budgets
