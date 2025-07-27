@@ -1,0 +1,16 @@
+# openSUSE (zypper)
+FROM opensuse/leap:15.5
+RUN zypper --non-interactive refresh && zypper --non-interactive install \
+    curl \
+    sudo \
+    lsb-release \
+    gpg2 \
+    ca-certificates \
+    gcc \
+    gcc-c++ \
+    make \
+    git
+WORKDIR /app
+COPY . .
+RUN cd multitool && go build -o mt
+ENTRYPOINT ["/app/multitool/mt"]

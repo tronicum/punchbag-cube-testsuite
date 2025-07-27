@@ -21,47 +21,7 @@ fix-deps:
 	cd ../multitool && go get github.com/aws/aws-sdk-go-v2/service/cloudformation
 	cd ../multitool && go get github.com/aws/aws-sdk-go-v2/credentials
 	cd ../multitool && go get github.com/aws/aws-sdk-go-v2/service/s3
-	cd ../multitool && go mod tidy
-	cd ../terraform-multicloud-provider && go mod tidy || true
-	cd .. && rm -rf vendor/
-	cd .. && go work vendor
-
-# Build werfty and other binaries
-build: fix-deps
-	@echo "Building multitool CLI (single binary: ../multitool/mt) ..."
-	cd ../multitool && go build -mod=readonly -o mt ./
-	@echo "Building cube-server..."
-	cd ../cube-server && go build -mod=readonly -o cube-server ./
-	@echo "Building werfty..."
-	cd ../werfty && go build -mod=readonly -o werfty ./cmd
-	@echo "NOTE: The only supported CLI binary is ../multitool/mt. Do not use ./mt or multitool/multitool."
-
-# Run all tests
-test:
-	cd .. && go test -mod=readonly ./...
-
-# Test Azure functions in simulation mode (default)
-test-azure: test-azure-sim
-
-test-azure-sim:
-	@echo "Testing Azure functions in simulation mode..."
-	../scripts/test-azure-functions.sh
-
-# Test Azure functions in direct mode
-test-azure-direct:
-	@echo "Testing Azure functions in direct mode..."
-	../scripts/test-azure-functions.sh --direct
-
-# Clean build artifacts
-clean:
-	rm -f ../werfty/werfty
-	rm -f ../cube-server/cube-server
-	rm -f ../multitool/mt
-	rm -f ../generator/werfty-generator
-	@echo "Cleaned all binaries. Only ../multitool/mt is supported as the CLI binary."
-
-# Start cube-server for testing
-start-server:
+test-os-docker:
 	@echo "Starting cube-server..."
 	cd ../cube-server && ./cube-server &
 
@@ -85,3 +45,19 @@ server-clean:
 server-restart:
 	$(MAKE) -C ../server stop
 	$(MAKE) -C ../server run
+
+## Main test targets
+.PHONY: test test-azure test-azure-sim test-azure-direct
+
+test:
+	go test ../...
+
+test-azure: test-azure-sim
+
+test-azure-sim:
+	@echo "Testing Azure functions in simulation mode..."
+	./scripts/test-azure-functions.sh
+
+test-azure-direct:
+	@echo "Testing Azure functions in direct mode..."
+	./scripts/test-azure-functions.sh --direct

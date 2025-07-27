@@ -1,0 +1,16 @@
+# CentOS (yum/dnf)
+FROM centos:stream9
+RUN dnf -y update && dnf -y install \
+    curl \
+    sudo \
+    redhat-lsb-core \
+    gnupg2 \
+    ca-certificates \
+    gcc \
+    gcc-c++ \
+    make \
+    git
+WORKDIR /app
+COPY . .
+RUN cd multitool && go build -o mt
+ENTRYPOINT ["/app/multitool/mt"]

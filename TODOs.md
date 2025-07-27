@@ -1,3 +1,30 @@
+# Refactor Plan: Merge server and cube-server
+
+- Audit both directories for unique logic, scripts, and configuration.
+- Move all essential orchestration, simulation, and server logic into cube-server/.
+- Remove any duplicate, legacy, or unused files from server/.
+- Update all Makefiles, scripts, and documentation to reference only cube-server/ for server operations.
+- Ensure all tests, CI, and developer workflows use the unified cube-server/.
+
+- Validate the migration by running all server-related tests and operations from cube-server/ only.
+# Modular Go Test Orchestration Rule
+
+- Only define a `go-tests` target in a module Makefile if Go code and tests are present.
+- The main orchestration in `testing/Makefile` should only call `go-tests` for modules with actual Go tests.
+- Do not use shell logic to check for Go files; simply omit the target if there are no tests.
+# Outstanding Test Failures (to fix later)
+
+- [ ] **generator**: Test failures due to mixed package names (`main` and `generator`) in the same directory, and missing internal package references. Example errors:
+    - found packages main (aks.go) and generator (end2end_test.go) in generator/
+    - package punchbag-cube-testsuite/generator/internal/generator is not in std
+
+- [ ] **werfty**: Test failures due to missing/misconfigured imports from client and sharedmodels, plus struct field/type mismatches. Example errors:
+    - package punchbag-cube-testsuite/client/cmd is not in std
+    - unknown field CloudProvider in struct literal of type models.Cluster
+    - undefined: sharedmodels.AKSTestRequest
+    - cannot use cluster.Status (variable of string type models.ClusterStatus) as string value in struct literal
+
+- [ ] Fix generator and werfty test errors after modular orchestration is validated and other priorities are complete.
 ## Documentation Modularization
 
 - [ ] Move multitool documentation to multitool/README.md and reference it from the main README.md
@@ -185,29 +212,6 @@
         1. Add Azure DevOps provider commands to multitool CLI (projects, pipelines, repos, boards)
         2. Implement Azure DevOps REST API integration for real operations
 
-# Phase 1: Shared Library Foundation
-- [ ] Update multitool to use shared/providers/azure instead of local commands
-- [ ] Add shared/import packages for data exchange
-- [ ] Test all applications using shared/ library
-- [ ] Standardize shared/ library interfaces:
-    - [ ] Common Provider interface for all clouds (review for consistency)
-    - [ ] Standardized authentication and configuration (review/complete)
-    - [ ] Consistent simulation vs direct mode handling (review)
-- [ ] Complete shared module integration across all components:
-    - [ ] Standardize API interfaces between multitool, generators, and cube-server
-
-# Phase 2: CLI and Application Refactor
-- [ ] Restructure multitool CLI commands to the new structure (see below)
-- [ ] Review and update documentation and help output to reflect the new structure
-- [ ] Ensure backward compatibility or provide migration notes for users
-- [ ] Standardize error handling and logging across components
-- [ ] Document shared module API and usage patterns
-
-# Phase 3: Generator and Transformer Enhancements
-- [ ] Enhance werfty-generator application (high priority)
-    - [ ] Integrate Magic Modules as the code generator for Google Cloud resources (automated IaC support)
-- [ ] Enhance werfty-transformator application (high priority)
-    - [ ] Use Magic Modules output for Google resource transformation logic
 - [ ] Enhance multitool CLI capabilities (high priority)
 
 # Phase 4: Advanced Integration & CI
@@ -252,3 +256,43 @@
 - [ ] Investigate enabling Copilot (AI assistant) to access GitHub for direct commits and merge requests. (Low priority)
 - [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
         2. Use shared/export to generate data for other applications
+
+## FIX PLAN: Modular Test Orchestration & Makefile Setup (July 2025)
+
+- [ ] Audit all Makefiles in root and subdirectories for duplicate/conflicting targets and .PHONY declarations.
+- [ ] Ensure each subdirectory (multitool, cube-server, generator, werfty) has a Makefile with build, clean, and test targets.
+- [ ] Rewrite `testing/Makefile`:
+    - Single .PHONY declaration at the top.
+    - Modular test targets for each module: test-multitool, test-shared, test-cube-server, test-generator, test-werfty.
+    - Main test target calls all modular test targets.
+    - Remove legacy/duplicate targets and any use of `go test ../...`.
+- [ ] Update root Makefile to only call `$(MAKE) -C testing test` for the test target.
+- [ ] Validate by running `make test` from the root and ensure all module tests are executed separately.
+- [ ] Document the modular test orchestration in developer docs and README.md.
+
+### Step-by-step Fix Process
+1. Audit and clean up all Makefiles for duplicate/conflicting targets and .PHONY declarations.
+2. Ensure all subdirectory Makefiles exist and are correct.
+3. Rewrite `testing/Makefile` for modular test orchestration.
+4. Update root Makefile to delegate test logic to `testing/Makefile`.
+5. Validate with `make test` and individual module test runs.
+6. Document the setup and update developer notes.
+
+## ATOMIC REFACTOR PLAN: Makefile Modularization & Test Delegation (July 2025)
+
+- [ ] Refactor Makefile structure for maintainability, modularity, and future extensibility:
+    - Root Makefile: Only orchestrates build, test, and clean. Delegates all test logic to `testing/Makefile` and server orchestration to application Makefiles (e.g., `cube-server/Makefile`).
+    - `testing/Makefile`: Contains all test logic, including Docker-based, multiarch, cross-distro CLI tests. Flexible targets for future test types (e.g., `mt-tests-docker`). All test scripts moved to `testing/scripts/`.
+    - `cube-server/Makefile`: Contains all server orchestration logic (start/stop/build/clean).
+    - Avoid duplicate/conflicting targets across Makefiles. Ensure clear boundaries and documentation.
+    - Document all changes and update developer docs.
+
+### Sprint Steps
+1. Write this refactor plan to TODOs.md (done).
+2. Confirm with user (done).
+3. Refactor root Makefile to delegate all test logic and server orchestration.
+4. Move all test logic to `testing/Makefile`.
+5. Move server orchestration logic to `cube-server/Makefile`.
+6. Clean up legacy/duplicate targets and scripts.
+7. Update documentation and developer notes.
+8. Validate with test runs and CI.

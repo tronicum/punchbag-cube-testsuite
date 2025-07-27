@@ -1,0 +1,15 @@
+FROM rockylinux:9
+RUN dnf -y update && dnf -y install \
+    curl \
+    sudo \
+    lsb-release \
+    redhat-lsb-core || true \
+    gnupg2 \
+    ca-certificates \
+    gcc \
+    gcc-c++ \
+    make \
+    git
+WORKDIR /app
+COPY ./mt /usr/local/bin/mt
+ENTRYPOINT ["mt"]

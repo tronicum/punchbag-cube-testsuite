@@ -33,7 +33,26 @@
 5. Add CI checks to enforce module hygiene, run tests, and validate shared usage.
 6. Review TODOs.md for remaining migration, refactor, and feature tasks; prioritize next CLI, provider, or integration features.
 
+
 ## Notes
 - See TODOs.md for current sprint tasks and feature roadmap.
 - See README.md for CLI usage and developer documentation.
 - This file is the single source of truth for architecture and module boundaries.
+
+## OS/Package Manager Testing Strategy
+
+To ensure robust cross-platform support for OS detection and package management features, the following approach is used:
+
+- All CLI binaries are always named `mt` for all Linux/arch builds.
+- OS and package manager detection is tested using Docker containers for each major Linux distribution.
+- The containers are only used for testing the package manager and OS detection features, not for general CLI use.
+- All Dockerfiles for testing are located in `testing/docker/` and named by OS (e.g., `Dockerfile.ubuntu`, `Dockerfile.alpine`, etc.).
+- Each Dockerfile copies the pre-built `mt` binary into the container and sets it as the entrypoint.
+- Example test commands:
+  - `docker build -f testing/docker/Dockerfile.ubuntu -t mt-ubuntu .`
+  - `docker run --rm mt-ubuntu os-detect`
+  - `docker run --rm mt-ubuntu list-packages`
+- This ensures that the `mt` binary's OS/package manager features work as expected on all supported distributions.
+- The containers are not intended for end-user use, only for CI/maintainer testing.
+
+See `TESTING.md` for more details and usage instructions.

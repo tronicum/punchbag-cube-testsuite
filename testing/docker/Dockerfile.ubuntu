@@ -1,0 +1,13 @@
+# Ubuntu (apt) - No open US/EU mirror available. Consider hosting a private registry or proxy.
+FROM ubuntu:24.04
+RUN apt-get update && apt-get install -y \
+    curl \
+    sudo \
+    lsb-release \
+    gnupg \
+    ca-certificates \
+    build-essential \
+    git
+WORKDIR /app
+COPY ./mt /usr/local/bin/mt
+ENTRYPOINT ["mt"]

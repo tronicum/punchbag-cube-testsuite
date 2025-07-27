@@ -8,4 +8,5 @@
 - If in doubt, ask for clarification before running commands in the wrong directory.
 
 # (Add more rules below as needed)
+- Never proceed to the next step if any code, build, or test fails. Always stop, diagnose, and resolve errors before continuing.
 - if in doubt, check the todos first, then ask what todo

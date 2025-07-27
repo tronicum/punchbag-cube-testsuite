@@ -64,8 +64,7 @@ See [multitool/README.md](./multitool/README.md) for full details on configurati
 ## Component Overview
 
 - **shared/**: Central Go module for all cloud/provider abstractions, models, and shared logic. All applications must use this for provider operations.
-- **cube-server/**: Unified server and simulation component. Contains all simulation, API, and backend logic. Uses only the shared module for provider abstractions. All simulation and server logic is consolidated here.
-- **sim/** and **sim-server/**: Legacy simulation modules. All unique logic has been migrated to cube-server. These are deprecated and removed after migration.
+- **cube-server/**: Unified server and simulation component. Contains all simulation, API, and backend logic. Uses only the shared module for provider abstractions. All simulation and server logic is consolidated here. **This replaces the legacy server directory.**
 - **multitool/**: Unified CLI tool. All commands (including k8sctl, k8s-manage) use shared abstractions and models. No direct provider logic outside shared.
 - **werfty/**, **werfty-generator/**, **werfty-transformator/**: Modular applications for resource management, code generation, and transformation. Each is a separate Go module for maintainability.
 
@@ -286,21 +285,18 @@ curl -X POST http://localhost:8081/api/v1/azure/budget \
 
 ## Components
 
-### 🖥️ Server (`/server`)
+### 🖥️ Server (`cube-server/`)
 
-REST API server that provides endpoints for:
-- AKS cluster management (CRUD operations)
-- Test execution and monitoring
-- Health checks and metrics
-- Complete OpenAPI specification
+Unified REST API server and simulation backend. All endpoints, simulation logic, and orchestration are now in `cube-server/`.
 
 **Quick Start:**
 ```bash
-cd server
+cd cube-server
+go mod tidy
 go run main.go
 ```
 
-Server will be available at `http://localhost:8080`
+Server will be available at `http://localhost:8081`
 
 ### 📱 Werfty (`/werfty`)
 
@@ -371,9 +367,9 @@ Each component can be containerized:
 
 ```bash
 # Server
-cd server
-docker build -t punchbag-server .
-docker run -p 8080:8080 punchbag-server
+cd cube-server
+docker build -t punchbag-cube-server .
+docker run -p 8081:8081 punchbag-cube-server
 
 # Werfty (for CI/CD pipelines)
 cd werfty
@@ -383,8 +379,8 @@ docker build -t punchbag-werfty .
 ## API Documentation
 
 The server provides comprehensive API documentation:
-- Interactive docs: `http://localhost:8080/docs`
-- OpenAPI spec: `server/api/openapi.yaml`
+- Interactive docs: `http://localhost:8081/docs`
+- OpenAPI spec: `cube-server/api/openapi.yaml`
 
 ## Multi-Cloud Usage Examples
 
@@ -510,9 +506,9 @@ go run main.go --input aws_s3_example.tf --src-provider aws --destination-provid
 ### Start the API Server
 ```bash
 # From project root
-cd cmd/cube-server
-# Or use Go workspace mode
-PORT=8081 go run main.go
+cd cube-server
+go mod tidy
+go run main.go
 ```
 
 ### Run Automated API Tests
