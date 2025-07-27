@@ -61,7 +61,7 @@ See [multitool/README.md](./multitool/README.md) for full documentation on the m
 
 ## Multitool-Specific TODOs
 
-- [ ] Implement `.mtconfig/<profile>/config.yaml` profile system for multitool
+- [ ] Implement `multitool/.mtconfig/<profile>/config.yaml` profile system for multitool
 - [ ] Add CLI flag `--profile` and env var support
 - [ ] Update provider selection logic to use config values
 - [ ] Document usage and migration in README.md

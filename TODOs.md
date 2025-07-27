@@ -14,6 +14,13 @@
 - Do not use shell logic to check for Go files; simply omit the target if there are no tests.
 # Outstanding Test Failures (to fix later)
 
+## Multitool/Cube-Server Modularization TODOs
+
+- [ ] Move Hetzner S3 simulation mock (`NewHetznerS3Mock` and related code) from `multitool/pkg/client/hetzner_s3_mock.go` to `shared/providers/hetzner/objectstorage.go`.
+- [ ] Move the CLI command `simulate-hetzner-s3` from `multitool/cmd/sim_hetzner_s3.go` to `cube-server/cmd/sim_hetzner_s3.go`.
+- [ ] Register the simulation command in cube-server only, and update documentation to reflect the new location.
+- [ ] Remove legacy simulation code from multitool after migration.
+
 - [ ] **generator**: Test failures due to mixed package names (`main` and `generator`) in the same directory, and missing internal package references. Example errors:
     - found packages main (aks.go) and generator (end2end_test.go) in generator/
     - package punchbag-cube-testsuite/generator/internal/generator is not in std
@@ -75,15 +82,15 @@
 # TODOs for punchbag-cube-testsuite
 ## Planned: Multitool kubeconfig-like config system
 
-- [ ] Implement `.mtconfig/<profile>/config.yaml` profile system for multitool:
-    - Each profile is a directory under `.mtconfig/`, e.g. `.mtconfig/aws-dev/config.yaml`.
+- [ ] Implement `multitool/.mtconfig/<profile>/config.yaml` profile system for multitool:
+    - Each profile is a directory under `multitool/.mtconfig/`, e.g. `multitool/.mtconfig/aws-dev/config.yaml`.
     - Config file in YAML format, supports provider, region, credentials, endpoints, and custom settings.
     - Profile switching via CLI flag `--profile` or environment variable.
     - Provider-specific settings and secrets (static, ENV, or external secret managers).
     - Extensible for new fields/providers.
 
 ### Implementation Steps
-1. Scaffold `.mtconfig/<profile>/config.yaml` loader in multitool.
+1. Scaffold `multitool/.mtconfig/<profile>/config.yaml` loader in multitool.
 2. Add CLI flag `--profile` and env var support.
 3. Update provider selection logic to use config values.
 4. Document usage and migration in README.md.
@@ -296,3 +303,8 @@
 6. Clean up legacy/duplicate targets and scripts.
 7. Update documentation and developer notes.
 8. Validate with test runs and CI.
+
+- [ ] Move Hetzner S3 simulation mock (`NewHetznerS3Mock` and related code) from `multitool/pkg/client/hetzner_s3_mock.go` to `shared/providers/hetzner/objectstorage.go`.
+- [ ] Move the CLI command `simulate-hetzner-s3` from `multitool/cmd/sim_hetzner_s3.go` to `cube-server/cmd/sim_hetzner_s3.go`.
+- [ ] Register the simulation command in cube-server only, and update documentation to reflect the new location.
+- [ ] Remove legacy simulation code from multitool after migration.

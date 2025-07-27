@@ -15,7 +15,7 @@ import (
 func copyConfig(t *testing.T, profile string) string {
   t.Helper()
   tmp := t.TempDir()
-  mtconfig := filepath.Join(tmp, ".mtconfig", profile)
+  mtconfig := filepath.Join(tmp, "multitool/.mtconfig", profile)
   err := os.MkdirAll(mtconfig, 0o755)
   if err != nil {
     t.Fatalf("failed to create temp config dir: %v", err)

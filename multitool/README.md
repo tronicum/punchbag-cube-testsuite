@@ -20,7 +20,7 @@ This document covers usage, commands, configuration, and architecture for the mu
     - `mt scaffold ...` (project scaffolding)
 
 ## Configuration
-- Profiles are managed via `.mtconfig/<profile>/config.yaml`.
+- Profiles are managed via `multitool/.mtconfig/<profile>/config.yaml`.
 - Switch profiles using `--profile` or the `MT_PROFILE` environment variable.
 - Config files support provider, region, credentials, endpoints, and custom settings.
 
@@ -79,7 +79,7 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 
 Multitool supports a kubeconfig-like profile system for cloud provider configuration.
 
-- Profiles are stored in `.mtconfig/<profile>/config.yaml`.
+- Profiles are stored in `multitool/.mtconfig/<profile>/config.yaml`.
 - Switch profiles using `--profile <name>` or set the `MTCONFIG_PROFILE` environment variable.
 - Each config file supports provider, region, credentials, endpoints, and custom settings.
 - Environment variables in config values (e.g. `${AWS_ACCESS_KEY_ID}`) are expanded at runtime. If not set, multitool will attempt to read from a file named after the variable, or prompt the user.
@@ -102,7 +102,7 @@ settings:
 
 1. CLI flag (e.g. `--provider`, `--profile`)
 2. Environment variable (e.g. `MTCONFIG_PROFILE`)
-3. User config (`$HOME/.mt/config.yaml`)
+3. User config (`$HOME/multitool/.mtconfig/config.yaml`)
 4. Project config (`./conf/k8sctl.yml`)
 5. Default (hardcoded fallback)
 

@@ -62,7 +62,7 @@ func expandConfigVars(cfg *MTConfig) {
 }
 
 func LoadMTConfig(profile string) (*MTConfig, error) {
-  base := ".mtconfig"
+  base := "multitool/.mtconfig"
   if env := os.Getenv("MTCONFIG_BASE"); env != "" {
 	base = env
   }

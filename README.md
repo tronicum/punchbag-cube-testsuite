@@ -4,7 +4,7 @@ The multitool CLI supports flexible configuration for all commands, including `k
 
 1. **CLI flag** (e.g. `--mode`, `--provider`)
 2. **Environment variable** (`K8SCTL_MODE`, `K8SCTL_PROVIDER`)
-3. **User config** (`$HOME/.mt/config.yaml`)
+3. **User config** (`$HOME/multitool/.mtconfig/config.yaml`)
 4. **Project config** (`./conf/k8sctl.yml`)
 5. **Default** (hardcoded fallback)
 
@@ -16,7 +16,7 @@ This allows you to set global, per-user, or per-project defaults, and override t
 
 - The multitool CLI documentation has been moved to `multitool/README.md`.
 ```sh
-# Use local mode by default (set in conf/k8sctl.yml or $HOME/.mt/config.yaml)
+# Use local mode by default (set in conf/k8sctl.yml or $HOME/multitool/.mtconfig/config.yaml)
 mt k8sctl get nodes
 
 # Override mode for a single command
@@ -44,7 +44,7 @@ default_mode: local
 default_provider: hetzner
 ```
 
-**$HOME/.mt/config.yaml**
+**$HOME/multitool/.mtconfig/config.yaml**
 ```yaml
 default_mode: proxy
 default_provider: azure
