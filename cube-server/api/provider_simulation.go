@@ -23,9 +23,9 @@ func (h *ProviderSimulationHandlers) GenericAWSS3SimHandler(c *gin.Context) {
 
 // ProviderSimulationHandlers contains simulation endpoints for cloud providers
 type ProviderSimulationHandlers struct {
-	store     store.Store
-	logger    *zap.Logger
-	simulator *simulation.SimulationService
+	   store     store.Store
+	   logger    *zap.Logger
+	   simulator *simulation.SimulationService
 }
 
 // DeleteSimulatedBucket handles DELETE /api/v1/simulate/providers/:provider/buckets/:bucket
@@ -47,12 +47,12 @@ func (h *ProviderSimulationHandlers) DeleteSimulatedBucket(c *gin.Context) {
 }
 
 // NewProviderSimulationHandlers creates a new ProviderSimulationHandlers instance
-func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger) *ProviderSimulationHandlers {
-	return &ProviderSimulationHandlers{
-		store:     s,
-		logger:    logger,
-		simulator: simulation.NewSimulationService(),
-	}
+func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger, sim *simulation.SimulationService) *ProviderSimulationHandlers {
+	   return &ProviderSimulationHandlers{
+			   store:     s,
+			   logger:    logger,
+			   simulator: sim,
+	   }
 }
 
 // CreateSimulatedBucket handles POST /api/v1/simulate/providers/:provider/buckets

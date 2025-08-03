@@ -1,3 +1,8 @@
+# Detect OS using multitool (mt local os-detect)
+detect_os() {
+  OS_OUT=$("$SCRIPT_DIR/../multitool/mt" local os-detect 2>/dev/null | grep 'OS:' | awk '{print $2}')
+  echo "$OS_OUT"
+}
 #!/bin/bash
 # Usage: ./cube_server_control.sh start|stop [port]
 set -euo pipefail
@@ -22,6 +27,9 @@ for arg in "$@"; do
 done
 
 start_server() {
+  # Detect OS for any OS-specific logic
+  OS_DETECTED=$(detect_os)
+  echo "[INFO] Detected OS: $OS_DETECTED"
   cd "$CUBE_SERVER_DIR"
   pwd
   if [ "$DEBUG" -eq 1 ]; then
@@ -54,9 +62,21 @@ start_server() {
     echo "[ERROR] cube-server process not running. See $LOG_FILE for details."
     exit 1
   fi
-  # Check if server is listening on the port (macOS compatible)
-  if ! lsof -nP -iTCP:$PORT | grep LISTEN | grep cube-server > /dev/null; then
-    echo "[ERROR] cube-server not listening on port $PORT. See $LOG_FILE for details."
+  # Check if server is listening on the port (macOS compatible, retry up to 5 times)
+  LISTEN_OK=0
+  i=1
+  while [ $i -le 5 ]; do
+    LSOF_OUT=$(lsof -nP -iTCP:$PORT | grep LISTEN)
+    echo "[DEBUG] lsof output (attempt $i): $LSOF_OUT"
+    if echo "$LSOF_OUT" | grep -E 'cube-serv(er)?' > /dev/null; then
+      LISTEN_OK=1
+      break
+    fi
+    sleep 1
+    i=$((i+1))
+  done
+  if [ $LISTEN_OK -ne 1 ]; then
+    echo "[ERROR] cube-server not listening on port $PORT after retries. See $LOG_FILE for details."
     kill $SERVER_PID
     exit 1
   fi

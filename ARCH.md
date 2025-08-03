@@ -61,12 +61,12 @@ To ensure robust cross-platform support for OS detection and package management 
 
 See `TESTING.md` for more details and usage instructions.
 
-## Simulation Test Flow (Hetzner S3)
-- All bucket operations (create, list, delete) must be performed via multitool CLI.
+## Simulation Test Flow (Object Storage: aws-s3, generic-aws-s3, hetzner)
+- All bucket operations (create, list, delete) must be performed via multitool CLI using the correct provider name: `aws-s3`, `generic-aws-s3`, or `hetzner`.
 - No direct file or state manipulation is allowed in test scripts.
-- Dummy S3 credentials can be injected via SIMULATE_DUMMY_S3_CREDS.
-- [Planned] Dummy S3 buckets can be injected via SIMULATE_DUMMY_S3_BUCKETS (to be implemented).
-- The simulation server persists state via CUBE_SERVER_SIM_PERSIST.
+- Dummy S3 credentials can be injected via `SIMULATE_DUMMY_S3_CREDS`.
+- [Planned] Dummy S3 buckets can be injected via `SIMULATE_DUMMY_S3_BUCKETS` (to be implemented, must support all providers).
+- The simulation server persists state via `CUBE_SERVER_SIM_PERSIST`.
 
 ## Test Orchestration Rule
 - All test setup, execution, and teardown must use multitool CLI commands only.

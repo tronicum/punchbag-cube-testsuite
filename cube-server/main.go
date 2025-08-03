@@ -9,6 +9,8 @@ import (
 	   "go.uber.org/zap"
 
 	   api "github.com/tronicum/punchbag-cube-testsuite/cube-server/api"
+	   "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
+	   "github.com/tronicum/punchbag-cube-testsuite/cube-server/internal"
 )
 
 func main() {
@@ -69,8 +71,41 @@ func main() {
 	})
 
 
-	// Register all API v1 routes (including simulation, proxy, etc.)
-	api.SetupRoutes(router, nil, logger)
+
+	// 1. Load server config (YAML or ENV)
+	config, err := internal.LoadServerConfig()
+	if err != nil {
+		logger.Warn("Could not load config, proceeding with defaults", zap.Error(err))
+	}
+
+	// 2. Create shared SimulationService
+	sim := simulation.NewSimulationService()
+
+	// 3. Inject dummy buckets if needed (from config or ENV)
+	if config != nil && config.Storage.DummyBuckets != nil {
+		conv := map[string][]struct{ Name, Region string }{}
+		for provider, buckets := range config.Storage.DummyBuckets {
+			for _, b := range buckets {
+				conv[provider] = append(conv[provider], struct{ Name, Region string }{b.Name, b.Region})
+			}
+		}
+		internal.InjectDummyBucketsIfNeeded(sim, conv)
+	} else {
+		// fallback: try ENV/file-based config
+		dummy := internal.LoadDummyBucketsConfig()
+		if dummy != nil {
+			conv := map[string][]struct{ Name, Region string }{}
+			for provider, buckets := range dummy {
+				for _, b := range buckets {
+					conv[provider] = append(conv[provider], struct{ Name, Region string }{b.Name, b.Region})
+				}
+			}
+			internal.InjectDummyBucketsIfNeeded(sim, conv)
+		}
+	}
+
+	// 4. Register all API v1 routes (including simulation, proxy, etc.)
+	api.SetupRoutes(router, nil, logger, sim)
 
 	// Start server
 	// Get port from --port flag or environment variable

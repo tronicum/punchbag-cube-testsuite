@@ -10,8 +10,12 @@ import (
 )
 
 // SetupRoutes configures all the API routes
-func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
-	handlers := NewHandlers(store, logger)
+import (
+	   "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
+)
+
+func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger, sim *simulation.SimulationService) {
+	   handlers := NewHandlers(store, logger)
 
 	// API version prefix
 	v1 := router.Group("/api/v1")
@@ -59,7 +63,7 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 		}
 
 
-   providerSimHandlers := NewProviderSimulationHandlers(store, logger)
+   providerSimHandlers := NewProviderSimulationHandlers(store, logger, sim)
 
    // Simulation endpoints
    simulate := v1.Group("/simulate")

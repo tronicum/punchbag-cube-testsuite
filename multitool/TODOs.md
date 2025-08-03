@@ -1,4 +1,8 @@
-# TODO: Support generic AWS S3 simulation endpoints
+# 2025-08-03: CLI Help and Command Consistency
+
+- [ ] Update multitool CLI help output to accurately reflect all available commands (e.g., `local os-detect`).
+- [ ] Ensure all documented examples in README and help match the actual CLI structure and subcommands.
+aws-s3# TODO: Support generic AWS S3 simulation endpoints
 - Add CLI support for --storage-provider generic-aws-s3 to test against the generic AWS S3 simulation endpoint
 - Add tests for generic AWS S3 simulation mode
 ## Modularization and Migration (from root TODOs.md)
@@ -80,8 +84,8 @@ See [multitool/README.md](./multitool/README.md) for full documentation on the m
 - [ ] Use shared/log and shared/errors for all error handling and logging in multitool and sim server.
 - [ ] Improve help output, usage examples, and shell completion scripts. Add batch and interactive modes for resource operations.
 - [ ] Update README and TODOs to reflect new architecture, usage, and migration notes.
-- [ ] Add support for injecting dummy S3 buckets via ENV (e.g., SIMULATE_DUMMY_S3_BUCKETS) in the simulation server for test setup.
-- [ ] Document and enforce: all test orchestration must be done via multitool CLI, never by direct file manipulation or bash logic.
+- [ ] Add support for injecting dummy S3 buckets via ENV (e.g., SIMULATE_DUMMY_S3_BUCKETS) in the simulation server for test setup. Must support all providers: aws-s3, generic-aws-s3, hetzner.
+- [ ] Document and enforce: all test orchestration must be done via multitool CLI, never by direct file manipulation or bash logic. Provider names must be used exactly as: aws-s3, generic-aws-s3, hetzner.
 
 ---
 SPDX-License-Identifier: AGPL-3.0-only

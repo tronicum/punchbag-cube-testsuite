@@ -19,7 +19,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var supportedProviders = []string{"aws-s3", "hetzner"}
+var supportedProviders = []string{"aws-s3", "generic-aws-s3", "hetzner"}
 
 var supportedProvidersCmd = &cobra.Command{
 	Use:   "supported-providers",
@@ -33,8 +33,8 @@ var supportedProvidersCmd = &cobra.Command{
 }
 
 var objectStorageCmd = &cobra.Command{
-	Use:   "objectstorage",
-	Short: "Manage S3-like object storage buckets (AWS, Hetzner)",
+	   Use:   "objectstorage",
+	   Short: "Manage S3-like object storage buckets (aws-s3, generic-aws-s3, hetzner)",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Supported object storage providers:")
 		for _, p := range supportedProviders {
@@ -56,7 +56,7 @@ var automationMode bool
 
 var createBucketCmd = &cobra.Command{
 	   Use:   "create [name] [region]",
-	   Short: "Create a new bucket (supports --storage-provider, --policy, --versioning, --lifecycle)",
+	   Short: "Create a new bucket (supports --storage-provider: aws-s3, generic-aws-s3, hetzner)",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		name, region := args[0], args[1]
@@ -115,15 +115,15 @@ var createBucketCmd = &cobra.Command{
 		}
 	   var err error
 	   // In simulate mode, skip real credential checks and use dummy values
-	   if mode == "simulate" && provider == "hetzner" {
+	   if mode == "simulate" && (provider == "hetzner" || provider == "aws-s3" || provider == "generic-aws-s3") {
 		   if os.Getenv("SIMULATE_DUMMY_S3_CREDS") == "1" {
-			   log.Info("[SIMULATE] Using dummy Hetzner S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
+			   log.Info("[SIMULATE] Using dummy S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
 			   log.Info("Created bucket (simulate): %+v", bucket)
 			   return
 		   }
 	   }
 	   switch provider {
-	   case "aws-s3":
+	   case "aws-s3", "generic-aws-s3":
 			   s3Client, e := awsS3.NewS3Client(cmd.Context(), region)
 			   if e != nil {
 					   fmt.Println("AWS S3 client error:", e)
@@ -153,7 +153,7 @@ var createBucketCmd = &cobra.Command{
 
 var listBucketsCmd = &cobra.Command{
 	   Use:   "list",
-	   Short: "List all buckets for a provider (use --storage-provider)",
+	   Short: "List all buckets for a provider (use --storage-provider: aws-s3, generic-aws-s3, hetzner)",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		provider := getProvider(cmd)
@@ -194,15 +194,15 @@ var listBucketsCmd = &cobra.Command{
 			}
 	   } else {
 		   // In simulate mode, skip real credential checks and use dummy values
-		   if mode == "simulate" && provider == "hetzner" {
+		   if mode == "simulate" && (provider == "hetzner" || provider == "aws-s3" || provider == "generic-aws-s3") {
 			   if os.Getenv("SIMULATE_DUMMY_S3_CREDS") == "1" {
-				   log.Info("[SIMULATE] Using dummy Hetzner S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
+				   log.Info("[SIMULATE] Using dummy S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
 				   // Return a dummy bucket list for simulation
 				   buckets = []models.ObjectStorageBucket{
 					   {
 						   Name:      "sim-bucket-1",
-						   Provider:  models.CloudProviderHetzner,
-						   Region:    "fsn1",
+						   Provider:  models.CloudProvider(provider),
+						   Region:    "sim-region-1",
 						   CreatedAt: time.Now().UTC(),
 					   },
 				   }
@@ -211,7 +211,7 @@ var listBucketsCmd = &cobra.Command{
 			   }
 		   } else {
 			   switch provider {
-			   case "aws-s3":
+			   case "aws-s3", "generic-aws-s3":
 					   s3Client, e := awsS3.NewS3Client(cmd.Context(), "us-east-1") // TODO: region flag
 					   if e != nil {
 							   fmt.Println("AWS S3 client error:", e)
@@ -227,7 +227,7 @@ var listBucketsCmd = &cobra.Command{
 			   }
 			   if err != nil {
 				   if err.Error() == "InvalidAccessKeyId" || (err.Error() != "" && (contains(err.Error(), "InvalidAccessKeyId") || contains(err.Error(), "403"))) {
-					   fmt.Println("Error: Invalid Hetzner S3 access key or secret. Please check your credentials and environment variables (HETZNER_S3_ACCESS_KEY, HETZNER_S3_SECRET_KEY).")
+					   fmt.Println("Error: Invalid S3 access key or secret. Please check your credentials and environment variables.")
 				   } else {
 					   fmt.Println("Error:", err)
 				   }
@@ -303,7 +303,7 @@ var getBucketCmd = &cobra.Command{
 
 var deleteBucketCmd = &cobra.Command{
 	   Use:   "delete [id]",
-	   Short: "Delete a bucket by ID (use --storage-provider)",
+	   Short: "Delete a bucket by ID (use --storage-provider: aws-s3, generic-aws-s3, hetzner)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 	   id := args[0]
@@ -360,15 +360,15 @@ var deleteBucketCmd = &cobra.Command{
 	   var err error
 	   // mode already declared above
 	   // In simulate mode, skip real credential checks and use dummy values
-	   if mode == "simulate" && provider == "hetzner" {
+	   if mode == "simulate" && (provider == "hetzner" || provider == "aws-s3" || provider == "generic-aws-s3") {
 		   if os.Getenv("SIMULATE_DUMMY_S3_CREDS") == "1" {
-			   log.Info("[SIMULATE] Using dummy Hetzner S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
+			   log.Info("[SIMULATE] Using dummy S3 credentials (SIMULATE_DUMMY_S3_CREDS=1)")
 			   printSuccessOrError(true, automationMode, "Bucket deleted successfully (simulate).")
 			   return
 		   }
 	   }
 	   switch provider {
-	   case "aws-s3":
+	   case "aws-s3", "generic-aws-s3":
 			   s3Client, e := awsS3.NewS3Client(cmd.Context(), "us-east-1") // TODO: region flag
 			   if e != nil {
 					   printSuccessOrError(false, automationMode, "AWS S3 client error: %v", e)
@@ -408,7 +408,7 @@ func init() {
 	   objectStorageCmd.PersistentFlags().StringVar(&hetznerToken, "hetzner-token", "", "Hetzner API token (overrides env/config)")
 	   objectStorageCmd.PersistentFlags().BoolVar(&skipPrompts, "skip-prompts", false, "Skip all interactive prompts (for automation)")
 	   objectStorageCmd.PersistentFlags().BoolVar(&automationMode, "automation-mode", false, "Enable automation/CI mode (alias for --skip-prompts --force, prints colored output)")
-	   objectStorageCmd.PersistentFlags().String("storage-provider", "hetzner", "Object storage provider: hetzner or aws-s3 (future: more supported)")
+	   objectStorageCmd.PersistentFlags().String("storage-provider", "hetzner", "Object storage provider: aws-s3, generic-aws-s3, hetzner")
 
 	   // Register --mode as a local flag on each subcommand
 	   createBucketCmd.Flags().String("mode", "direct", "Operation mode: direct|proxy|simulate")

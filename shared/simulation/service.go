@@ -1,40 +1,18 @@
-// Package simulation provides shared simulation logic for cloud resource operations.
-//
-// This package is used by both the server and multitool CLI to ensure consistent simulation behavior.
-// All provider validation, cluster/test simulation, and related logic should be implemented here.
-//
-// To add support for a new provider or operation, extend the logic in this package only.
-//
-// Usage examples and API documentation are provided in the README and in the public method comments below.
-//
-// Public API for provider knowledge and simulation logic
-//
-// Example usage:
-//
-//   import "punchbag-cube-testsuite/shared/simulation"
-//
-//   sim := simulation.NewSimulationService()
-//   result := sim.ValidateProvider("azure", nil)
-//   opResult := sim.SimulateOperation(&simulation.SimulationRequest{
-//       Provider: "aws",
-//       Operation: "create_cluster",
-//       Parameters: map[string]interface{}{...},
-//   })
-//
-// All Go-based tools (server, multitool, werftygen, etc.) should import and use this package directly for provider info and simulation.
-// For non-Go clients, use the cube-server HTTP API.
-//
-// To add a new provider or operation, extend this package only.
 
 package simulation
 
 import (
-	"fmt"
-	"math/rand"
-	"os"
-	"time"
-	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	   "fmt"
+	   "math/rand"
+	   "os"
+	   "time"
+	   "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
+
+// BucketStore returns the bucket store for direct manipulation (e.g., for dummy/test buckets)
+func (s *SimulationService) BucketStore() *BucketStore {
+	   return s.buckets
+}
 
 // SimulationService provides cloud provider simulation capabilities
 type SimulationService struct {
@@ -201,23 +179,23 @@ func (s *SimulationService) SimulateOperation(req *SimulationRequest) *Simulatio
 	delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
 	time.Sleep(delay)
 
-	switch req.Operation {
-	case "create_bucket":
-		nameVal := s.getParamOrDefault(req.Parameters, "name", "sim-bucket-")
-		name, _ := nameVal.(string)
-		bucketName := name + s.generateRandomID()
-		regionVal := s.getParamOrDefault(req.Parameters, "region", "us-west-2")
-		region, _ := regionVal.(string)
-		bucket := s.buckets.Create(req.Provider, bucketName, region)
-		result.Success = true
-		result.Result = bucket
-	case "delete_bucket":
-		bucketName, _ := req.Parameters["bucket"].(string)
-		result.Success, result.Result = s.buckets.Delete(req.Provider, bucketName)
-	case "list_buckets":
-		buckets := s.buckets.List(req.Provider)
-		result.Success = true
-		result.Result = map[string]interface{}{ "buckets": buckets, "total": len(buckets) }
+	   switch req.Operation {
+	   case "create_bucket":
+			   nameVal := s.getParamOrDefault(req.Parameters, "name", "sim-bucket-")
+			   name, _ := nameVal.(string)
+			   bucketName := name + s.generateRandomID()
+			   regionVal := s.getParamOrDefault(req.Parameters, "region", "us-west-2")
+			   region, _ := regionVal.(string)
+			   bucket := s.buckets.Create(req.Provider, bucketName, region)
+			   result.Success = true
+			   result.Result = bucket
+	   case "delete_bucket":
+			   bucketName, _ := req.Parameters["bucket"].(string)
+			   result.Success, result.Result = s.buckets.Delete(req.Provider, bucketName)
+	   case "list_buckets":
+			   buckets := s.buckets.List(req.Provider)
+			   result.Success = true
+			   result.Result = map[string]interface{}{ "buckets": buckets, "total": len(buckets) }
 	// ...existing code for clusters and tests...
 	case "create_cluster":
 		result.Success = true

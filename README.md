@@ -1,3 +1,28 @@
+## Example: Dummy/Test Bucket Injection in Server Startup
+
+To inject dummy/test buckets for simulation, use the following pattern in your server startup:
+
+```go
+import (
+    "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
+    "github.com/tronicum/punchbag-cube-testsuite/cube-server/internal"
+)
+
+// ...
+
+// 1. Create the simulation service
+sim := simulation.NewSimulationService()
+
+// 2. Load dummy bucket config (from ENV, file, or YAML config)
+dummyConfig := internal.LoadDummyBucketsConfig() // or from your loaded YAML config
+
+// 3. Inject dummy buckets if needed (only if no buckets exist for a provider)
+internal.InjectDummyBucketsIfNeeded(sim, dummyConfig)
+
+// ... continue with server setup ...
+```
+
+This ensures that dummy/test buckets are only injected if no buckets exist for a provider, and keeps all simulation logic cleanly separated from server orchestration and configuration.
 # Configuration and CLI Flag Precedence
 
 The multitool CLI supports flexible configuration for all commands, including `k8sctl` and `k8s-manage`. The following precedence is used for flags such as `--mode` and `--provider`:
