@@ -15,6 +15,22 @@ This document covers usage, configuration, and architecture for the cube-server 
 - See `api/openapi.yaml` for full API specification.
 - Simulation endpoints for Azure, AWS, GCP, Hetzner, etc.
 
+## Debug Mode
+
+To start the server in debug mode (verbose logging, error details), use the `--debug` flag:
+
+```
+go run main.go --debug
+```
+
+Or with a custom port:
+
+```
+go run main.go --port 9090 --debug
+```
+
+This enables development logging and prints debug information to the console.
+
 ## Developer Notes
 - All provider logic must use the shared/ library abstraction.
 - No direct provider/model code outside shared/.

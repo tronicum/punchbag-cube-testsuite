@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
 	"github.com/spf13/cobra"
 )
 
@@ -54,8 +55,8 @@ var execCmd = &cobra.Command{
 }
 
 func init() {
-execCmd.Flags().String("provider", "", "Cloud provider (hetzner|azure|...)")
-execCmd.Flags().String("kubeconfig", "", "Path to kubeconfig file")
-// No need to add --mode flag here; inherited from RootCmd
-RootCmd.AddCommand(execCmd)
+	execCmd.Flags().String("provider", "", "Cloud provider (hetzner|azure|...)")
+	execCmd.Flags().String("kubeconfig", "", "Path to kubeconfig file")
+	// No need to add --mode flag here; inherited from RootCmd
+	RootCmd.AddCommand(execCmd)
 }

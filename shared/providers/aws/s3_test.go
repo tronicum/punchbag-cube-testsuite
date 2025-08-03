@@ -2,8 +2,9 @@ package aws
 
 import (
 	"context"
-	"testing"
 	"os"
+	"testing"
+
 	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
 

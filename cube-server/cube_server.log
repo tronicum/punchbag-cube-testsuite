@@ -1,0 +1,37 @@
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /health                   --> main.main.func3 (4 handlers)
+[GIN-debug] POST   /api/v1/clusters          --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).CreateCluster-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters          --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).ListClusters-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id      --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).GetCluster-fm (4 handlers)
+[GIN-debug] PUT    /api/v1/clusters/:id      --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).UpdateCluster-fm (4 handlers)
+[GIN-debug] DELETE /api/v1/clusters/:id      --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).DeleteCluster-fm (4 handlers)
+[GIN-debug] POST   /api/v1/clusters/:id/tests --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).RunTest-fm (4 handlers)
+[GIN-debug] GET    /api/v1/clusters/:id/tests --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).ListTestResults-fm (4 handlers)
+[GIN-debug] GET    /api/v1/tests/:id         --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*Handlers).GetTestResult-fm (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/health    --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.SetupRoutes.func1 (4 handlers)
+[GIN-debug] GET    /api/v1/metrics/status    --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.SetupRoutes.func2 (4 handlers)
+[GIN-debug] POST   /api/v1/simulate/providers/:provider/operations/:operation --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).SimulateProviderOperation-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulate/providers/:provider/buckets --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).CreateSimulatedBucket-fm (4 handlers)
+[GIN-debug] GET    /api/v1/simulate/providers/:provider/buckets --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).ListSimulatedBuckets-fm (4 handlers)
+[GIN-debug] DELETE /api/v1/simulate/providers/:provider/buckets/:bucket --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).DeleteSimulatedBucket-fm (4 handlers)
+[GIN-debug] GET    /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] PUT    /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] PATCH  /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] HEAD   /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] OPTIONS /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] DELETE /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] CONNECT /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] TRACE  /api/v1/simulate/aws-s3/*path --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).GenericAWSS3SimHandler-fm (4 handlers)
+[GIN-debug] GET    /api/v1/validate/:provider --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*ProviderSimulationHandlers).ValidateProvider-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulator/azure/aks --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*AzureHandlers).SimulateAKS-fm (4 handlers)
+[GIN-debug] POST   /api/v1/simulator/azure/budget --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.(*AzureHandlers).SimulateAzureBudget-fm (4 handlers)
+[GIN-debug] GET    /docs                     --> github.com/tronicum/punchbag-cube-testsuite/cube-server/api.SetupRoutes.func3 (4 handlers)
+{"level":"info","ts":1754218734.5501661,"caller":"cube-server/main.go:88","msg":"Starting Cube Server...","port":"18080"}
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :18080
+[GIN] 2025/08/03 - 12:59:01 | 200 |   2.24842675s |             ::1 | GET      "/api/v1/simulate/providers/hetzner/buckets"

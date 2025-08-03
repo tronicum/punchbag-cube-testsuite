@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +51,7 @@ func SaveMockDataToFile(c *gin.Context) {
 		return
 	}
 	filePath := "mock_" + key + ".json"
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

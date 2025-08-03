@@ -1,0 +1,59 @@
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /health                   --> main.main.func3 (4 handlers)
+[GIN-debug] POST   /api/simulate/azure/aks   --> main.main.WrapF.func4 (4 handlers)
+[GIN-debug] GET    /api/simulate/azure/aks   --> main.main.WrapF.func5 (4 handlers)
+[GIN-debug] DELETE /api/simulate/azure/aks   --> main.main.WrapF.func6 (4 handlers)
+[GIN-debug] POST   /api/simulate/azure/loganalytics --> main.main.WrapF.func7 (4 handlers)
+[GIN-debug] GET    /api/simulate/azure/loganalytics --> main.main.WrapF.func8 (4 handlers)
+[GIN-debug] POST   /api/validation           --> main.main.WrapF.func9 (4 handlers)
+[GIN-debug] GET    /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] POST   /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] PUT    /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] PATCH  /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] HEAD   /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] OPTIONS /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] DELETE /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] CONNECT /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] TRACE  /api/simulate/objectstorage/hetzner/buckets --> main.main.WrapH.func11 (4 handlers)
+[GIN-debug] GET    /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] POST   /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] PUT    /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] PATCH  /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] HEAD   /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] OPTIONS /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] DELETE /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] CONNECT /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] TRACE  /api/simulate/objectstorage/hetzner/buckets/ --> main.main.WrapH.func13 (4 handlers)
+[GIN-debug] GET    /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] POST   /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] PUT    /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] PATCH  /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] HEAD   /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] OPTIONS /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] DELETE /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] CONNECT /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] TRACE  /api/simulate/objectstorage/aws/buckets --> main.main.WrapH.func15 (4 handlers)
+[GIN-debug] GET    /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] POST   /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] PUT    /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] PATCH  /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] HEAD   /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] OPTIONS /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] DELETE /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] CONNECT /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+[GIN-debug] TRACE  /api/simulate/objectstorage/aws/buckets/ --> main.main.WrapH.func17 (4 handlers)
+{"level":"info","ts":1754116389.6181161,"caller":"cube-server/main.go:101","msg":"Starting Cube Server...","port":"9000"}
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :9000
+[SIM DEBUG] GET /api/simulate/objectstorage/hetzner/buckets
+[GIN] 2025/08/02 - 08:33:11 | 200 |      134.75µs |             ::1 | GET      "/api/simulate/objectstorage/hetzner/buckets"
+[SIM DEBUG] POST /api/simulate/objectstorage/aws/buckets
+[GIN] 2025/08/02 - 08:33:11 | 201 |     180.292µs |             ::1 | POST     "/api/simulate/objectstorage/aws/buckets"
+[SIM DEBUG] GET /api/simulate/objectstorage/hetzner/buckets
+[GIN] 2025/08/02 - 08:33:11 | 200 |      37.458µs |             ::1 | GET      "/api/simulate/objectstorage/hetzner/buckets"
+[SIM DEBUG] GET /api/simulate/objectstorage/hetzner/buckets
+[GIN] 2025/08/02 - 08:33:11 | 200 |      58.583µs |             ::1 | GET      "/api/simulate/objectstorage/hetzner/buckets"

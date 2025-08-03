@@ -1,24 +1,24 @@
 package api
 
 import (
-	   "bytes"
-	   "encoding/json"
-	   "net/http"
-	   "net/http/httptest"
-	   "testing"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-	   "github.com/gin-gonic/gin"
-	   "go.uber.org/zap"
-	   store "github.com/tronicum/punchbag-cube-testsuite/store"
+	"github.com/gin-gonic/gin"
+	store "github.com/tronicum/punchbag-cube-testsuite/store"
+	"go.uber.org/zap"
 )
 
 func TestSimulateS3ObjectStorageOperations(t *testing.T) {
-	   gin.SetMode(gin.TestMode)
-	   r := gin.New()
-	   // Provide a mock store and logger
-	   var mockStore store.Store = nil
-	   logger := zap.NewNop()
-	   SetupRoutes(r, mockStore, logger)
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	// Provide a mock store and logger
+	var mockStore store.Store = nil
+	logger := zap.NewNop()
+	SetupRoutes(r, mockStore, logger)
 
 	// Create bucket
 	createReq := map[string]interface{}{

@@ -2,8 +2,12 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -94,69 +98,117 @@ func (c *HetznerObjectStorageClient) CreateBucket(bucket *sharedmodels.ObjectSto
 
 // ListBuckets lists all buckets in the Hetzner project/region
 func (c *HetznerObjectStorageClient) ListBuckets() ([]*sharedmodels.ObjectStorageBucket, error) {
-	fmt.Println("[Hetzner] ListBuckets called")
-	region := "fsn1"
-	endpoint := fmt.Sprintf("https://%s.your-objectstorage.com", region)
-	parsed, err := url.Parse(endpoint)
-	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		fmt.Printf("[Hetzner] ERROR: Invalid endpoint URL: %s\n", endpoint)
-		return nil, fmt.Errorf("invalid endpoint URL: %s", endpoint)
-	}
-	urlStr := parsed.String()
-	fmt.Printf("[Hetzner] Using endpoint: %s\n", urlStr)
-	fmt.Printf("[Hetzner] Using region: %s\n", region)
-	fmt.Printf("[Hetzner] Using access key: %s...\n", maskToken(c.accessKey))
+	// If S3 keys are set, use S3 API
+	if c.accessKey != "" && c.secretKey != "" {
+		region := "fsn1"
+		endpoint := fmt.Sprintf("https://%s.your-objectstorage.com", region)
+		parsed, err := url.Parse(endpoint)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			fmt.Printf("[Hetzner] ERROR: Invalid endpoint URL: %s\n", endpoint)
+			return nil, fmt.Errorf("invalid endpoint URL: %s", endpoint)
+		}
+		urlStr := parsed.String()
+		fmt.Printf("[Hetzner] Using endpoint: %s\n", urlStr)
+		fmt.Printf("[Hetzner] Using region: %s\n", region)
+		fmt.Printf("[Hetzner] Using access key: %s...\n", maskToken(c.accessKey))
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(c.accessKey, c.secretKey, "")),
-		config.WithEndpointResolver(
-			aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: urlStr, SigningRegion: region}, nil
-			}),
-		),
-	)
-	if err != nil {
-		fmt.Printf("[Hetzner] config error: %v\n", err)
-		return nil, err
+		cfg, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(c.accessKey, c.secretKey, "")),
+			config.WithEndpointResolver(
+				aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
+					return aws.Endpoint{URL: urlStr, SigningRegion: region}, nil
+				}),
+			),
+		)
+		if err != nil {
+			fmt.Printf("[Hetzner] config error: %v\n", err)
+			return nil, err
+		}
+
+		s3client := s3.NewFromConfig(cfg)
+		resp, err := s3client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
+		if err != nil {
+			fmt.Printf("[Hetzner] ListBuckets error: %v\n", err)
+			if resp != nil {
+				fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
+			}
+			if ae, ok := err.(interface {
+				ErrorCode() string
+				ErrorMessage() string
+			}); ok {
+				fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
+			}
+			return nil, err
+		}
+		fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
+		if len(resp.Buckets) == 0 {
+			fmt.Println("[Hetzner] No buckets found.")
+		}
+		var out []*sharedmodels.ObjectStorageBucket
+		for _, b := range resp.Buckets {
+			created := time.Time{}
+			if b.CreationDate != nil {
+				created = *b.CreationDate
+			}
+			if !created.IsZero() && created.Before(time.Now().AddDate(-1, 0, 0)) {
+				fmt.Printf("[Hetzner] WARNING: Bucket %s has suspiciously old timestamp: %v\n", *b.Name, created)
+			}
+			out = append(out, &sharedmodels.ObjectStorageBucket{
+				Name:      *b.Name,
+				Region:    region,
+				Provider:  sharedmodels.CloudProvider("hetzner"),
+				CreatedAt: created,
+			})
+		}
+		return out, nil
 	}
 
-	s3client := s3.NewFromConfig(cfg)
-	resp, err := s3client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
-	if err != nil {
-		fmt.Printf("[Hetzner] ListBuckets error: %v\n", err)
-		if resp != nil {
-			fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
+	// If only HCLOUD_TOKEN is set, use REST API to list object storages
+	token := os.Getenv("HCLOUD_TOKEN")
+	if token != "" {
+		fmt.Println("[Hetzner] Listing object storages using HCLOUD_TOKEN via REST API...")
+		url := "https://api.hetzner.cloud/v1/object_storages"
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
 		}
-		if ae, ok := err.(interface {
-			ErrorCode() string
-			ErrorMessage() string
-		}); ok {
-			fmt.Printf("[Hetzner] API ErrorCode: %s, Message: %s\n", ae.ErrorCode(), ae.ErrorMessage())
+		req.Header.Set("Authorization", "Bearer "+token)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
 		}
-		return nil, err
+		defer resp.Body.Close()
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		fmt.Printf("[Hetzner] REST ListBuckets response: %s\n", string(respBody))
+		if resp.StatusCode != 200 {
+			return nil, fmt.Errorf("Hetzner REST API error: %s", resp.Status)
+		}
+		// Parse response
+		type hcloudObjectStorage struct {
+			ID       int    `json:"id"`
+			Name     string `json:"name"`
+			Location string `json:"location"`
+		}
+		type hcloudObjectStorageListResp struct {
+			ObjectStorages []hcloudObjectStorage `json:"object_storages"`
+		}
+		var result hcloudObjectStorageListResp
+		if err := json.Unmarshal(respBody, &result); err != nil {
+			return nil, err
+		}
+		var out []*sharedmodels.ObjectStorageBucket
+		for _, b := range result.ObjectStorages {
+			out = append(out, &sharedmodels.ObjectStorageBucket{
+				Name:     b.Name,
+				Region:   b.Location,
+				Provider: sharedmodels.CloudProvider("hetzner"),
+			})
+		}
+		return out, nil
 	}
-	fmt.Printf("[Hetzner] ListBuckets response: %+v\n", resp)
-	if len(resp.Buckets) == 0 {
-		fmt.Println("[Hetzner] No buckets found.")
-	}
-	var out []*sharedmodels.ObjectStorageBucket
-	for _, b := range resp.Buckets {
-		created := time.Time{}
-		if b.CreationDate != nil {
-			created = *b.CreationDate
-		}
-		if !created.IsZero() && created.Before(time.Now().AddDate(-1, 0, 0)) {
-			fmt.Printf("[Hetzner] WARNING: Bucket %s has suspiciously old timestamp: %v\n", *b.Name, created)
-		}
-		out = append(out, &sharedmodels.ObjectStorageBucket{
-			Name:      *b.Name,
-			Region:    region,
-			Provider:  sharedmodels.CloudProvider("hetzner"),
-			CreatedAt: created,
-		})
-	}
-	return out, nil
+
+	return nil, fmt.Errorf("No Hetzner credentials found. Set HETZNER_S3_ACCESS_KEY/HETZNER_S3_SECRET_KEY or HCLOUD_TOKEN.")
 }
 
 // DeleteBucket deletes a Hetzner object storage bucket by name (S3-compatible API)

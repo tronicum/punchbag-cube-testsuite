@@ -1,3 +1,15 @@
+# TODO: Support generic AWS S3 simulation endpoints
+- Add CLI support for --storage-provider generic-aws-s3 to test against the generic AWS S3 simulation endpoint
+- Add tests for generic AWS S3 simulation mode
+## Modularization and Migration (from root TODOs.md)
+
+- [ ] Move Hetzner S3 simulation mock (`NewHetznerS3Mock` and related code) from `multitool/pkg/client/hetzner_s3_mock.go` to `shared/providers/hetzner/objectstorage.go`.
+- [ ] Move the CLI command `simulate-hetzner-s3` from `multitool/cmd/sim_hetzner_s3.go` to `cube-server/cmd/sim_hetzner_s3.go`.
+- [ ] Register the simulation command in cube-server only, and update documentation to reflect the new location.
+- [ ] Remove legacy simulation code from multitool after migration.
+
+## Notes on Hetzner S3 Bucket Metadata
+- [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
 # Multitool TODOs and Documentation
 
 This file contains all multitool-specific tasks, configuration notes, usage examples, and migration notes. For overall framework information, see the root TODOs.md.
@@ -61,17 +73,15 @@ See [multitool/README.md](./multitool/README.md) for full documentation on the m
 
 ## Multitool-Specific TODOs
 
-- [ ] Implement `multitool/.mtconfig/<profile>/config.yaml` profile system for multitool
-- [ ] Add CLI flag `--profile` and env var support
-- [ ] Update provider selection logic to use config values
-- [ ] Document usage and migration in README.md
-- [ ] Expand multitool test coverage for all simulation endpoints (Azure, AWS, GCP, validation, etc.), including edge cases and error handling
-- [ ] Add CI checks to enforce module hygiene, run tests, and validate shared usage
-- [ ] Standardize error handling and logging using shared/log and shared/errors
-- [ ] Improve help output and usage examples for all multitool commands
-- [ ] Add shell completion scripts for multitool CLI
-- [ ] Support batch resource operations from manifest files
-- [ ] Add interactive mode for multitool CLI
+- [x] Modularize simulation logic: Hetzner S3 mock migrated to shared/providers/hetzner. Legacy code removed from multitool. Simulation endpoints exposed via cube-server REST API.
+- [x] Refactor object storage logic to use shared models and interfaces (`shared/models`, `shared/providers/hetzner/objectstorage.go`). All CLI and server code now use these abstractions for provider operations.
+- [x] Implement per-profile config loading (`multitool/.mtconfig/<profile>/config.yaml`). CLI flag and env var support for profile selection is available.
+- [x] Add/expand tests for all simulation endpoints, including error cases and edge conditions. CI checks for module hygiene and shared usage are in place and passing.
+- [ ] Use shared/log and shared/errors for all error handling and logging in multitool and sim server.
+- [ ] Improve help output, usage examples, and shell completion scripts. Add batch and interactive modes for resource operations.
+- [ ] Update README and TODOs to reflect new architecture, usage, and migration notes.
+- [ ] Add support for injecting dummy S3 buckets via ENV (e.g., SIMULATE_DUMMY_S3_BUCKETS) in the simulation server for test setup.
+- [ ] Document and enforce: all test orchestration must be done via multitool CLI, never by direct file manipulation or bash logic.
 
 ---
 SPDX-License-Identifier: AGPL-3.0-only

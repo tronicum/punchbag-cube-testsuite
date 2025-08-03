@@ -5,8 +5,11 @@
 - When editing or testing a module, always use the correct working directory for that module.
 - If a user specifies a module, all actions must be performed in that module's directory unless otherwise stated.
 - Always check the current directory with `pwd` before running any Go command or script.
+- If unsure about the current working directory, always run `pwd` first before proceeding. This applies especially when running Go commands or scripts, and should be done almost every time unless the context is absolutely clear.
 - If in doubt, ask for clarification before running commands in the wrong directory.
 
 # (Add more rules below as needed)
-- Never proceed to the next step if any code, build, or test fails. Always stop, diagnose, and resolve errors before continuing.
-- if in doubt, check the todos first, then ask what todo
+- All scripts must use workspace-root-relative paths for all binaries and scripts, so they work regardless of the current working directory. This ensures robust automation and prevents path errors in CI and local runs.
+- All Makefiles in the workspace must always provide a 'build' target, even if it is a no-op or just documents that nothing is needed. This ensures scripts and automation relying on 'make build' never fail due to a missing target.
+Never proceed to the next step if any code, build, or test fails. Always stop, diagnose, and resolve errors before continuing.
+If in doubt, check the TODOs or project documentation first, then ask what to do next.

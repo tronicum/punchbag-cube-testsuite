@@ -1,18 +1,20 @@
 package importpkg
 
 import (
-  "encoding/json"
-  "io"
-  "gopkg.in/yaml.v3"
+	"encoding/json"
+	"io"
+
+	"gopkg.in/yaml.v3"
 )
+
 // LoadConfigYAML loads configuration from a YAML reader
 func LoadConfigYAML(r io.Reader) (*Config, error) {
-  var cfg Config
-  dec := yaml.NewDecoder(r)
-  if err := dec.Decode(&cfg); err != nil {
-	return nil, err
-  }
-  return &cfg, nil
+	var cfg Config
+	dec := yaml.NewDecoder(r)
+	if err := dec.Decode(&cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 // Profile represents a configuration profile for different environments

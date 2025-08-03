@@ -1,17 +1,25 @@
+
 # Testing Makefile to control builds and tests from the testing directory
 
-.PHONY: help build test test-azure test-azure-sim test-azure-direct clean fix-deps
+
+.PHONY: help build test test-azure test-azure-sim test-azure-direct clean fix-deps e2e-multitool-test
+
 
 # Default target
 help:
-	@echo "Available targets:"
-	@echo "  fix-deps        Fix Go module dependencies"
-	@echo "  build           Build all binaries"
-	@echo "  test           Run all tests"
-	@echo "  test-azure     Test Azure functions (simulation mode)"
-	@echo "  test-azure-sim Test Azure functions (simulation mode)"
-	@echo "  test-azure-direct Test Azure functions (direct mode)"
-	@echo "  clean          Clean build artifacts"
+	   @echo "Available targets:"
+	   @echo "  fix-deps        Fix Go module dependencies"
+	   @echo "  build           Build all binaries"
+	   @echo "  test            Run all tests"
+	   @echo "  test-azure      Test Azure functions (simulation mode)"
+	   @echo "  test-azure-sim  Test Azure functions (simulation mode)"
+	   @echo "  test-azure-direct Test Azure functions (direct mode)"
+	   @echo "  e2e-multitool-test  Run end-to-end multitool/cube-server integration test"
+	   @echo "  clean           Clean build artifacts"
+# End-to-end test for multitool/cube-server integration
+.PHONY: e2e-multitool-test
+e2e-multitool-test:
+	bash ./end2end/end2end_multitool_test.sh
 
 # Fix dependencies first
 fix-deps:

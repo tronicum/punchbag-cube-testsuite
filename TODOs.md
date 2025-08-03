@@ -1,25 +1,37 @@
-# Refactor Plan: Merge server and cube-server
+# TODO: Add generic AWS S3 simulation endpoint for SDK compatibility
+- Implement a generic endpoint under /api/v1/simulate/aws-s3/* for simulating AWS S3 SDK-compatible operations (provider: generic-aws-s3)
+- Ensure this endpoint is documented and tested
+## TODO: Simulation/Mock Migration
 
-- Audit both directories for unique logic, scripts, and configuration.
-- Move all essential orchestration, simulation, and server logic into cube-server/.
-- Remove any duplicate, legacy, or unused files from server/.
-- Update all Makefiles, scripts, and documentation to reference only cube-server/ for server operations.
-- Ensure all tests, CI, and developer workflows use the unified cube-server/.
+- [x] Migrate all Hetzner S3 mock logic from multitool and shared/providers/hetzner to sim-server within cube-server.
+- [x] Remove legacy mock server code from multitool.
+- [x] Ensure all simulation endpoints are served via cube-server/sim-server abstraction.
+- [x] Add general file-based simulation persistence to cube-server (shared/providers/hetzner/objectstorage.go and other providers). When CUBE_SERVER_SIM_PERSIST is set, all simulation state (e.g., buckets) is loaded/saved to a JSON file (default: /tmp/cube_server_sim_buckets.json). This enables robust, repeatable simulation tests and server restarts.
+    - [x] Add env var/flag for persistence file path (CUBE_SERVER_SIM_PERSIST).
+    - [x] Document in ARCH.md and ENHANCE.md.
+    - [x] Ensure test scripts set/clean this file for isolation.
+- [ ] Validate the migration by running all server-related tests and operations from cube-server/ only.
 
-- Validate the migration by running all server-related tests and operations from cube-server/ only.
-# Modular Go Test Orchestration Rule
+## Refactor Plan: Merge server and cube-server
 
-- Only define a `go-tests` target in a module Makefile if Go code and tests are present.
-- The main orchestration in `testing/Makefile` should only call `go-tests` for modules with actual Go tests.
-- Do not use shell logic to check for Go files; simply omit the target if there are no tests.
+- [ ] Audit both directories for unique logic, scripts, and configuration.
+- [ ] Move all essential orchestration, simulation, and server logic into cube-server/.
+- [ ] Remove any duplicate, legacy, or unused files from server/.
+- [ ] Update all Makefiles, scripts, and documentation to reference only cube-server/ for server operations.
+- [ ] Ensure all tests, CI, and developer workflows use the unified cube-server/.
+
+## Modular Go Test Orchestration Rule
+
+- [ ] Only define a `go-tests` target in a module Makefile if Go code and tests are present.
+- [ ] The main orchestration in `testing/Makefile` should only call `go-tests` for modules with actual Go tests.
+- [ ] Do not use shell logic to check for Go files; simply omit the target if there are no tests.
 # Outstanding Test Failures (to fix later)
+
 
 ## Multitool/Cube-Server Modularization TODOs
 
-- [ ] Move Hetzner S3 simulation mock (`NewHetznerS3Mock` and related code) from `multitool/pkg/client/hetzner_s3_mock.go` to `shared/providers/hetzner/objectstorage.go`.
-- [ ] Move the CLI command `simulate-hetzner-s3` from `multitool/cmd/sim_hetzner_s3.go` to `cube-server/cmd/sim_hetzner_s3.go`.
-- [ ] Register the simulation command in cube-server only, and update documentation to reflect the new location.
-- [ ] Remove legacy simulation code from multitool after migration.
+*Moved to `multitool/TODOs.md` for better organization.*
+
 
 - [ ] **generator**: Test failures due to mixed package names (`main` and `generator`) in the same directory, and missing internal package references. Example errors:
     - found packages main (aks.go) and generator (end2end_test.go) in generator/
@@ -77,8 +89,12 @@
 ## Notes on end2end_multitool_test.sh
 
 - The variable `SIMULATOR_BIN` in `testing/end2end/end2end_multitool_test.sh` points to the multitool CLI binary. It is used to run multitool commands directly (such as objectstorage and resource simulations) and is not a client for the sim-server. This ensures all CLI calls use the correct binary location.
+
 ## Notes on Hetzner S3 Bucket Metadata
 - [ ] Hetzner Object Storage (and all S3-compatible APIs) do not provide bucket creation or update timestamps via the S3 API. This is a limitation of the protocol and not the implementation. If richer metadata is needed, monitor Hetzner's hcloud API for future support.
+
+## Storage Provider Abstraction Rule
+- [ ] Enforce that *all* storage provider logic (not just in multitool) must use the shared/ abstraction. No direct provider/model code outside shared/.
 # TODOs for punchbag-cube-testsuite
 ## Planned: Multitool kubeconfig-like config system
 

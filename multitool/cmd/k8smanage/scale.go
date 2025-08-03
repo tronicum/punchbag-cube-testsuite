@@ -2,6 +2,7 @@ package k8smanage
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +12,7 @@ var scaleClusterCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		provider, _ := cmd.Flags().GetString("provider")
 		name, _ := cmd.Flags().GetString("name")
-	nodes, _ := cmd.Flags().GetInt("nodes")
+		nodes, _ := cmd.Flags().GetInt("nodes")
 		if provider == "" || name == "" || nodes < 1 {
 			fmt.Println("Error: --provider, --name, and --nodes are required")
 			cmd.Help()

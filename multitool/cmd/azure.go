@@ -11,10 +11,10 @@ import (
 
 // Root Azure Command
 var azureCmd = &cobra.Command{
-	   Use:   "azure",
-	   Short: "Azure cloud provider operations",
-	   Long:  `Manage Azure resources including AKS clusters, monitoring, budgets, and storage.`,
-	   Annotations: map[string]string{"group": "Cloud Management Commands"},
+	Use:         "azure",
+	Short:       "Azure cloud provider operations",
+	Long:        `Manage Azure resources including AKS clusters, monitoring, budgets, and storage.`,
+	Annotations: map[string]string{"group": "Cloud Management Commands"},
 }
 
 // ==== MONITORING ====

@@ -13,95 +13,11 @@ type S3Object struct {
 }
 
 // HetznerS3Mock simulates a minimal Hetzner S3 API in-memory.
-type HetznerS3Mock struct {
-	buckets map[string]map[string]S3Object // bucket -> key -> object
-	mu      sync.RWMutex
-}
-
-// NewHetznerS3Mock creates a new in-memory Hetzner S3 mock.
-func NewHetznerS3Mock() *HetznerS3Mock {
-	return &HetznerS3Mock{
-		buckets: make(map[string]map[string]S3Object),
-	}
-}
-
-// CreateBucket creates a new bucket.
-func (m *HetznerS3Mock) CreateBucket(name string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if _, exists := m.buckets[name]; exists {
-		return fmt.Errorf("bucket already exists")
-	}
-	m.buckets[name] = make(map[string]S3Object)
-	return nil
-}
-
-// PutObject puts an object into a bucket.
-func (m *HetznerS3Mock) PutObject(bucket, key string, value []byte) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	b, ok := m.buckets[bucket]
-	if !ok {
-		return fmt.Errorf("bucket not found")
-	}
-	b[key] = S3Object{Key: key, Value: value}
-	return nil
-}
-
-// GetObject retrieves an object from a bucket.
-func (m *HetznerS3Mock) GetObject(bucket, key string) ([]byte, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	b, ok := m.buckets[bucket]
-	if !ok {
-		return nil, fmt.Errorf("bucket not found")
-	}
-	obj, ok := b[key]
-	if !ok {
-		return nil, fmt.Errorf("object not found")
-	}
-	return obj.Value, nil
-}
-
-// ListBuckets lists all buckets.
-func (m *HetznerS3Mock) ListBuckets() []string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var out []string
-	for k := range m.buckets {
-		out = append(out, k)
-	}
-	return out
-}
-
-// ListObjects lists all object keys in a bucket.
-func (m *HetznerS3Mock) ListObjects(bucket string) ([]string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	b, ok := m.buckets[bucket]
-	if !ok {
-		return nil, fmt.Errorf("bucket not found")
-	}
-	var out []string
+// Deprecated: Use shared/providers/hetzner/s3_mock.go instead.
+// This file is now a stub for legacy references.
 	for k := range b {
-		out = append(out, k)
-	}
-	return out, nil
-}
-
-// DeleteObject deletes an object from a bucket.
-func (m *HetznerS3Mock) DeleteObject(bucket, key string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	b, ok := m.buckets[bucket]
-	if !ok {
-		return fmt.Errorf("bucket not found")
-	}
-	if _, ok := b[key]; !ok {
-		return fmt.Errorf("object not found")
-	}
-	delete(b, key)
-	return nil
+// Deprecated: Use shared/providers/hetzner/s3_mock.go instead.
+// This file is intentionally left blank. All Hetzner S3 mock logic has been migrated to shared/providers/hetzner/s3_mock.go.
 }
 
 // DeleteBucket deletes a bucket and all its objects.

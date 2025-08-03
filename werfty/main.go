@@ -1,9 +1,5 @@
 package main
 
-import (
-	"punchbag-cube-testsuite/client/cmd"
-)
-
 func main() {
-	cmd.Execute()
+	   // No-op: client module removed from project.
 }

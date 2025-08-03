@@ -54,9 +54,9 @@ func (a *AzureBlobProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // S3SimOrProxyHandler switches between simulation and proxy for S3 endpoints, per provider.
 type S3SimOrProxyHandler struct {
-	Mode      string // "proxy" or "simulation"
-	Sim       http.Handler
-	Proxy     S3Proxy
+	Mode  string // "proxy" or "simulation"
+	Sim   http.Handler
+	Proxy S3Proxy
 }
 
 func (h *S3SimOrProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

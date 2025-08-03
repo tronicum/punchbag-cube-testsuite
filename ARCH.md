@@ -1,3 +1,6 @@
+# Architecture Note: Generic AWS S3 Simulation Endpoint
+- The system must provide a generic AWS S3 simulation endpoint under /api/v1/simulate/aws-s3/* to support SDK-compatible testing and integration.
+- This endpoint should be provider-agnostic and simulate standard AWS S3 API behavior for all basic bucket/object operations.
 # punchbag-cube-testsuite Architecture
 
 ## Component Overview
@@ -23,6 +26,7 @@
 2. [x] Remove sim/ and sim-server/ after migration.
 3. [x] Ensure cube-server uses only shared/ for provider logic.
 4. [x] Update go.work and all references to use cube-server for simulation and backend operations.
+5. [x] General simulation persistence: The cube-server now supports file-based persistence for simulation state (e.g., buckets, objects) for all providers. When the environment variable CUBE_SERVER_SIM_PERSIST is set, all simulation state is loaded from and saved to the specified file (default: /tmp/cube_server_sim_buckets.json). This enables robust, repeatable end-to-end tests and allows the simulation server to be restarted without losing state. Test scripts should set/clean this file for isolation.
 
 ## Next Steps (Post-Migration)
 
@@ -56,3 +60,14 @@ To ensure robust cross-platform support for OS detection and package management 
 - The containers are not intended for end-user use, only for CI/maintainer testing.
 
 See `TESTING.md` for more details and usage instructions.
+
+## Simulation Test Flow (Hetzner S3)
+- All bucket operations (create, list, delete) must be performed via multitool CLI.
+- No direct file or state manipulation is allowed in test scripts.
+- Dummy S3 credentials can be injected via SIMULATE_DUMMY_S3_CREDS.
+- [Planned] Dummy S3 buckets can be injected via SIMULATE_DUMMY_S3_BUCKETS (to be implemented).
+- The simulation server persists state via CUBE_SERVER_SIM_PERSIST.
+
+## Test Orchestration Rule
+- All test setup, execution, and teardown must use multitool CLI commands only.
+- Scripts may only orchestrate CLI calls and may not manipulate simulation state directly.
