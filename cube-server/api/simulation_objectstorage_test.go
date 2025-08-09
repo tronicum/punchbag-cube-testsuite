@@ -15,7 +15,7 @@ import (
 
 // NewTestSimulationService returns a SimulationService for tests
 func NewTestSimulationService() *simulation.SimulationService {
-	return simulation.NewSimulationService()
+	return simulation.NewSimulationServiceWithOptions(true, false) // fast simulation, no debug for tests
 }
 
 func TestSimulateS3ObjectStorageOperations(t *testing.T) {

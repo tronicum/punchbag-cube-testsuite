@@ -27,7 +27,8 @@ type SimulationService struct {
 func NewSimulationService() *SimulationService {
 		   persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
 		   if persistPath == "" {
-				   persistPath = "testdata/cube_server_sim_buckets.json"
+				   // Use /tmp for relative path safety - testdata/... is only valid from workspace root
+				   persistPath = "/tmp/cube_server_sim_buckets.json"
 		   }
 	   s := &SimulationService{
 			   rand: rand.New(rand.NewSource(time.Now().UnixNano())),
