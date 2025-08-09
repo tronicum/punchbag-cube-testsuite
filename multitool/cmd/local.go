@@ -73,55 +73,55 @@ var localListPackagesCmd = &cobra.Command{
 }
 
 var localInstallPackageCmd = &cobra.Command{
-	   Use:   "install",
-	   Short: "Install system packages",
-	   RunE: func(cmd *cobra.Command, args []string) error {
-			   packages, _ := cmd.Flags().GetStringArray("package")
-			   yes, _ := cmd.Flags().GetBool("yes")
+	Use:   "install",
+	Short: "Install system packages",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		packages, _ := cmd.Flags().GetStringArray("package")
+		yes, _ := cmd.Flags().GetBool("yes")
 
-			   if len(packages) == 0 {
-					   return fmt.Errorf("no packages specified to install")
-			   }
+		if len(packages) == 0 {
+			return fmt.Errorf("no packages specified to install")
+		}
 
-			   fmt.Printf("Installing packages:\n")
-			   for _, pkg := range packages {
-					   fmt.Printf("  - %s\n", pkg)
-			   }
-			   fmt.Printf("Auto-confirm: %t\n", yes)
+		fmt.Printf("Installing packages:\n")
+		for _, pkg := range packages {
+			fmt.Printf("  - %s\n", pkg)
+		}
+		fmt.Printf("Auto-confirm: %t\n", yes)
 
-			   var installCmd string
-			   var installArgs []string
-			   if runtime.GOOS == "linux" {
-					   installCmd = "apt-get"
-					   installArgs = []string{"install", "-y"}
-					   installArgs = append(installArgs, packages...)
-			   } else if runtime.GOOS == "darwin" {
-					   installCmd = "brew"
-					   installArgs = []string{"install"}
-					   installArgs = append(installArgs, packages...)
-			   } else if runtime.GOOS == "windows" {
-					   installCmd = "choco"
-					   installArgs = []string{"install", "-y"}
-					   installArgs = append(installArgs, packages...)
-			   } else {
-					   return fmt.Errorf("unsupported OS for package installation")
-			   }
+		var installCmd string
+		var installArgs []string
+		if runtime.GOOS == "linux" {
+			installCmd = "apt-get"
+			installArgs = []string{"install", "-y"}
+			installArgs = append(installArgs, packages...)
+		} else if runtime.GOOS == "darwin" {
+			installCmd = "brew"
+			installArgs = []string{"install"}
+			installArgs = append(installArgs, packages...)
+		} else if runtime.GOOS == "windows" {
+			installCmd = "choco"
+			installArgs = []string{"install", "-y"}
+			installArgs = append(installArgs, packages...)
+		} else {
+			return fmt.Errorf("unsupported OS for package installation")
+		}
 
-			   if !yes {
-					   fmt.Printf("[DRY RUN] Would run: %s %v\n", installCmd, installArgs)
-					   return nil
-			   }
+		if !yes {
+			fmt.Printf("[DRY RUN] Would run: %s %v\n", installCmd, installArgs)
+			return nil
+		}
 
-			   fmt.Printf("Running: %s %v\n", installCmd, installArgs)
-			   c := exec.Command(installCmd, installArgs...)
-			   c.Stdout = os.Stdout
-			   c.Stderr = os.Stderr
-			   if err := c.Run(); err != nil {
-					   return fmt.Errorf("failed to install packages: %w", err)
-			   }
-			   fmt.Printf("Package installation complete.\n")
-			   return nil
-	   },
+		fmt.Printf("Running: %s %v\n", installCmd, installArgs)
+		c := exec.Command(installCmd, installArgs...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		if err := c.Run(); err != nil {
+			return fmt.Errorf("failed to install packages: %w", err)
+		}
+		fmt.Printf("Package installation complete.\n")
+		return nil
+	},
 }
 
 // ==== SYSTEM CONFIGURATION ====

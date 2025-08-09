@@ -85,13 +85,13 @@ func (f *Formatter) formatTable(data interface{}) error {
 			fmt.Println("No data found")
 			return nil
 		}
-		
+
 		// Get headers from first item
 		headers := make([]string, 0)
 		for key := range v[0] {
 			headers = append(headers, key)
 		}
-		
+
 		// Print headers
 		for i, header := range headers {
 			if i > 0 {
@@ -100,7 +100,7 @@ func (f *Formatter) formatTable(data interface{}) error {
 			fmt.Fprint(writer, header)
 		}
 		fmt.Fprintln(writer)
-		
+
 		// Print separator
 		for i := range headers {
 			if i > 0 {
@@ -109,7 +109,7 @@ func (f *Formatter) formatTable(data interface{}) error {
 			fmt.Fprint(writer, "---")
 		}
 		fmt.Fprintln(writer)
-		
+
 		// Print data rows
 		for _, row := range v {
 			for i, header := range headers {
@@ -128,11 +128,11 @@ func (f *Formatter) formatTable(data interface{}) error {
 		if testResults, ok := convertToTestResultTable(data); ok {
 			return f.formatTestResultTable(testResults, writer)
 		}
-		
+
 		// Fallback to JSON for complex types
 		return f.formatJSON(data)
 	}
-	
+
 	return nil
 }
 
@@ -153,7 +153,7 @@ func (f *Formatter) formatClusterTable(clusters []map[string]interface{}, writer
 		name := truncateString(fmt.Sprintf("%v", cluster["name"]), 20)
 		provider := fmt.Sprintf("%v", cluster["provider"])
 		status := fmt.Sprintf("%v", cluster["status"])
-		
+
 		// Get region or location
 		regionLocation := ""
 		if region, ok := cluster["region"]; ok && region != "" {
@@ -161,7 +161,7 @@ func (f *Formatter) formatClusterTable(clusters []map[string]interface{}, writer
 		} else if location, ok := cluster["location"]; ok && location != "" {
 			regionLocation = fmt.Sprintf("%v", location)
 		}
-		
+
 		// Format created date
 		created := ""
 		if createdAt, ok := cluster["created_at"]; ok {
@@ -193,7 +193,7 @@ func (f *Formatter) formatTestResultTable(results []map[string]interface{}, writ
 		testType := fmt.Sprintf("%v", result["test_type"])
 		status := fmt.Sprintf("%v", result["status"])
 		duration := fmt.Sprintf("%v", result["duration"])
-		
+
 		// Format started date
 		started := ""
 		if startedAt, ok := result["started_at"]; ok {

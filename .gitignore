@@ -12,3 +12,20 @@ examples/.terraform/providers/registry.terraform.io/hashicorp/azurerm/*
 *.tfstate*
 terraform.tfvars
 */.DS_Store
+
+# Binary executables
+cube-server/cube-server
+mt
+multitool/mt
+**/cube-server
+**/mt
+
+# Log files
+*.log
+cube-server/*.log
+cube_server*.log
+server_test.log
+test.log
+
+# PID files
+*.pid

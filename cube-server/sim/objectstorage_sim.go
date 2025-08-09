@@ -1,15 +1,15 @@
 package sim
 
 import (
-	   "encoding/json"
-	   "fmt"
-	   "net/http"
-	   "os"
-	   "strings"
-	   "sync"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
 
-	   sharederrors "github.com/tronicum/punchbag-cube-testsuite/shared/errors"
-	   "github.com/tronicum/punchbag-cube-testsuite/shared/log"
+	sharederrors "github.com/tronicum/punchbag-cube-testsuite/shared/errors"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/log"
 )
 
 // ObjectStorageSim defines a generic interface for object storage simulation
@@ -54,109 +54,109 @@ func (m *HetznerS3Mock) DeleteBucket(name string) error {
 
 // ObjectStorageSimHandler exposes any ObjectStorageSim as an HTTP handler for simulation
 func ObjectStorageSimHandler(sim ObjectStorageSim) http.Handler {
-   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		   path := r.URL.Path
-		   w.Header().Set("Content-Type", "application/json")
-		   // Debug log for all incoming simulation requests
-		   fmt.Printf("[SIM DEBUG] %s %s\n", r.Method, path)
-		   // Accept both '/buckets' and '/buckets/' (trailing slash)
-		   if strings.HasSuffix(path, "/buckets") || strings.HasSuffix(path, "/buckets/") {
-			   switch r.Method {
-			   case http.MethodGet:
-				   // List buckets
-				   buckets := sim.ListBuckets()
-				   type ObjectStorageBucket struct {
-					   ID             string                 `json:"id,omitempty"`
-					   Name           string                 `json:"name"`
-					   Provider       string                 `json:"provider"`
-					   Region         string                 `json:"region,omitempty"`
-					   Location       string                 `json:"location,omitempty"`
-					   CreatedAt      string                 `json:"created_at,omitempty"`
-					   UpdatedAt      string                 `json:"updated_at,omitempty"`
-					   Policy         interface{}            `json:"policy,omitempty"`
-					   Lifecycle      interface{}            `json:"lifecycle,omitempty"`
-					   ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
-				   }
-				   var out []ObjectStorageBucket
-				   for _, name := range buckets {
-					   out = append(out, ObjectStorageBucket{
-						   ID: "sim-" + name,
-						   Name: name,
-						   Provider: "hetzner",
-						   Region: "fsn1",
-						   CreatedAt: "2025-01-01T00:00:00Z",
-						   UpdatedAt: "2025-01-01T00:00:00Z",
-						   Policy: nil,
-						   Lifecycle: nil,
-						   ProviderConfig: map[string]interface{}{},
-					   })
-				   }
-				   w.WriteHeader(http.StatusOK)
-				   _ = json.NewEncoder(w).Encode(out)
-			   case http.MethodPost:
-				   // Create bucket
-				   var req struct {
-					   Name           string                 `json:"name"`
-					   Provider       string                 `json:"provider"`
-					   Region         string                 `json:"region"`
-					   Location       string                 `json:"location,omitempty"`
-					   Policy         interface{}            `json:"policy,omitempty"`
-					   Lifecycle      interface{}            `json:"lifecycle,omitempty"`
-					   ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
-				   }
-				   if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-					   w.WriteHeader(http.StatusBadRequest)
-					   _ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request"})
-					   return
-				   }
-				   err := sim.CreateBucket(req.Name)
-				   if err != nil {
-					   if err == sharederrors.ErrConflict {
-						   w.WriteHeader(http.StatusConflict)
-						   _ = json.NewEncoder(w).Encode(map[string]string{"error": "Bucket already exists"})
-					   } else {
-						   w.WriteHeader(http.StatusInternalServerError)
-						   _ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-					   }
-					   return
-				   }
-				   w.WriteHeader(http.StatusCreated)
-				   _ = json.NewEncoder(w).Encode(map[string]interface{}{
-					   "id": "sim-" + req.Name,
-					   "name": req.Name,
-					   "provider": req.Provider,
-					   "region": req.Region,
-					   "location": req.Location,
-					   "created_at": "2025-01-01T00:00:00Z",
-					   "updated_at": "2025-01-01T00:00:00Z",
-					   "policy": req.Policy,
-					   "lifecycle": req.Lifecycle,
-					   "provider_config": req.ProviderConfig,
-				   })
-			   default:
-				   w.WriteHeader(http.StatusNotImplemented)
-				   _ = json.NewEncoder(w).Encode(map[string]string{"error": "Not implemented for this method"})
-			   }
-			   return
-		   }
-		   w.WriteHeader(http.StatusNotFound)
-		   _ = json.NewEncoder(w).Encode(map[string]string{"error": "Unknown endpoint"})
-   })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		// Debug log for all incoming simulation requests
+		fmt.Printf("[SIM DEBUG] %s %s\n", r.Method, path)
+		// Accept both '/buckets' and '/buckets/' (trailing slash)
+		if strings.HasSuffix(path, "/buckets") || strings.HasSuffix(path, "/buckets/") {
+			switch r.Method {
+			case http.MethodGet:
+				// List buckets
+				buckets := sim.ListBuckets()
+				type ObjectStorageBucket struct {
+					ID             string                 `json:"id,omitempty"`
+					Name           string                 `json:"name"`
+					Provider       string                 `json:"provider"`
+					Region         string                 `json:"region,omitempty"`
+					Location       string                 `json:"location,omitempty"`
+					CreatedAt      string                 `json:"created_at,omitempty"`
+					UpdatedAt      string                 `json:"updated_at,omitempty"`
+					Policy         interface{}            `json:"policy,omitempty"`
+					Lifecycle      interface{}            `json:"lifecycle,omitempty"`
+					ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
+				}
+				var out []ObjectStorageBucket
+				for _, name := range buckets {
+					out = append(out, ObjectStorageBucket{
+						ID:             "sim-" + name,
+						Name:           name,
+						Provider:       "hetzner",
+						Region:         "fsn1",
+						CreatedAt:      "2025-01-01T00:00:00Z",
+						UpdatedAt:      "2025-01-01T00:00:00Z",
+						Policy:         nil,
+						Lifecycle:      nil,
+						ProviderConfig: map[string]interface{}{},
+					})
+				}
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(out)
+			case http.MethodPost:
+				// Create bucket
+				var req struct {
+					Name           string                 `json:"name"`
+					Provider       string                 `json:"provider"`
+					Region         string                 `json:"region"`
+					Location       string                 `json:"location,omitempty"`
+					Policy         interface{}            `json:"policy,omitempty"`
+					Lifecycle      interface{}            `json:"lifecycle,omitempty"`
+					ProviderConfig map[string]interface{} `json:"provider_config,omitempty"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+					w.WriteHeader(http.StatusBadRequest)
+					_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request"})
+					return
+				}
+				err := sim.CreateBucket(req.Name)
+				if err != nil {
+					if err == sharederrors.ErrConflict {
+						w.WriteHeader(http.StatusConflict)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": "Bucket already exists"})
+					} else {
+						w.WriteHeader(http.StatusInternalServerError)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+					}
+					return
+				}
+				w.WriteHeader(http.StatusCreated)
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
+					"id":              "sim-" + req.Name,
+					"name":            req.Name,
+					"provider":        req.Provider,
+					"region":          req.Region,
+					"location":        req.Location,
+					"created_at":      "2025-01-01T00:00:00Z",
+					"updated_at":      "2025-01-01T00:00:00Z",
+					"policy":          req.Policy,
+					"lifecycle":       req.Lifecycle,
+					"provider_config": req.ProviderConfig,
+				})
+			default:
+				w.WriteHeader(http.StatusNotImplemented)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "Not implemented for this method"})
+			}
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Unknown endpoint"})
+	})
 }
 
 // ListBuckets returns a list of all bucket names.
 func (m *HetznerS3Mock) ListBuckets() []string {
-	   // If SIMULATE_DUMMY_S3_CREDS=1, always return a dummy bucket for simulation/testing
-	   if os.Getenv("SIMULATE_DUMMY_S3_CREDS") == "1" {
-			   return []string{"sim-bucket-1"}
-	   }
-	   m.mu.RLock()
-	   defer m.mu.RUnlock()
-	   var names []string
-	   for name := range m.buckets {
-			   names = append(names, name)
-	   }
-	   return names
+	// If SIMULATE_DUMMY_S3_CREDS=1, always return a dummy bucket for simulation/testing
+	if os.Getenv("SIMULATE_DUMMY_S3_CREDS") == "1" {
+		return []string{"sim-bucket-1"}
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var names []string
+	for name := range m.buckets {
+		names = append(names, name)
+	}
+	return names
 }
 
 // ListObjects returns a list of all object keys in a bucket.

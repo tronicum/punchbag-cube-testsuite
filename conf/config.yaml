@@ -1,0 +1,16 @@
+# Default Cube Server config for simulation and test environments
+# This file is optional, but suppresses startup warnings and can be extended for CI or local overrides.
+
+server:
+  port: 18080
+  mode: simulate
+  log_level: info
+
+# Dummy/test buckets can be configured here if needed
+#dummy_buckets:
+#  hetzner:
+#    - name: test-bucket
+#      region: fsn1
+#  aws:
+#    - name: test-bucket
+#      region: us-west-2

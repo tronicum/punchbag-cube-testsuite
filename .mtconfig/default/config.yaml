@@ -1,0 +1,9 @@
+provider: aws
+region: us-east-1
+credentials:
+  access_key: ${AWS_ACCESS_KEY_ID}
+  secret_key: ${AWS_SECRET_ACCESS_KEY}
+endpoints:
+  s3: https://s3.us-east-1.amazonaws.com
+settings:
+  versioning: false

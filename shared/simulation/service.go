@@ -16,23 +16,43 @@ func (s *SimulationService) BucketStore() *BucketStore {
 
 // SimulationService provides cloud provider simulation capabilities
 type SimulationService struct {
-	rand *rand.Rand
-	buckets *BucketStore
-	persistPath string
+	   rand         *rand.Rand
+	   buckets      *BucketStore
+	   persistPath  string
+	   fastSimulate bool
+	   debug        bool
 }
 
 // NewSimulationService creates a new simulation service
 func NewSimulationService() *SimulationService {
-	persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
-	if persistPath == "" {
-		persistPath = "/tmp/cube_server_sim_buckets.json"
-	}
-	s := &SimulationService{
-		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
-		persistPath: persistPath,
-	}
-	s.buckets = NewBucketStore(persistPath)
-	return s
+		   persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
+		   if persistPath == "" {
+				   persistPath = "testdata/cube_server_sim_buckets.json"
+		   }
+	   s := &SimulationService{
+			   rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+			   persistPath: persistPath,
+			   fastSimulate: os.Getenv("FAST_SIMULATE") == "1",
+			   debug: os.Getenv("CUBE_SERVER_DEBUG") == "1",
+	   }
+	   s.buckets = NewBucketStore(persistPath)
+	   return s
+}
+
+// NewSimulationServiceWithOptions allows explicit config
+func NewSimulationServiceWithOptions(fastSimulate, debug bool) *SimulationService {
+	   persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
+	   if persistPath == "" {
+			   persistPath = "/tmp/cube_server_sim_buckets.json"
+	   }
+	   s := &SimulationService{
+			   rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+			   persistPath: persistPath,
+			   fastSimulate: fastSimulate,
+			   debug: debug,
+	   }
+	   s.buckets = NewBucketStore(persistPath)
+	   return s
 }
 
 
@@ -166,27 +186,38 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 }
 
 // SimulateOperation simulates a cloud provider operation
+
 func (s *SimulationService) SimulateOperation(req *SimulationRequest) *SimulationResult {
-	start := time.Now()
+	   start := time.Now()
 
-	result := &SimulationResult{
-		Provider:  req.Provider,
-		Operation: req.Operation,
-		Timestamp: start.Format(time.RFC3339),
-	}
+	   if s.debug {
+			   fmt.Printf("[SIM DEBUG] SimulateOperation: provider=%s, op=%s, params=%#v\n", req.Provider, req.Operation, req.Parameters)
+	   }
 
-	// Simulate operation delay
-	delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
-	time.Sleep(delay)
+	   result := &SimulationResult{
+			   Provider:  req.Provider,
+			   Operation: req.Operation,
+			   Timestamp: start.Format(time.RFC3339),
+	   }
+
+	   // Simulate operation delay unless fastSimulate is enabled
+	   if !s.fastSimulate {
+			   delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
+			   time.Sleep(delay)
+	   }
 
 	   switch req.Operation {
 	   case "create_bucket":
-			   nameVal := s.getParamOrDefault(req.Parameters, "name", "sim-bucket-")
+			   nameVal := s.getParamOrDefault(req.Parameters, "name", "")
 			   name, _ := nameVal.(string)
-			   bucketName := name + s.generateRandomID()
+			   if name == "" {
+				   // Generate a default name for testing if none provided
+				   name = "sim-bucket-" + s.generateRandomID()
+			   }
+			   // Use exact name like real S3 API - no modifications
 			   regionVal := s.getParamOrDefault(req.Parameters, "region", "us-west-2")
 			   region, _ := regionVal.(string)
-			   bucket := s.buckets.Create(req.Provider, bucketName, region)
+			   bucket := s.buckets.Create(req.Provider, name, region)
 			   result.Success = true
 			   result.Result = bucket
 	   case "delete_bucket":

@@ -8,17 +8,24 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 	store "github.com/tronicum/punchbag-cube-testsuite/store"
 	"go.uber.org/zap"
 )
 
+// NewTestSimulationService returns a SimulationService for tests
+func NewTestSimulationService() *simulation.SimulationService {
+	return simulation.NewSimulationService()
+}
+
 func TestSimulateS3ObjectStorageOperations(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	// Provide a mock store and logger
+	// Provide a mock store, logger, and simulation service
 	var mockStore store.Store = nil
 	logger := zap.NewNop()
-	SetupRoutes(r, mockStore, logger)
+	sim := NewTestSimulationService()
+	SetupRoutes(r, mockStore, logger, sim)
 
 	// Create bucket
 	createReq := map[string]interface{}{
@@ -30,7 +37,7 @@ func TestSimulateS3ObjectStorageOperations(t *testing.T) {
 		},
 	}
 	body, _ := json.Marshal(createReq)
-	req := httptest.NewRequest("POST", "/api/v1/providers/aws/operations/create_bucket", bytes.NewReader(body))
+	req := httptest.NewRequest("POST", "/api/v1/simulate/providers/aws/operations/create_bucket", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
@@ -48,7 +55,7 @@ func TestSimulateS3ObjectStorageOperations(t *testing.T) {
 		},
 	}
 	body, _ = json.Marshal(policyReq)
-	req = httptest.NewRequest("POST", "/api/v1/providers/aws/operations/set_bucket_policy", bytes.NewReader(body))
+	req = httptest.NewRequest("POST", "/api/v1/simulate/providers/aws/operations/set_bucket_policy", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp = httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
@@ -66,7 +73,7 @@ func TestSimulateS3ObjectStorageOperations(t *testing.T) {
 		},
 	}
 	body, _ = json.Marshal(versioningReq)
-	req = httptest.NewRequest("POST", "/api/v1/providers/aws/operations/set_bucket_versioning", bytes.NewReader(body))
+	req = httptest.NewRequest("POST", "/api/v1/simulate/providers/aws/operations/set_bucket_versioning", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp = httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
@@ -84,7 +91,7 @@ func TestSimulateS3ObjectStorageOperations(t *testing.T) {
 		},
 	}
 	body, _ = json.Marshal(lifecycleReq)
-	req = httptest.NewRequest("POST", "/api/v1/providers/aws/operations/set_bucket_lifecycle", bytes.NewReader(body))
+	req = httptest.NewRequest("POST", "/api/v1/simulate/providers/aws/operations/set_bucket_lifecycle", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp = httptest.NewRecorder()
 	r.ServeHTTP(resp, req)

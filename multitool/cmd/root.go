@@ -34,8 +34,8 @@ func init() {
 	gcpCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
 	hetznerCmd.Annotations = map[string]string{"group": "Cloud Management Commands"}
 	objectStorageCmd.Annotations = map[string]string{"group": "Cloud ObjectStorage (S3) Commands"}
-	   rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
-	   rootCmd.PersistentFlags().String("provider", "aws", "Object storage provider (aws, hetzner)")
+	rootCmd.PersistentFlags().StringVar(&proxyServer, "server", "", "If set, forward all resource management requests to this cube-server URL (proxy/simulation mode)")
+	rootCmd.PersistentFlags().String("provider", "aws", "Object storage provider (aws, hetzner)")
 
 	// Register only the correct top-level commands, matching the new CLI tree structure
 	rootCmd.AddCommand(azureCmd)         // mt azure ...

@@ -12,11 +12,11 @@ import (
 )
 
 var (
-outputFormat  string
-	location      string
-	region        string
-	projectID     string
-	configFile    string
+	outputFormat string
+	location     string
+	region       string
+	projectID    string
+	configFile   string
 )
 
 // clusterCmd represents the cluster command group
@@ -39,30 +39,30 @@ Examples:
   multitool cluster create my-cluster aws --region us-west-2
   multitool cluster create my-cluster gcp --project-id my-project --region us-central1`,
 	Args: cobra.ExactArgs(2),
-Run: func(cmd *cobra.Command, args []string) {
-	// clusterName := args[0]
-	providerStr := args[1]
+	Run: func(cmd *cobra.Command, args []string) {
+		// clusterName := args[0]
+		providerStr := args[1]
 
-	// Read output format from flag, default to 'table' if not set
-	outputFormatFlag, err := cmd.Flags().GetString("output")
-	if err != nil || outputFormatFlag == "" {
-		outputFormatFlag = "table"
-	}
+		// Read output format from flag, default to 'table' if not set
+		outputFormatFlag, err := cmd.Flags().GetString("output")
+		if err != nil || outputFormatFlag == "" {
+			outputFormatFlag = "table"
+		}
 
-	provider := sharedmodels.CloudProvider(providerStr)
-	if !isValidProvider(provider) {
-		err := errors.New("invalid provider: " + providerStr + ". Supported providers: azure, aws, gcp, hetzner, ionos, stackit")
-		output.FormatError(err)
-		log.Error(err.Error())
-		return
-	}
+		provider := sharedmodels.CloudProvider(providerStr)
+		if !isValidProvider(provider) {
+			err := errors.New("invalid provider: " + providerStr + ". Supported providers: azure, aws, gcp, hetzner, ionos, stackit")
+			output.FormatError(err)
+			log.Error(err.Error())
+			return
+		}
 
-	// TODO: Use shared library for cluster operations (create)
-	// Use outputFormatFlag for output formatting
-	// ...existing code for providerConfig and config...
-	// ...existing code for loading configFile...
-	// TODO: Call shared library to create cluster and print result
-},
+		// TODO: Use shared library for cluster operations (create)
+		// Use outputFormatFlag for output formatting
+		// ...existing code for providerConfig and config...
+		// ...existing code for loading configFile...
+		// TODO: Call shared library to create cluster and print result
+	},
 }
 
 // clusterListCmd lists clusters
@@ -76,13 +76,13 @@ Examples:
   multitool cluster list azure
   multitool cluster list aws`,
 	Args: cobra.MaximumNArgs(1),
-Run: func(cmd *cobra.Command, args []string) {
-	outputFormatFlag, err := cmd.Flags().GetString("output")
-	if err != nil || outputFormatFlag == "" {
-		outputFormatFlag = "table"
-	}
-	// TODO: Call shared library to list clusters and print result using outputFormatFlag
-},
+	Run: func(cmd *cobra.Command, args []string) {
+		outputFormatFlag, err := cmd.Flags().GetString("output")
+		if err != nil || outputFormatFlag == "" {
+			outputFormatFlag = "table"
+		}
+		// TODO: Call shared library to list clusters and print result using outputFormatFlag
+	},
 }
 
 // clusterGetCmd gets a specific cluster
@@ -95,14 +95,14 @@ Examples:
   multitool cluster get cluster-123
   multitool cluster get cluster-123 --output json`,
 	Args: cobra.ExactArgs(1),
-Run: func(cmd *cobra.Command, args []string) {
-	outputFormatFlag, err := cmd.Flags().GetString("output")
-	if err != nil || outputFormatFlag == "" {
-		outputFormatFlag = "table"
-	}
-	// clusterID := args[0]
-	// TODO: Call shared library to get cluster and print result using outputFormatFlag
-},
+	Run: func(cmd *cobra.Command, args []string) {
+		outputFormatFlag, err := cmd.Flags().GetString("output")
+		if err != nil || outputFormatFlag == "" {
+			outputFormatFlag = "table"
+		}
+		// clusterID := args[0]
+		// TODO: Call shared library to get cluster and print result using outputFormatFlag
+	},
 }
 
 // clusterDeleteCmd deletes a cluster
@@ -176,14 +176,14 @@ Examples:
   multitool test list cluster-123
   multitool test list cluster-123 --output json`,
 	Args: cobra.ExactArgs(1),
-Run: func(cmd *cobra.Command, args []string) {
-	outputFormatFlag, err := cmd.Flags().GetString("output")
-	if err != nil || outputFormatFlag == "" {
-		outputFormatFlag = "table"
-	}
-	// clusterID := args[0]
-	// TODO: Call shared library to list test results and print result using outputFormatFlag
-},
+	Run: func(cmd *cobra.Command, args []string) {
+		outputFormatFlag, err := cmd.Flags().GetString("output")
+		if err != nil || outputFormatFlag == "" {
+			outputFormatFlag = "table"
+		}
+		// clusterID := args[0]
+		// TODO: Call shared library to list test results and print result using outputFormatFlag
+	},
 }
 
 // testGetCmd gets a specific test result
@@ -196,14 +196,14 @@ Examples:
   multitool test get test-456
   multitool test get test-456 --output yaml`,
 	Args: cobra.ExactArgs(1),
-Run: func(cmd *cobra.Command, args []string) {
-	outputFormatFlag, err := cmd.Flags().GetString("output")
-	if err != nil || outputFormatFlag == "" {
-		outputFormatFlag = "table"
-	}
-	// testID := args[0]
-	// TODO: Call shared library to get test result and print result using outputFormatFlag
-},
+	Run: func(cmd *cobra.Command, args []string) {
+		outputFormatFlag, err := cmd.Flags().GetString("output")
+		if err != nil || outputFormatFlag == "" {
+			outputFormatFlag = "table"
+		}
+		// testID := args[0]
+		// TODO: Call shared library to get test result and print result using outputFormatFlag
+	},
 }
 
 // Helper functions

@@ -1,9 +1,10 @@
 package simulation
 
 import (
-	"encoding/json"
-	"os"
-	"sync"
+	   "encoding/json"
+	   "fmt"
+	   "os"
+	   "sync"
 )
 
 // BucketStore handles bucket simulation state and persistence
@@ -36,14 +37,17 @@ func (bs *BucketStore) Load() {
 }
 
 func (bs *BucketStore) Save() {
-	bs.mu.Lock()
-	defer bs.mu.Unlock()
-	f, err := os.Create(bs.persistPath)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	_ = json.NewEncoder(f).Encode(bs.buckets)
+	   f, err := os.Create(bs.persistPath)
+	   if err != nil {
+			   fmt.Fprintf(os.Stderr, "[BUCKET DEBUG] Failed to write persist file: %s: %v\n", bs.persistPath, err)
+			   return
+	   }
+	   defer f.Close()
+	   if err := json.NewEncoder(f).Encode(bs.buckets); err != nil {
+			   fmt.Fprintf(os.Stderr, "[BUCKET DEBUG] Failed to encode buckets to persist file: %s: %v\n", bs.persistPath, err)
+	   } else {
+			   fmt.Fprintf(os.Stderr, "[BUCKET DEBUG] Persisted buckets to file: %s\n", bs.persistPath)
+	   }
 }
 
 func (bs *BucketStore) Create(provider, name, region string) map[string]interface{} {

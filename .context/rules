@@ -7,6 +7,10 @@
 - If in doubt, ask for clarification before running commands in the wrong directory.
 
 # (Add more rules below as needed)
+- Never start the server directly in the foreground; always use the provided control script to start, stop, or restart the server.
+- Never run commands if the terminal is not available or is blocked by a foreground process. Always ensure you have a usable shell prompt before proceeding.
+- After any tiny edit (e.g., a single line or small patch), always run a Go test (go test ./...) in the relevant module to catch issues early.
+- Always check Go syntax (go fmt, go vet, or go build) before compiling or applying patches, to avoid syntax and patch errors.
 - All scripts must use workspace-root-relative paths for all binaries and scripts, so they work regardless of the current working directory. This ensures robust automation and prevents path errors in CI and local runs.
 Never proceed to the next step if any code, build, or test fails. Always stop, diagnose, and resolve errors before continuing.
 If in doubt, check the TODOs or project documentation first, then ask what to do next.

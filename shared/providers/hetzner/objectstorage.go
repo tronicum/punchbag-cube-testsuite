@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -38,10 +38,10 @@ type HetznerS3Client struct {
 	secretKey string
 	region    string
 	// Simulation persistence
-	simBuckets []models.ObjectStorageBucket
-	simMu      sync.Mutex
+	simBuckets     []models.ObjectStorageBucket
+	simMu          sync.Mutex
 	simPersistPath string
-	simEnabled bool
+	simEnabled     bool
 }
 
 // NewHetznerS3Client creates a Hetzner S3-compatible client using environment variables or defaults.
@@ -63,7 +63,7 @@ func NewHetznerS3Client() *HetznerS3Client {
 	simEnabled := os.Getenv("CUBE_SERVER_SIM_PERSIST") != ""
 	simPersistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
 	if simPersistPath == "" {
-		simPersistPath = "/tmp/cube_server_sim_buckets.json"
+		simPersistPath = "testdata/cube_server_sim_buckets.json"
 	}
 	client := &HetznerS3Client{accessKey: accessKey, secretKey: secretKey, region: region, simEnabled: simEnabled, simPersistPath: simPersistPath}
 	if simEnabled {
@@ -71,6 +71,7 @@ func NewHetznerS3Client() *HetznerS3Client {
 	}
 	return client
 }
+
 // simLoad loads buckets from the general simulation persistence file (CUBE_SERVER_SIM_PERSIST).
 func (c *HetznerS3Client) simLoad() {
 	c.simMu.Lock()
@@ -85,8 +86,20 @@ func (c *HetznerS3Client) simLoad() {
 func (c *HetznerS3Client) simSave() {
 	c.simMu.Lock()
 	defer c.simMu.Unlock()
-	data, _ := json.MarshalIndent(c.simBuckets, "", "  ")
-	_ = ioutil.WriteFile(c.simPersistPath, data, 0644)
+	data, err := json.MarshalIndent(c.simBuckets, "", "  ")
+	if err != nil {
+		fmt.Printf("[DEBUG] simSave marshal error: %v\n", err)
+		return
+	}
+	if len(data) == 0 {
+		fmt.Printf("[DEBUG] simSave: marshaled data is empty! simBuckets: %+v\n", c.simBuckets)
+	}
+	err = ioutil.WriteFile(c.simPersistPath, data, 0644)
+	if err != nil {
+		fmt.Printf("[DEBUG] simSave write error: %v\n", err)
+	} else {
+		fmt.Printf("[DEBUG] simSave wrote %d bytes to %s\n", len(data), c.simPersistPath)
+	}
 }
 
 // NewHetznerS3ClientWithKeys creates a Hetzner S3-compatible client with explicit credentials.
@@ -110,7 +123,15 @@ func (c *HetznerS3Client) CreateBucket(ctx context.Context, bucket *models.Objec
 		bucket.Region = c.region
 		bucket.CreatedAt = time.Now().UTC()
 		c.simBuckets = append(c.simBuckets, *bucket)
+		fmt.Printf("[DEBUG] simBuckets before save: %+v\n", c.simBuckets)
 		c.simSave()
+		// Double-check file size after save
+		fi, err := os.Stat(c.simPersistPath)
+		if err == nil {
+			fmt.Printf("[DEBUG] simSave file size: %d bytes\n", fi.Size())
+		} else {
+			fmt.Printf("[DEBUG] simSave stat error: %v\n", err)
+		}
 		return nil
 	}
 	// Normal (real) mode
