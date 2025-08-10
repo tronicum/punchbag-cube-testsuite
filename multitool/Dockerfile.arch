@@ -1,0 +1,14 @@
+# Arch Linux (pacman)
+FROM archlinux:base-devel
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm \
+    curl \
+    sudo \
+    lsb-release \
+    gnupg \
+    ca-certificates \
+    base-devel \
+    git
+WORKDIR /app
+COPY . .
+RUN cd multitool && go build -o mt
+ENTRYPOINT ["/app/multitool/mt"]

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -87,16 +89,37 @@ var localInstallPackageCmd = &cobra.Command{
 		}
 		fmt.Printf("Auto-confirm: %t\n", yes)
 
-		// This would call system-specific package manager
+		var installCmd string
+		var installArgs []string
 		if runtime.GOOS == "linux" {
-			fmt.Printf("Using system package manager: apt/dnf/pacman\n")
+			installCmd = "apt-get"
+			installArgs = []string{"install", "-y"}
+			installArgs = append(installArgs, packages...)
 		} else if runtime.GOOS == "darwin" {
-			fmt.Printf("Using system package manager: brew\n")
+			installCmd = "brew"
+			installArgs = []string{"install"}
+			installArgs = append(installArgs, packages...)
 		} else if runtime.GOOS == "windows" {
-			fmt.Printf("Using system package manager: choco\n")
+			installCmd = "choco"
+			installArgs = []string{"install", "-y"}
+			installArgs = append(installArgs, packages...)
+		} else {
+			return fmt.Errorf("unsupported OS for package installation")
 		}
 
-		fmt.Printf("Packages would be installed here\n")
+		if !yes {
+			fmt.Printf("[DRY RUN] Would run: %s %v\n", installCmd, installArgs)
+			return nil
+		}
+
+		fmt.Printf("Running: %s %v\n", installCmd, installArgs)
+		c := exec.Command(installCmd, installArgs...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		if err := c.Run(); err != nil {
+			return fmt.Errorf("failed to install packages: %w", err)
+		}
+		fmt.Printf("Package installation complete.\n")
 		return nil
 	},
 }

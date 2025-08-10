@@ -7,6 +7,7 @@ package k8sctl
 import (
 	"fmt"
 	"os/exec"
+
 	"github.com/spf13/cobra"
 )
 
@@ -33,8 +34,8 @@ var clusterInfoCmd = &cobra.Command{
 }
 
 func init() {
-clusterInfoCmd.Flags().String("provider", "", "Cloud provider (hetzner|azure|...)")
-clusterInfoCmd.Flags().String("kubeconfig", "", "Path to kubeconfig file")
-// No need to add --mode flag here; inherited from RootCmd
-RootCmd.AddCommand(clusterInfoCmd)
+	clusterInfoCmd.Flags().String("provider", "", "Cloud provider (hetzner|azure|...)")
+	clusterInfoCmd.Flags().String("kubeconfig", "", "Path to kubeconfig file")
+	// No need to add --mode flag here; inherited from RootCmd
+	RootCmd.AddCommand(clusterInfoCmd)
 }

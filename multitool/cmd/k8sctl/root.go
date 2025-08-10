@@ -4,9 +4,8 @@
 // k8sctl: kubectl-like subcommand for multitool
 package k8sctl
 
-
 import (
-	   "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 // RootCmd is the root command for k8sctl (kubectl-like operations)
@@ -15,7 +14,6 @@ var RootCmd = &cobra.Command{
 	Short: "kubectl-like operations (get, apply, exec, logs, etc.) via multitool abstraction",
 }
 
-
 func init() {
-	   AddModeFlag(RootCmd)
+	AddModeFlag(RootCmd)
 }

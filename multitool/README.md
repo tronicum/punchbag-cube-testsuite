@@ -1,3 +1,53 @@
+# Multitool CLI Documentation
+
+This document covers usage, commands, configuration, and architecture for the multitool CLI (`mt`).
+
+## Overview
+- The multitool CLI (`mt`) is the unified entrypoint for all cloud, Kubernetes, and local resource operations.
+- Only use the binary at `./multitool/mt` for all documentation, scripts, and usage examples.
+
+## Command Structure
+- All commands are organized by provider or resource type:
+    - `mt aws ...` (CloudFormation, S3, EKS, etc.)
+    - `mt gcp ...` (GCP-specific commands)
+    - `mt hetzner ...` (Hetzner-specific commands)
+    - `mt k8s ...` (provider-agnostic Kubernetes commands)
+    - `mt k8sctl ...` (kubectl-like operations)
+    - `mt k8s-manage ...` (cluster lifecycle management)
+    - `mt local ...` (local OS, package, file operations)
+    - `mt config ...` (global config management)
+    - `mt test ...` (testing utilities)
+    - `mt scaffold ...` (project scaffolding)
+
+## Configuration
+- Profiles are managed via `multitool/.mtconfig/<profile>/config.yaml`.
+- Switch profiles using `--profile` or the `MT_PROFILE` environment variable.
+- Config files support provider, region, credentials, endpoints, and custom settings.
+
+## Usage Examples
+```sh
+# List S3 buckets on AWS
+./multitool/mt aws s3 list-buckets --profile aws-dev
+
+# Create a Kubernetes cluster on Hetzner
+./multitool/mt k8s-manage create cluster --provider hetzner --profile hetzner-prod
+
+# Apply a manifest using k8sctl
+./multitool/mt k8sctl apply -f manifest.yaml --profile gcp-dev
+```
+
+## Developer Notes
+- All provider logic must use the shared/ library abstraction.
+- No direct provider/model code outside shared/.
+- CLI structure is designed for extensibility and future providers.
+
+## References
+- See main README.md for high-level project info and links to other app docs.
+- See `shared/README.md` for shared library API and usage.
+- See `cube-server/README.md` for server documentation.
+
+---
+SPDX-License-Identifier: AGPL-3.0-only
 # Multitool - Multi-Cloud CLI for Resource Management
 
 Multitool is a comprehensive command-line interface for managing cloud resources, running tests, and handling system operations across multiple cloud providers. It supports Azure, AWS, GCP, Hetzner, IONOS, and StackIT.
@@ -19,16 +69,58 @@ Multitool is a comprehensive command-line interface for managing cloud resources
 - Support for multiple output formats (table, JSON, YAML)
 - Centralized credential and setting management
 
-### 📦 Package Management (Coming Soon)
-- Cross-platform package installation and management
-- OS detection and appropriate package manager selection
-- Support for Homebrew, apt, rpm, pacman, choco, and winget
-
 ### ☁️ Object Storage Management
 - Create, list, get, and delete S3-like object storage buckets across all supported cloud providers (AWS, Azure, GCP, StackIT, Hetzner, IONOS)
 - Works in both direct (mock/local) and proxy (simulation/server) modes
-- Provider is selected by the first argument to each objectstorage command (e.g., `multitool objectstorage create aws my-bucket us-west-2`)
-- In proxy mode (`--server`), requests are forwarded to the cube-server/sim-server API for simulation or real provider proxying
+- Provider is selected by the first argument to each objectstorage command (e.g., `mt objectstorage create my-bucket us-west-2 --provider aws`)
+- In proxy mode (`--server`), requests are forwarded to the cube-server API for simulation or real provider proxying
+
+## Configuration System
+
+Multitool supports a kubeconfig-like profile system for cloud provider configuration.
+
+- Profiles are stored in `multitool/.mtconfig/<profile>/config.yaml`.
+- Switch profiles using `--profile <name>` or set the `MTCONFIG_PROFILE` environment variable.
+- Each config file supports provider, region, credentials, endpoints, and custom settings.
+- Environment variables in config values (e.g. `${AWS_ACCESS_KEY_ID}`) are expanded at runtime. If not set, multitool will attempt to read from a file named after the variable, or prompt the user.
+
+### Example config.yaml
+```yaml
+provider: aws
+region: eu-central-1
+credentials:
+  access_key: ${AWS_ACCESS_KEY_ID}
+  secret_key: ${AWS_SECRET_ACCESS_KEY}
+endpoints:
+  s3: https://s3.eu-central-1.amazonaws.com
+settings:
+  versioning: true
+  custom_policy: ./policy.json
+```
+
+## CLI Flag and Config Precedence
+
+1. CLI flag (e.g. `--provider`, `--profile`)
+2. Environment variable (e.g. `MTCONFIG_PROFILE`)
+3. User config (`$HOME/multitool/.mtconfig/config.yaml`)
+4. Project config (`./conf/k8sctl.yml`)
+5. Default (hardcoded fallback)
+
+## Example Usage
+
+```sh
+# Use a specific profile
+mt objectstorage list --profile aws-dev
+
+# Use environment variable for profile
+export MTCONFIG_PROFILE=default
+mt objectstorage create mybucket eu-central-1
+```
+
+## Migration Notes
+
+- The new config system replaces previous ad-hoc config files and flags.
+- See the main README.md for a summary and links to provider-specific docs.
 
 ## Building the CLI
 

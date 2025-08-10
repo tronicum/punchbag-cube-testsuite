@@ -1,10 +1,35 @@
+## Example: Dummy/Test Bucket Injection in Server Startup
+
+To inject dummy/test buckets for simulation, use the following pattern in your server startup:
+
+```go
+import (
+    "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
+    "github.com/tronicum/punchbag-cube-testsuite/cube-server/internal"
+)
+
+// ...
+
+// 1. Create the simulation service
+sim := simulation.NewSimulationService()
+
+// 2. Load dummy bucket config (from ENV, file, or YAML config)
+dummyConfig := internal.LoadDummyBucketsConfig() // or from your loaded YAML config
+
+// 3. Inject dummy buckets if needed (only if no buckets exist for a provider)
+internal.InjectDummyBucketsIfNeeded(sim, dummyConfig)
+
+// ... continue with server setup ...
+```
+
+This ensures that dummy/test buckets are only injected if no buckets exist for a provider, and keeps all simulation logic cleanly separated from server orchestration and configuration.
 # Configuration and CLI Flag Precedence
 
 The multitool CLI supports flexible configuration for all commands, including `k8sctl` and `k8s-manage`. The following precedence is used for flags such as `--mode` and `--provider`:
 
 1. **CLI flag** (e.g. `--mode`, `--provider`)
 2. **Environment variable** (`K8SCTL_MODE`, `K8SCTL_PROVIDER`)
-3. **User config** (`$HOME/.mt/config.yaml`)
+3. **User config** (`$HOME/multitool/.mtconfig/config.yaml`)
 4. **Project config** (`./conf/k8sctl.yml`)
 5. **Default** (hardcoded fallback)
 
@@ -12,8 +37,11 @@ This allows you to set global, per-user, or per-project defaults, and override t
 
 **Example for k8sctl:**
 
+## Migration Notes
+
+- The multitool CLI documentation has been moved to `multitool/README.md`.
 ```sh
-# Use local mode by default (set in conf/k8sctl.yml or $HOME/.mt/config.yaml)
+# Use local mode by default (set in conf/k8sctl.yml or $HOME/multitool/.mtconfig/config.yaml)
 mt k8sctl get nodes
 
 # Override mode for a single command
@@ -41,30 +69,34 @@ default_mode: local
 default_provider: hetzner
 ```
 
-**$HOME/.mt/config.yaml**
+**$HOME/multitool/.mtconfig/config.yaml**
 ```yaml
 default_mode: proxy
 default_provider: azure
 ```
 
-## CLI Structure
+## Multitool CLI and Configuration
 
-...existing documentation...
-# Punchbag Cube Test Suite
+See [multitool/README.md](./multitool/README.md) for full documentation on the multitool CLI, configuration system, usage examples, and migration notes.
+
+## CLI Structure
 
 A comprehensive multi-cloud test suite for testing punchbag cube functionality with server, werfty, and Terraform provider components.
 
-## Overview
-
-This project provides a complete ecosystem for testing various aspects of the punchbag cube system across multiple cloud providers including:
-- REST API server for multi-cloud cluster management and test execution
-- Command-line werfty for interacting with the API across cloud providers
-- Terraform provider for Infrastructure as Code (IaC) support
-- Multi-cloud support: Azure (AKS), StackIT (Schwarz IT), AWS (EKS), GCP (GKE), Hetzner Cloud, IONOS Cloud
-- Performance and load testing capabilities across different cloud environments
-- **Comprehensive Azure support** including monitoring, budgets, and cost management
-
+### ⚙️ Configuration & Object Storage Management
+See [multitool/README.md](./multitool/README.md) for full details on configuration profiles, object storage, and advanced CLI usage.
 ## Supported Cloud Providers
+
+
+- **AWS, GCP, etc.**: Extendable via shared/ abstractions and simulation handlers
+
+Example usage:
+
+```bash
+curl -X POST http://localhost:8081/api/simulate/azure/loganalytics
+
+```
+
 
 - **Azure**: Azure Kubernetes Service (AKS), Azure Monitor, Log Analytics, Application Insights, Azure Budgets
 - **StackIT (Schwarz IT)**: StackIT Kubernetes Engine (SKE)
@@ -251,21 +283,18 @@ curl -X POST http://localhost:8081/api/v1/azure/budget \
 
 ## Components
 
-### 🖥️ Server (`/server`)
+### 🖥️ Server (`cube-server/`)
 
-REST API server that provides endpoints for:
-- AKS cluster management (CRUD operations)
-- Test execution and monitoring
-- Health checks and metrics
-- Complete OpenAPI specification
+Unified REST API server and simulation backend. All endpoints, simulation logic, and orchestration are now in `cube-server/`.
 
 **Quick Start:**
 ```bash
-cd server
+cd cube-server
+go mod tidy
 go run main.go
 ```
 
-Server will be available at `http://localhost:8080`
+Server will be available at `http://localhost:8081`
 
 ### 📱 Werfty (`/werfty`)
 
@@ -336,9 +365,9 @@ Each component can be containerized:
 
 ```bash
 # Server
-cd server
-docker build -t punchbag-server .
-docker run -p 8080:8080 punchbag-server
+cd cube-server
+docker build -t punchbag-cube-server .
+docker run -p 8081:8081 punchbag-cube-server
 
 # Werfty (for CI/CD pipelines)
 cd werfty
@@ -348,8 +377,8 @@ docker build -t punchbag-werfty .
 ## API Documentation
 
 The server provides comprehensive API documentation:
-- Interactive docs: `http://localhost:8080/docs`
-- OpenAPI spec: `server/api/openapi.yaml`
+- Interactive docs: `http://localhost:8081/docs`
+- OpenAPI spec: `cube-server/api/openapi.yaml`
 
 ## Multi-Cloud Usage Examples
 
@@ -475,9 +504,9 @@ go run main.go --input aws_s3_example.tf --src-provider aws --destination-provid
 ### Start the API Server
 ```bash
 # From project root
-cd cmd/cube-server
-# Or use Go workspace mode
-PORT=8081 go run main.go
+cd cube-server
+go mod tidy
+go run main.go
 ```
 
 ### Run Automated API Tests
@@ -500,6 +529,24 @@ bash scripts/lint.sh
     -H 'Content-Type: application/json' \
     -d '{"name":"test-cluster","provider":"azure","location":"eastus"}'
   ```
+
+## Testing GitHub Actions Workflows Locally
+
+You can test your GitHub Actions workflows locally using [`act`](https://github.com/nektos/act):
+
+1. Install act (macOS):
+   ```sh
+   brew install act
+   ```
+2. Run your workflow locally:
+   ```sh
+   act
+   ```
+   - Use `act pull_request` to simulate a pull request event.
+   - Use `-j <job-name>` to run a specific job.
+   - You may need Docker running and to set up secrets or environment variables for some jobs.
+
+This is useful for quickly validating CI changes before pushing to GitHub.
 
 ## Contributing
 

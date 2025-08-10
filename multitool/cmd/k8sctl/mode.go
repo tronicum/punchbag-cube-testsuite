@@ -7,9 +7,10 @@ package k8sctl
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"path/filepath"
 )
 
 var mode string

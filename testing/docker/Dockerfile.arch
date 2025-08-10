@@ -1,0 +1,14 @@
+# Arch Linux (pacman) - Use registry.archlinux.org (official, open)
+ARG ARCH_BASE_IMAGE=archlinux/base
+FROM ${ARCH_BASE_IMAGE}
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm \
+    curl \
+    sudo \
+    lsb-release \
+    gnupg \
+    ca-certificates \
+    base-devel \
+    git
+WORKDIR /app
+COPY ./mt /usr/local/bin/mt
+ENTRYPOINT ["mt"]

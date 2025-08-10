@@ -10,7 +10,11 @@ import (
 )
 
 // SetupRoutes configures all the API routes
-func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
+import (
+	"github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
+)
+
+func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger, sim *simulation.SimulationService) {
 	handlers := NewHandlers(store, logger)
 
 	// API version prefix
@@ -58,24 +62,41 @@ func SetupRoutes(router *gin.Engine, store store.Store, logger *zap.Logger) {
 			})
 		}
 
-		// Provider simulation endpoints
-		providerHandlers := NewProviderSimulationHandlers(store, logger)
+		providerSimHandlers := NewProviderSimulationHandlers(store, logger, sim)
 
-		// Validation endpoints
+		// Simulation endpoints
+		simulate := v1.Group("/simulate")
+		{
+			simulate.POST("/providers/:provider/operations/:operation", providerSimHandlers.SimulateProviderOperation)
+			simulate.POST("/providers/:provider/buckets", providerSimHandlers.CreateSimulatedBucket)
+			simulate.GET("/providers/:provider/buckets", providerSimHandlers.ListSimulatedBuckets)
+			simulate.DELETE("/providers/:provider/buckets/:bucket", providerSimHandlers.DeleteSimulatedBucket)
+			// Generic AWS S3 simulation endpoint for SDK compatibility
+			simulate.Any("/aws-s3/*path", providerSimHandlers.GenericAWSS3SimHandler)
+			// Add more simulation endpoints as needed
+		}
+
+		// Proxy endpoints (real provider, via server)
+		// proxy := v1.Group("/proxy")
+		// {
+		//     // TODO: Register proxy handlers here
+		//     // proxy.POST("/providers/:provider/operations/:operation", ...)
+		//     // proxy.DELETE("/providers/:provider/buckets/:bucket", ...)
+		// }
+
+		// direct := v1.Group("/direct")
+		// {
+		//     // TODO: Register direct handlers here
+		// }
+
+		// Validation endpoints (can be under simulate or proxy as appropriate)
 		validate := v1.Group("/validate")
 		{
-			validate.GET(":provider", providerHandlers.ValidateProvider)
+			validate.GET(":provider", providerSimHandlers.ValidateProvider)
 		}
 
-		// Provider simulation endpoints
-		providers := v1.Group("/providers")
-		{
-			providers.POST(":provider/operations/:operation", providerHandlers.SimulateProviderOperation)
-		}
-
-		// Azure simulation endpoints (under /simulator)
+		// Azure simulation endpoints (legacy, to be migrated)
 		simulator := NewAzureHandlers(logger)
-
 		sim := v1.Group("/simulator")
 		{
 			sim.POST("/azure/aks", simulator.SimulateAKS)

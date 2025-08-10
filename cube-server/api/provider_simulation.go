@@ -2,15 +2,25 @@ package api
 
 import (
 	"fmt"
-	"net/http"
-
+	"time"
+	"github.com/gin-gonic/gin"
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	simulation "github.com/tronicum/punchbag-cube-testsuite/shared/simulation"
 	store "github.com/tronicum/punchbag-cube-testsuite/store"
-
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"net/http"
 )
+
+// GenericAWSS3SimHandler simulates AWS S3 SDK-compatible endpoints for the provider 'generic-aws-s3'
+func (h *ProviderSimulationHandlers) GenericAWSS3SimHandler(c *gin.Context) {
+	// This is a stub for now. Log the request and return a generic simulated response.
+	path := c.Param("path")
+	method := c.Request.Method
+	h.logger.Info("[GENERIC AWS S3 SIM] Simulating AWS S3 SDK endpoint", zap.String("method", method), zap.String("path", path))
+	c.JSON(200, gin.H{"message": "Simulated AWS S3 SDK endpoint", "method": method, "path": path})
+}
+
+// ...existing code...
 
 // ProviderSimulationHandlers contains simulation endpoints for cloud providers
 type ProviderSimulationHandlers struct {
@@ -19,12 +29,104 @@ type ProviderSimulationHandlers struct {
 	simulator *simulation.SimulationService
 }
 
+// DeleteSimulatedBucket handles DELETE /api/v1/simulate/providers/:provider/buckets/:bucket
+func (h *ProviderSimulationHandlers) DeleteSimulatedBucket(c *gin.Context) {
+	provider := c.Param("provider")
+	bucket := c.Param("bucket")
+
+	simReq := &simulation.SimulationRequest{
+		Provider:   provider,
+		Operation:  "delete_bucket",
+		Parameters: map[string]interface{}{"bucket": bucket},
+	}
+	result := h.simulator.SimulateOperation(simReq)
+	if result.Success {
+		c.JSON(http.StatusOK, result.Result)
+	} else {
+		c.JSON(http.StatusNotFound, result)
+	}
+}
+
 // NewProviderSimulationHandlers creates a new ProviderSimulationHandlers instance
-func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger) *ProviderSimulationHandlers {
+func NewProviderSimulationHandlers(s store.Store, logger *zap.Logger, sim *simulation.SimulationService) *ProviderSimulationHandlers {
 	return &ProviderSimulationHandlers{
 		store:     s,
 		logger:    logger,
-		simulator: simulation.NewSimulationService(),
+		simulator: sim,
+	}
+}
+
+// CreateSimulatedBucket handles POST /api/v1/simulate/providers/:provider/buckets
+func (h *ProviderSimulationHandlers) CreateSimulatedBucket(c *gin.Context) {
+	// DEBUG: Log entry to handler
+	fmt.Println("[DEBUG] Entered CreateSimulatedBucket handler")
+	provider := c.Param("provider")
+	var req map[string]interface{}
+	fmt.Printf("[SERVER DEBUG] CreateSimulatedBucket called for provider=%s\n", provider)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[SERVER DEBUG] Invalid request body: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	fmt.Printf("[SERVER DEBUG] Request body: %#v\n", req)
+	simReq := &simulation.SimulationRequest{
+		Provider:   provider,
+		Operation:  "create_bucket",
+		Parameters: req,
+	}
+	fmt.Printf("[SERVER DEBUG] Calling SimulateOperation with: provider=%s, op=%s, params=%#v\n", simReq.Provider, simReq.Operation, simReq.Parameters)
+	result := h.simulator.SimulateOperation(simReq)
+	fmt.Printf("[SERVER DEBUG] SimulateOperation result: success=%v, result=%#v, error=%v\n", result.Success, result.Result, result.Error)
+	if result.Success {
+		c.JSON(http.StatusCreated, result.Result)
+	} else {
+		c.JSON(http.StatusBadRequest, result)
+	}
+}
+
+// ListSimulatedBuckets handles GET /api/v1/simulate/providers/:provider/buckets
+func (h *ProviderSimulationHandlers) ListSimulatedBuckets(c *gin.Context) {
+	fmt.Println("[DEBUG] Entered ListSimulatedBuckets handler")
+	provider := c.Param("provider")
+	fmt.Printf("[SERVER DEBUG] ListSimulatedBuckets called for provider=%s\n", provider)
+	simReq := &simulation.SimulationRequest{
+		Provider:   provider,
+		Operation:  "list_buckets",
+		Parameters: map[string]interface{}{},
+	}
+	fmt.Printf("[SERVER DEBUG] Calling SimulateOperation for list_buckets with: provider=%s\n", provider)
+	result := h.simulator.SimulateOperation(simReq)
+	fmt.Printf("[SERVER DEBUG] SimulateOperation list_buckets result: success=%v, result=%#v, error=%v\n", result.Success, result.Result, result.Error)
+	if result.Success {
+		// result.Result is a map with "buckets": []map[string]interface{}
+		if bucketsObj, ok := result.Result["buckets"]; ok {
+			if bucketsList, ok := bucketsObj.([]map[string]interface{}); ok {
+				// Convert simulation bucket format to ObjectStorageBucket format
+				var convertedBuckets []sharedmodels.ObjectStorageBucket
+				for _, simBucket := range bucketsList {
+					bucket := sharedmodels.ObjectStorageBucket{
+						Name:     getString(simBucket, "bucket"),
+						Provider: sharedmodels.CloudProvider(getString(simBucket, "provider")),
+						Region:   getString(simBucket, "region"),
+					}
+					// Set a default CreatedAt if not present
+					if bucket.Name != "" {
+						bucket.CreatedAt = time.Now().UTC()
+					}
+					convertedBuckets = append(convertedBuckets, bucket)
+				}
+				fmt.Printf("[SERVER DEBUG] Converted %d buckets to ObjectStorageBucket format\n", len(convertedBuckets))
+				c.JSON(http.StatusOK, convertedBuckets)
+			} else {
+				fmt.Printf("[SERVER DEBUG] bucketsObj is not []map[string]interface{}, type=%T\n", bucketsObj)
+				c.JSON(http.StatusOK, []interface{}{})
+			}
+		} else {
+			fmt.Printf("[SERVER DEBUG] No 'buckets' key in result\n")
+			c.JSON(http.StatusOK, []interface{}{})
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, result)
 	}
 }
 
@@ -71,15 +173,6 @@ func (h *ProviderSimulationHandlers) ValidateProviderLegacy(c *gin.Context) {
 
 // The following provider-specific validation endpoints are deprecated and replaced by the shared simulation logic.
 // They are removed to ensure all validation uses the shared simulation service.
-//
-// func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) { ... }
-// func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) { ... }
-// func (h *ProviderSimulationHandlers) validateIONOS(c *gin.Context) { ... }
-// func (h *ProviderSimulationHandlers) validateStackIT(c *gin.Context) { ... }
-// func (h *ProviderSimulationHandlers) validateAWS(c *gin.Context) { ... }
-// func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) { ... }
-//
-// Please use ValidateProvider instead.
 
 // GetProviderInfo handles GET /providers/{provider-name}/info
 func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
@@ -104,6 +197,18 @@ func (h *ProviderSimulationHandlers) GetProviderInfo(c *gin.Context) {
 		})
 	}
 }
+
+// The following provider-specific validation endpoints are deprecated and replaced by the shared simulation logic.
+// They are removed to ensure all validation uses the shared simulation service.
+//
+// func (h *ProviderSimulationHandlers) validateAzure(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateHetzner(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateIONOS(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateStackIT(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateAWS(c *gin.Context) { ... }
+// func (h *ProviderSimulationHandlers) validateGCP(c *gin.Context) { ... }
+//
+// Please use ValidateProvider instead.
 
 func (h *ProviderSimulationHandlers) getAzureInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -330,3 +435,13 @@ func (h *ProviderSimulationHandlers) RunSimulatedTest(c *gin.Context) {
 // The response will include provider-specific fields. See simulation/service.go for details.
 //
 // TODO: Document supported resource types and required fields for each provider.
+
+// getString safely extracts a string value from a map
+func getString(m map[string]interface{}, key string) string {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}

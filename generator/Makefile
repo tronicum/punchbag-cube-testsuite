@@ -11,7 +11,7 @@ clean:
 	rm -f $(BINARY) *.tf *.json *.a
 
 # Run all Go tests (unit and mapping logic)
-test:
+go-tests:
 	go test -v ./...
 
 # End-to-end test: simulate multitool, generate Terraform, lint

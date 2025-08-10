@@ -1,1 +1,0 @@
-module github.com/tronicum/punchbag-cube-testsuite/server

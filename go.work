@@ -1,15 +1,16 @@
 go 1.24.4
 
+
 use (
+	./cube-client
 	./cube-server
+	./generator
 	./multitool
+	./punchbag
 	./shared
 	./store
 	./terraform-multicloud-provider
 	./werfty
-	./client
 	./werfty-generator
 	./werfty-transformator
-	./cube-client
 )
-

@@ -1,0 +1,10 @@
+provider: aws
+region: eu-central-1
+credentials:
+  access_key: ${AWS_ACCESS_KEY_ID}
+  secret_key: ${AWS_SECRET_ACCESS_KEY}
+endpoints:
+  s3: https://s3.eu-central-1.amazonaws.com
+settings:
+  versioning: true
+  custom_policy: ./policy.json

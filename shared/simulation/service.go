@@ -1,52 +1,61 @@
-// Package simulation provides shared simulation logic for cloud resource operations.
-//
-// This package is used by both the server and multitool CLI to ensure consistent simulation behavior.
-// All provider validation, cluster/test simulation, and related logic should be implemented here.
-//
-// To add support for a new provider or operation, extend the logic in this package only.
-//
-// Usage examples and API documentation are provided in the README and in the public method comments below.
-//
-// Public API for provider knowledge and simulation logic
-//
-// Example usage:
-//
-//   import "punchbag-cube-testsuite/shared/simulation"
-//
-//   sim := simulation.NewSimulationService()
-//   result := sim.ValidateProvider("azure", nil)
-//   opResult := sim.SimulateOperation(&simulation.SimulationRequest{
-//       Provider: "aws",
-//       Operation: "create_cluster",
-//       Parameters: map[string]interface{}{...},
-//   })
-//
-// All Go-based tools (server, multitool, werftygen, etc.) should import and use this package directly for provider info and simulation.
-// For non-Go clients, use the cube-server HTTP API.
-//
-// To add a new provider or operation, extend this package only.
 
 package simulation
 
 import (
-	"fmt"
-	"math/rand"
-	"time"
-
-	"github.com/tronicum/punchbag-cube-testsuite/shared/models"
+	   "fmt"
+	   "math/rand"
+	   "os"
+	   "time"
+	   "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 )
+
+// BucketStore returns the bucket store for direct manipulation (e.g., for dummy/test buckets)
+func (s *SimulationService) BucketStore() *BucketStore {
+	   return s.buckets
+}
 
 // SimulationService provides cloud provider simulation capabilities
 type SimulationService struct {
-	rand *rand.Rand
+	   rand         *rand.Rand
+	   buckets      *BucketStore
+	   persistPath  string
+	   fastSimulate bool
+	   debug        bool
 }
 
 // NewSimulationService creates a new simulation service
 func NewSimulationService() *SimulationService {
-	return &SimulationService{
-		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+		   persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
+		   if persistPath == "" {
+				   // Use /tmp for relative path safety - testdata/... is only valid from workspace root
+				   persistPath = "/tmp/cube_server_sim_buckets.json"
+		   }
+	   s := &SimulationService{
+			   rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+			   persistPath: persistPath,
+			   fastSimulate: os.Getenv("FAST_SIMULATE") == "1",
+			   debug: os.Getenv("CUBE_SERVER_DEBUG") == "1",
+	   }
+	   s.buckets = NewBucketStore(persistPath)
+	   return s
 }
+
+// NewSimulationServiceWithOptions allows explicit config
+func NewSimulationServiceWithOptions(fastSimulate, debug bool) *SimulationService {
+	   persistPath := os.Getenv("CUBE_SERVER_SIM_PERSIST")
+	   if persistPath == "" {
+			   persistPath = "/tmp/cube_server_sim_buckets.json"
+	   }
+	   s := &SimulationService{
+			   rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+			   persistPath: persistPath,
+			   fastSimulate: fastSimulate,
+			   debug: debug,
+	   }
+	   s.buckets = NewBucketStore(persistPath)
+	   return s
+}
+
 
 // ProviderValidationResult represents the result of provider validation
 type ProviderValidationResult struct {
@@ -178,20 +187,48 @@ func (s *SimulationService) ValidateProvider(provider string, credentials map[st
 }
 
 // SimulateOperation simulates a cloud provider operation
+
 func (s *SimulationService) SimulateOperation(req *SimulationRequest) *SimulationResult {
-	start := time.Now()
+	   start := time.Now()
 
-	result := &SimulationResult{
-		Provider:  req.Provider,
-		Operation: req.Operation,
-		Timestamp: start.Format(time.RFC3339),
-	}
+	   if s.debug {
+			   fmt.Printf("[SIM DEBUG] SimulateOperation: provider=%s, op=%s, params=%#v\n", req.Provider, req.Operation, req.Parameters)
+	   }
 
-	// Simulate operation delay
-	delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
-	time.Sleep(delay)
+	   result := &SimulationResult{
+			   Provider:  req.Provider,
+			   Operation: req.Operation,
+			   Timestamp: start.Format(time.RFC3339),
+	   }
 
-	switch req.Operation {
+	   // Simulate operation delay unless fastSimulate is enabled
+	   if !s.fastSimulate {
+			   delay := time.Duration(s.rand.Intn(3000)+500) * time.Millisecond
+			   time.Sleep(delay)
+	   }
+
+	   switch req.Operation {
+	   case "create_bucket":
+			   nameVal := s.getParamOrDefault(req.Parameters, "name", "")
+			   name, _ := nameVal.(string)
+			   if name == "" {
+				   // Generate a default name for testing if none provided
+				   name = "sim-bucket-" + s.generateRandomID()
+			   }
+			   // Use exact name like real S3 API - no modifications
+			   regionVal := s.getParamOrDefault(req.Parameters, "region", "us-west-2")
+			   region, _ := regionVal.(string)
+			   bucket := s.buckets.Create(req.Provider, name, region)
+			   result.Success = true
+			   result.Result = bucket
+	   case "delete_bucket":
+			   bucketName, _ := req.Parameters["bucket"].(string)
+			   result.Success, result.Result = s.buckets.Delete(req.Provider, bucketName)
+	   case "list_buckets":
+			   buckets := s.buckets.List(req.Provider)
+			   result.Success = true
+			   result.Result = map[string]interface{}{ "buckets": buckets, "total": len(buckets) }
+	// ...existing code for clusters and tests...
 	case "create_cluster":
 		result.Success = true
 		result.Result = s.simulateCreateCluster(req.Provider, req.Parameters)
@@ -211,13 +248,49 @@ func (s *SimulationService) SimulateOperation(req *SimulationRequest) *Simulatio
 	case "run_test":
 		result.Success = true
 		result.Result = s.simulateRunTest(req.Parameters)
+	case "set_bucket_policy":
+		result.Success = true
+		result.Result = map[string]interface{}{
+			"bucket": req.Parameters["bucket"],
+			"policy": req.Parameters["policy"],
+			"status": "policy_set",
+		}
+	case "set_bucket_versioning":
+		result.Success = true
+		result.Result = map[string]interface{}{
+			"bucket":     req.Parameters["bucket"],
+			"versioning": req.Parameters["enabled"],
+			"status":     "versioning_set",
+		}
+	case "set_bucket_lifecycle":
+		result.Success = true
+		result.Result = map[string]interface{}{
+			"bucket":    req.Parameters["bucket"],
+			"lifecycle": req.Parameters["lifecycle"],
+			"status":    "lifecycle_set",
+		}
 	default:
 		result.Success = false
 		result.Error = fmt.Sprintf("unsupported operation: %s", req.Operation)
 	}
-
 	result.Duration = time.Since(start)
 	return result
+}
+
+
+// simulateCreateBucket simulates S3/object storage bucket creation
+func (s *SimulationService) simulateCreateBucket(provider string, params map[string]interface{}) map[string]interface{} {
+	nameVal := s.getParamOrDefault(params, "name", "sim-bucket-")
+	name, _ := nameVal.(string)
+	bucketName := name + s.generateRandomID()
+	regionVal := s.getParamOrDefault(params, "region", "us-west-2")
+	region, _ := regionVal.(string)
+	return map[string]interface{}{
+		"bucket":   bucketName,
+		"provider": provider,
+		"region":   region,
+		"status":   "created",
+	}
 }
 
 // simulateCreateCluster simulates cluster creation

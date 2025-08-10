@@ -33,6 +33,41 @@ type AzureProviderImpl struct {
 	simulationMode bool
 	subscriptionID string
 	tenantID       string
+	creds          map[string]string
+	config         map[string]interface{}
+	region         string
+	endpoints      map[string]string
+}
+
+// SetCredentials sets authentication credentials
+func (p *AzureProviderImpl) SetCredentials(creds map[string]string) { p.creds = creds }
+
+// SetConfig sets provider-specific config
+func (p *AzureProviderImpl) SetConfig(cfg map[string]interface{}) {
+	p.config = cfg
+	if r, ok := cfg["region"].(string); ok {
+		p.region = r
+	}
+	if e, ok := cfg["endpoints"].(map[string]string); ok {
+		p.endpoints = e
+	}
+}
+
+// GetRegion returns the configured region
+func (p *AzureProviderImpl) GetRegion() string { return p.region }
+
+// GetEndpoint returns the endpoint for a given service
+func (p *AzureProviderImpl) GetEndpoint(service string) string {
+	if p.endpoints != nil {
+		if ep, ok := p.endpoints[service]; ok {
+			return ep
+		}
+	}
+	// Default Azure endpoints (example)
+	if service == "aks" && p.region != "" {
+		return "https://management.azure.com/subscriptions/" + p.subscriptionID + "/resourceGroups/" + p.region + "/providers/Microsoft.ContainerService/managedClusters"
+	}
+	return ""
 }
 
 // NewAzureProvider creates a new Azure provider

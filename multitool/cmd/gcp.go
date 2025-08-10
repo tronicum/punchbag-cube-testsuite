@@ -8,10 +8,10 @@ import (
 
 // Root GCP Command
 var gcpCmd = &cobra.Command{
-	   Use:   "gcp",
-	   Short: "Google Cloud Platform operations",
-	   Long:  `Manage GCP resources including GKE clusters, Cloud Storage, and more.`,
-	   Annotations: map[string]string{"group": "Cloud Management Commands"},
+	Use:         "gcp",
+	Short:       "Google Cloud Platform operations",
+	Long:        `Manage GCP resources including GKE clusters, Cloud Storage, and more.`,
+	Annotations: map[string]string{"group": "Cloud Management Commands"},
 }
 
 // ==== GKE ====

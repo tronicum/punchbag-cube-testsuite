@@ -1,0 +1,15 @@
+# openSUSE (zypper) - Use registry.opensuse.org (official, open)
+FROM registry.opensuse.org/opensuse/leap:15.5
+RUN zypper --non-interactive refresh && zypper --non-interactive install \
+    curl \
+    sudo \
+    lsb-release \
+    gpg2 \
+    ca-certificates \
+    gcc \
+    gcc-c++ \
+    make \
+    git
+WORKDIR /app
+COPY ./mt /usr/local/bin/mt
+ENTRYPOINT ["mt"]

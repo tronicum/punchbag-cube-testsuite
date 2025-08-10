@@ -8,10 +8,10 @@ import (
 
 // Root AWS Command
 var awsCmd = &cobra.Command{
-	   Use:   "aws",
-	   Short: "AWS cloud provider operations",
-	   Long:  `Manage AWS resources including CloudFormation, S3, Lambda, and more.`,
-	   Annotations: map[string]string{"group": "Cloud Management Commands"},
+	Use:         "aws",
+	Short:       "AWS cloud provider operations",
+	Long:        `Manage AWS resources including CloudFormation, S3, Lambda, and more.`,
+	Annotations: map[string]string{"group": "Cloud Management Commands"},
 }
 
 // ...existing code...

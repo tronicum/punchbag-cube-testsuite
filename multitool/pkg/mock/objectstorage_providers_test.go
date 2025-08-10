@@ -30,28 +30,7 @@ func TestStackITObjectStorage(t *testing.T) {
 	}
 }
 
-func TestHetznerObjectStorage(t *testing.T) {
-	store := mock.NewHetznerObjectStorage()
-	bucket := &models.ObjectStorageBucket{Name: "hetz-bucket", Provider: models.Hetzner, Region: "fsn1"}
-	created, err := store.CreateBucket(bucket)
-	if err != nil {
-		t.Fatalf("CreateBucket failed: %v", err)
-	}
-	if created.Name != "hetz-bucket" || created.Provider != models.Hetzner {
-		t.Errorf("Unexpected bucket: %+v", created)
-	}
-	buckets, err := store.ListBuckets()
-	if err != nil || len(buckets) != 1 {
-		t.Errorf("ListBuckets failed or wrong count: %v, %d", err, len(buckets))
-	}
-	got, err := store.GetBucket(created.ID)
-	if err != nil || got.Name != "hetz-bucket" {
-		t.Errorf("GetBucket failed: %v, %+v", err, got)
-	}
-	if err := store.DeleteBucket(created.ID); err != nil {
-		t.Errorf("DeleteBucket failed: %v", err)
-	}
-}
+// TestHetznerObjectStorage removed: use shared/providers/hetzner/s3_mock.go for Hetzner S3 mock tests.
 
 func TestIonosObjectStorage(t *testing.T) {
 	store := mock.NewIonosObjectStorage()

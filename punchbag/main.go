@@ -8,6 +8,9 @@ import (
 	"os/exec"
 	"strings"
 
+	sharederrors "github.com/tronicum/punchbag-cube-testsuite/shared/errors"
+	"github.com/tronicum/punchbag-cube-testsuite/shared/log"
+
 	sharedmodels "github.com/tronicum/punchbag-cube-testsuite/shared/models"
 	"gopkg.in/yaml.v3"
 )
@@ -30,32 +33,32 @@ func LoadConfig(filePath string) (map[string]interface{}, error) {
 func GenerateAzureTemplates(config map[string]interface{}) {
 	// Example: Generate Azure Monitoring template
 	if _, ok := config["azure_monitoring"].(map[string]interface{}); ok {
-		fmt.Println("Generating Azure Monitoring template...")
+		log.Info("Generating Azure Monitoring template...")
 		// Add logic to generate monitoring template
 	}
 
 	// Example: Generate Azure Kubernetes template
 	if _, ok := config["azure_kubernetes"].(map[string]interface{}); ok {
-		fmt.Println("Generating Azure Kubernetes template...")
+		log.Info("Generating Azure Kubernetes template...")
 		// Add logic to generate Kubernetes template
 	}
 
 	// Example: Generate Azure Budgets template
 	if _, ok := config["azure_budgets"].(map[string]interface{}); ok {
-		fmt.Println("Generating Azure Budgets template...")
+		log.Info("Generating Azure Budgets template...")
 		// Add logic to generate budgets template
 	}
 
 	// Example: Generate Azure Log Analytics template
 	if _, ok := config["azure_log_analytics"].(map[string]interface{}); ok {
-		fmt.Println("Generating Azure Log Analytics template...")
+		log.Info("Generating Azure Log Analytics template...")
 		// Add logic to generate Log Analytics template
 	}
 
 	// Extend template generation for Azure services
 
 	if _, ok := config["object_storage"].(map[string]interface{}); ok {
-		fmt.Println("Generating Object Storage template...")
+		log.Info("Generating Object Storage template...")
 		// Add logic to generate object storage template
 	}
 }
@@ -103,33 +106,18 @@ resource "generic_object_storage_bucket" "example" {
 
 // GenerateMultipassCloudLayerTemplate generates a Terraform template for multipass-cloud-layer provider using the generic Bucket abstraction
 func GenerateMultipassCloudLayerTemplate(bucket *sharedmodels.ObjectStorageBucket) string {
-	return fmt.Sprintf(`# multipass-cloud-layer Bucket
-resource "multipass_cloud_layer_bucket" "%s" {
-  name         = "%s"
-  region       = "%s"
-  provider     = "%s"
-  storage_class = "%s"
-  tier         = "%s"
-}
-`,
-		bucket.Name,
-		bucket.Name,
-		bucket.Region,
-		bucket.Provider,
-		bucket.ProviderConfig["storage_class"],
-		bucket.ProviderConfig["tier"],
-	)
+	return "# multipass-cloud-layer Bucket\nresource \"multipass_cloud_layer_bucket\" \"" + bucket.Name + "\" {\n  name         = \"" + bucket.Name + "\"\n  region       = \"" + bucket.Region + "\"\n  provider     = \"" + bucket.Provider + "\"\n  storage_class = \"" + bucket.ProviderConfig["storage_class"].(string) + "\"\n  tier         = \"" + bucket.ProviderConfig["tier"].(string) + "\"\n}\n"
 }
 
 // GenerateTerraformFromJSON reads a JSON file and outputs a Terraform file for supported Azure resources
 func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 	content, err := os.ReadFile(inputPath)
 	if err != nil {
-		return fmt.Errorf("failed to read input JSON: %w", err)
+		return sharederrors.ErrNotFound
 	}
 	var data map[string]interface{}
 	if err := json.Unmarshal(content, &data); err != nil {
-		return fmt.Errorf("invalid JSON: %w", err)
+		return sharederrors.ErrValidation
 	}
 	// Detect resource type by keys and map fields
 	var tf string
@@ -139,14 +127,7 @@ func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 		resourceGroup := safeString(props, "resourceGroup", "example-rg")
 		severity := safeString(props, "severity", "3")
 		criteria := safeString(props, "criteria", "")
-		tf = fmt.Sprintf(`resource "azurerm_monitor_metric_alert" "example" {
-  name                = "%s"
-  resource_group_name = "%s"
-  severity            = %s
-  criteria            = "%s"
-  // ...map more fields from JSON as needed
-}`,
-			name, resourceGroup, severity, criteria)
+		tf = "resource \"azurerm_monitor_metric_alert\" \"example\" {\n  name                = \"" + name + "\"\n  resource_group_name = \"" + resourceGroup + "\"\n  severity            = " + severity + "\n  criteria            = \"" + criteria + "\"\n  // ...map more fields from JSON as needed\n}"
 	} else if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "loganalytics") {
 		// Map common Log Analytics fields
 		name := safeString(props, "name", "example-log-analytics")
@@ -154,34 +135,16 @@ func GenerateTerraformFromJSON(inputPath, outputPath string) error {
 		resourceGroup := safeString(props, "resourceGroup", "example-resource-group")
 		sku := safeString(props, "sku", "PerGB2018")
 		retention := safeInt(props, "retentionInDays", 30)
-		tf = fmt.Sprintf(`resource "azurerm_log_analytics_workspace" "example" {
-  name                = "%s"
-  location            = "%s"
-  resource_group_name = "%s"
-  sku                 = "%s"
-  retention_in_days   = %d
-  // ...map more fields from JSON as needed
-}`,
-			name, location, resourceGroup, sku, retention)
+		tf = "resource \"azurerm_log_analytics_workspace\" \"example\" {\n  name                = \"" + name + "\"\n  location            = \"" + location + "\"\n  resource_group_name = \"" + resourceGroup + "\"\n  sku                 = \"" + sku + "\"\n  retention_in_days   = " + fmt.Sprintf("%d", retention) + "\n  // ...map more fields from JSON as needed\n}"
 	} else if props, ok := data["properties"].(map[string]interface{}); ok && strings.Contains(inputPath, "aks") {
 		// Map AKS cluster fields
 		name := safeString(props, "name", "example-aks")
 		location := safeString(props, "location", "eastus")
 		resourceGroup := safeString(props, "resourceGroup", "example-rg")
 		nodeCount := safeInt(props, "nodeCount", 3)
-		tf = fmt.Sprintf(`resource "azurerm_kubernetes_cluster" "example" {
-  name                = "%s"
-  location            = "%s"
-  resource_group_name = "%s"
-  default_node_pool {
-    name       = "default"
-    node_count = %d
-  }
-  // ...map more fields from JSON as needed
-}`,
-			name, location, resourceGroup, nodeCount)
+		tf = "resource \"azurerm_kubernetes_cluster\" \"example\" {\n  name                = \"" + name + "\"\n  location            = \"" + location + "\"\n  resource_group_name = \"" + resourceGroup + "\"\n  default_node_pool {\n    name       = \"default\"\n    node_count = " + fmt.Sprintf("%d", nodeCount) + "\n  }\n  // ...map more fields from JSON as needed\n}"
 	} else {
-		return fmt.Errorf("unsupported or unrecognized resource type in %s", inputPath)
+		return sharederrors.ErrNotFound
 	}
 	return os.WriteFile(outputPath, []byte(tf), 0644)
 }
@@ -248,31 +211,31 @@ func main() {
 			mock["properties"].(map[string]interface{})["resourceGroup"] = *resourceGroup
 		}
 		out, _ := json.MarshalIndent(mock, "", "  ")
-		fmt.Println(string(out))
+		log.Info(string(out))
 		return
 	}
 
 	if *generateTerraform {
 		if *input == "" || *output == "" {
-			fmt.Println("Usage: werfty --generate-terraform --input <input.json> --output <output.tf>")
+			log.Error("Usage: werfty --generate-terraform --input <input.json> --output <output.tf>")
 			os.Exit(1)
 		}
 		err := GenerateTerraformFromJSON(*input, *output)
 		if err != nil {
-			fmt.Printf("Terraform generation failed: %v\n", err)
+			log.Error("Terraform generation failed: %v", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Terraform code written to %s\n", *output)
+		log.Info("Terraform code written to %s", *output)
 		// Lint the generated Terraform file if tflint is available
 		if _, err := os.Stat(*output); err == nil {
 			if _, err := execLookPath("tflint"); err == nil {
-				fmt.Println("Running tflint on generated Terraform...")
+				log.Info("Running tflint on generated Terraform...")
 				cmd := execCommand("tflint", *output)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				_ = cmd.Run()
 			} else {
-				fmt.Println("tflint not found; skipping linting.")
+				log.Warn("tflint not found; skipping linting.")
 			}
 		}
 		return
@@ -282,7 +245,7 @@ func main() {
 	filePath := "azure_services.tf"
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Printf("Failed to read file: %v\n", err)
+		log.Error("Failed to read file: %v", err)
 		os.Exit(1)
 	}
 
@@ -306,11 +269,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Code generation completed. Check generated_resources.go")
+	log.Info("Code generation completed. Check generated_resources.go")
 
 	config, err := LoadConfig("../conf/punchy.yml")
 	if err != nil {
-		fmt.Printf("Failed to load config: %v\n", err)
+		log.Error("Failed to load config: %v", err)
 		os.Exit(1)
 	}
 

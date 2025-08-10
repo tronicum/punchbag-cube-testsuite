@@ -1,49 +1,48 @@
 package client
 
 import (
-	   "fmt"
-	   "net/http"
-	   "strings"
-	   "time"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
 )
-
 
 // APIClient represents a minimal client for interacting with the cube-server API (health, login, SSO, etc).
 type APIClient struct {
-	   baseURL    string
-	   httpClient *http.Client
+	baseURL    string
+	httpClient *http.Client
 }
 
 // NewAPIClient creates a new API client. Returns nil if baseURL is empty.
 func NewAPIClient(baseURL string) *APIClient {
-	   if strings.TrimSpace(baseURL) == "" {
-			   return nil
-	   }
-	   return &APIClient{
-			   baseURL: strings.TrimSuffix(baseURL, "/"),
-			   httpClient: &http.Client{
-					   Timeout: 30 * time.Second,
-			   },
-	   }
+	if strings.TrimSpace(baseURL) == "" {
+		return nil
+	}
+	return &APIClient{
+		baseURL: strings.TrimSuffix(baseURL, "/"),
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
 }
 
 // buildURL helps construct endpoint URLs.
 func (c *APIClient) buildURL(path string) string {
-	   return c.baseURL + path
+	return c.baseURL + path
 }
 
 // Ping checks if the API server is reachable and healthy.
 func (c *APIClient) Ping() error {
-	   url := c.buildURL("/ping")
-	   resp, err := c.httpClient.Get(url)
-	   if err != nil {
-			   return err
-	   }
-	   defer resp.Body.Close()
-	   if resp.StatusCode != http.StatusOK {
-			   return fmt.Errorf("API ping failed: status %d", resp.StatusCode)
-	   }
-	   return nil
+	url := c.buildURL("/ping")
+	resp, err := c.httpClient.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API ping failed: status %d", resp.StatusCode)
+	}
+	return nil
 }
 
 // TODO (medium priority):

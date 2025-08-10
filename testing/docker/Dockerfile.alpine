@@ -1,0 +1,13 @@
+# Alpine (apk) - No open US/EU mirror available. Consider hosting a private registry or proxy.
+FROM alpine:3.20
+RUN apk add --no-cache \
+    curl \
+    sudo \
+    lsb-release \
+    gnupg \
+    ca-certificates \
+    build-base \
+    git
+WORKDIR /app
+COPY ./mt /usr/local/bin/mt
+ENTRYPOINT ["mt"]
